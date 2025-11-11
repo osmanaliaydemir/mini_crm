@@ -1,0 +1,77 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Finance.PaymentPlans.DetailsModel
+
+@{
+    ViewData["Title"] = "Ödeme Planı Detay";
+}
+
+<div class="dashboard-section border-0 shadow-sm mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">@ViewData["Title"]</h2>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
+        </div>
+    </div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Plan ID</dt>
+        <dd class="col-sm-9">@Model.Plan?.Id</dd>
+
+        <dt class="col-sm-3">Müşteri</dt>
+        <dd class="col-sm-9">@Model.Plan?.CustomerName</dd>
+
+        <dt class="col-sm-3">Sevkiyat</dt>
+        <dd class="col-sm-9">@Model.Plan?.ShipmentReference</dd>
+
+        <dt class="col-sm-3">Plan Tipi</dt>
+        <dd class="col-sm-9">@Model.Plan?.PlanType</dd>
+
+        <dt class="col-sm-3">Toplam Tutar</dt>
+        <dd class="col-sm-9">@Model.Plan?.TotalAmount.ToString("C2") @Model.Plan?.Currency</dd>
+
+        <dt class="col-sm-3">Başlangıç Tarihi</dt>
+        <dd class="col-sm-9">@Model.Plan?.StartDate.ToString("d")</dd>
+
+        <dt class="col-sm-3">Periyot (Hafta)</dt>
+        <dd class="col-sm-9">@Model.Plan?.PeriodicityWeeks</dd>
+
+        <dt class="col-sm-3">Notlar</dt>
+        <dd class="col-sm-9">@Model.Plan?.Notes</dd>
+    </dl>
+</div>
+
+<div class="dashboard-section border-0 shadow-sm">
+    <h3 class="h5 mb-3">Taksitler</h3>
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Vade Tarihi</th>
+                <th>Tutar</th>
+                <th>Ödenen</th>
+                <th>Ödeme Tarihi</th>
+                <th>Not</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var installment in Model.Plan?.Installments ?? Enumerable.Empty<CRM.Web.Pages.Finance.PaymentPlans.DetailsModel.PaymentInstallmentView>())
+        {
+            <tr>
+                <td>@installment.InstallmentNumber</td>
+                <td>@installment.DueDate.ToString("d")</td>
+                <td>@installment.Amount.ToString("C2") @installment.Currency</td>
+                <td>@(installment.PaidAmount.HasValue ? $"{installment.PaidAmount.Value.ToString("C2")} {installment.Currency}" : "-")</td>
+                <td>@(installment.PaidAt?.ToString("g") ?? "-")</td>
+                <td>@installment.Notes</td>
+            </tr>
+        }
+        @if (!(Model.Plan?.Installments.Any() ?? false))
+        {
+            <tr>
+                <td colspan="6" class="text-center text-muted">Taksit kaydı bulunmuyor.</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+

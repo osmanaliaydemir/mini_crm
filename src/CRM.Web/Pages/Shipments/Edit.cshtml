@@ -1,0 +1,95 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Shipments.EditModel
+@using CRM.Web
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Shipments_Form_Header_Edit"];
+}
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<form method="post" class="dashboard-section">
+    <input type="hidden" asp-for="Input.Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Input.SupplierId" class="form-label">@Localizer["Shipments_Form_Supplier"]</label>
+            <select asp-for="Input.SupplierId" class="form-select" asp-items="Model.SupplierOptions"></select>
+            <span asp-validation-for="Input.SupplierId" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.CustomerId" class="form-label">@Localizer["Shipments_Form_Customer"]</label>
+            <select asp-for="Input.CustomerId" class="form-select" asp-items="Model.CustomerOptions">
+                <option value="">@Localizer["Shipments_Form_SelectCustomer"]</option>
+            </select>
+            <span asp-validation-for="Input.CustomerId" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.ReferenceNumber" class="form-label">@Localizer["Shipments_Form_Reference"]</label>
+            <input asp-for="Input.ReferenceNumber" class="form-control" />
+            <span asp-validation-for="Input.ReferenceNumber" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.ShipmentDate" class="form-label">@Localizer["Shipments_Form_ShipmentDate"]</label>
+            <input asp-for="Input.ShipmentDate" class="form-control" type="date" />
+            <span asp-validation-for="Input.ShipmentDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.EstimatedArrival" class="form-label">@Localizer["Shipments_Form_EstimatedArrival"]</label>
+            <input asp-for="Input.EstimatedArrival" class="form-control" type="date" />
+            <span asp-validation-for="Input.EstimatedArrival" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.Status" class="form-label">@Localizer["Shipments_Form_Status"]</label>
+            <select asp-for="Input.Status" class="form-select" asp-items="Model.StatusOptions"></select>
+            <span asp-validation-for="Input.Status" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.LoadingPort" class="form-label">@Localizer["Shipments_Form_LoadingPort"]</label>
+            <input asp-for="Input.LoadingPort" class="form-control" />
+            <span asp-validation-for="Input.LoadingPort" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.DischargePort" class="form-label">@Localizer["Shipments_Form_DischargePort"]</label>
+            <input asp-for="Input.DischargePort" class="form-control" />
+            <span asp-validation-for="Input.DischargePort" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Input.Notes" class="form-label">@Localizer["Shipments_Form_Notes"]</label>
+            <textarea asp-for="Input.Notes" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Input.Notes" class="text-danger"></span>
+        </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="Input.StageStartedAt" class="form-label">@Localizer["Shipments_Form_StageStart"]</label>
+            <input asp-for="Input.StageStartedAt" class="form-control" type="datetime-local" />
+            <span asp-validation-for="Input.StageStartedAt" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.StageCompletedAt" class="form-label">@Localizer["Shipments_Form_StageComplete"]</label>
+            <input asp-for="Input.StageCompletedAt" class="form-control" type="datetime-local" />
+            <span asp-validation-for="Input.StageCompletedAt" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.StageNotes" class="form-label">@Localizer["Shipments_Form_StageNotes"]</label>
+            <input asp-for="Input.StageNotes" class="form-control" />
+            <span asp-validation-for="Input.StageNotes" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a class="btn btn-outline-secondary" asp-page="Details" asp-route-id="@Model.Input.Id">@Localizer["Shipments_Form_Cancel"]</a>
+        <button type="submit" class="btn btn-brand">@Localizer["Shipments_Form_Submit"]</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

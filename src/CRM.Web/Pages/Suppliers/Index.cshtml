@@ -1,0 +1,199 @@
+@page
+@model CRM.Web.Pages.Suppliers.IndexModel
+@using CRM.Web
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    ViewData["Title"] = "Tedarikçiler";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@ViewData["Title"]</h2>
+    <a class="btn btn-brand" asp-page="Create">Yeni Tedarikçi</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-4 col-lg-5 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Suppliers_Header_TotalSuppliers"]</span>
+                <div class="stat-value">@Model.TotalSuppliers</div>
+                <small class="stat-sub">@Localizer["Suppliers_Header_Last30Days_Value", Model.RecentSuppliersCount]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-4 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100 alt">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Suppliers_Header_Countries"]</span>
+                <div class="stat-value">@Model.DistinctCountryCount</div>
+                <small class="stat-sub">@Localizer["Suppliers_Header_Countries_Subtitle"]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-3 col-md-12">
+        <div class="card stat-card shadow-sm border-0 h-100 accent">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Suppliers_Header_TopCountry"]</span>
+                <div class="stat-value">@Model.TopCountryName</div>
+                <small class="stat-sub">@Localizer["Suppliers_Header_TopCountry_Value", Model.TopCountrySupplierCount]</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 h-100 chart-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="card-title mb-1">@Localizer["Suppliers_Chart_ByCountry_Title"]</h5>
+                        <p class="card-subtitle text-muted small mb-0">@Localizer["Suppliers_Chart_ByCountry_Description"]</p>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="suppliersByCountryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-3">@Localizer["Suppliers_TopCountries_Title"]</h5>
+                <ul class="list-group list-group-flush country-list">
+                    @if (Model.SupplierCountryStats.Any())
+                    {
+                        var rank = 1;
+                        foreach (var stat in Model.SupplierCountryStats.Take(5))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge badge-brand">@rank</span>
+                                    <span class="fw-semibold">@stat.Country</span>
+                                </div>
+                                <span class="text-muted small fw-semibold">@Localizer["Suppliers_TopCountries_Count", stat.SupplierCount]</span>
+                            </li>
+                            rank++;
+                        }
+                    }
+                    else
+                    {
+                        <li class="list-group-item text-muted small">@Localizer["Suppliers_Chart_NoData"]</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <table class="table table-hover align-middle"
+           data-crm-datatable="true"
+           data-disable-last-column="true"
+           data-order-column="0">
+        <thead>
+            <tr>
+                <th>Ad</th>
+                <th>Ülke</th>
+                <th>Vergi No</th>
+                <th>İletişim</th>
+                <th class="text-end">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var supplier in Model.Suppliers)
+        {
+            <tr>
+                <td>@supplier.Name</td>
+                <td>@supplier.Country</td>
+                <td>@supplier.TaxNumber</td>
+                <td>
+                    <div>@supplier.ContactEmail</div>
+                    <div>@supplier.ContactPhone</div>
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@supplier.Id">Düzenle</a>
+                    <a class="btn btn-sm btn-outline-secondary" asp-page="Details" asp-route-id="@supplier.Id">Detay</a>
+                    <a class="btn btn-sm btn-outline-danger" asp-page="Delete" asp-route-id="@supplier.Id">Sil</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const canvas = document.getElementById('suppliersByCountryChart');
+            if (!canvas || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const labels = @Html.Raw(Model.SupplierCountryChartLabelsJson);
+            const data = @Html.Raw(Model.SupplierCountryChartDataJson);
+
+            if (!Array.isArray(labels) || labels.length === 0 || !Array.isArray(data) || data.length === 0) {
+                const container = canvas.parentElement;
+                if (container) {
+                    container.innerHTML = '<div class="text-muted small">@Localizer["Suppliers_Chart_NoData"]</div>';
+                }
+                return;
+            }
+
+            const supplierCountTemplate = '@Localizer["Suppliers_TopCountries_Count", "{0}"]';
+
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '@Localizer["Suppliers_Header_TotalSuppliers"]',
+                        data: data,
+                        backgroundColor: '#1f7a8c',
+                        hoverBackgroundColor: '#195f6a',
+                        borderRadius: 8,
+                        maxBarThickness: 48
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#0f2b3a'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                color: '#0f2b3a'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return supplierCountTemplate.replace('{0}', context.parsed.y);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}

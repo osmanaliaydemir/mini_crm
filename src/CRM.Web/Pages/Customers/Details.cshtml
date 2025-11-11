@@ -1,0 +1,137 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Customers.DetailsModel
+
+@{
+    ViewData["Title"] = "Müşteri Detay";
+}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="dashboard-section border-0 shadow-sm">
+            <h2 class="mb-3">@Model.Customer?.Name</h2>
+            <dl class="row">
+                <dt class="col-sm-4">Ticari Unvan</dt>
+                <dd class="col-sm-8">@Model.Customer?.LegalName</dd>
+                <dt class="col-sm-4">Vergi No</dt>
+                <dd class="col-sm-8">@Model.Customer?.TaxNumber</dd>
+                <dt class="col-sm-4">Segment</dt>
+                <dd class="col-sm-8">@Model.Customer?.Segment</dd>
+                <dt class="col-sm-4">İletişim</dt>
+                <dd class="col-sm-8">
+                    <div>@Model.Customer?.Email</div>
+                    <div>@Model.Customer?.Phone</div>
+                </dd>
+                <dt class="col-sm-4">Adres</dt>
+                <dd class="col-sm-8">@Model.Customer?.Address</dd>
+                <dt class="col-sm-4">Notlar</dt>
+                <dd class="col-sm-8">@Model.Customer?.Notes</dd>
+            </dl>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-primary" asp-page="Edit" asp-route-id="@Model.Customer?.Id">Düzenle</a>
+                <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-section border-0 shadow-sm">
+            <h3 class="h5 mb-3">İrtibat Kişileri</h3>
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Ad</th>
+                        <th>Ünvan</th>
+                        <th>E-posta</th>
+                        <th>Telefon</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var contact in Model.Contacts)
+                {
+                    <tr>
+                        <td>@contact.FullName</td>
+                        <td>@contact.Position</td>
+                        <td>@contact.Email</td>
+                        <td>@contact.Phone</td>
+                    </tr>
+                }
+                @if (!Model.Contacts.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">İrtibat kaydı bulunmuyor.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-6">
+        <div class="dashboard-section border-0 shadow-sm">
+            <h3 class="h5 mb-3">Yeni Etkileşim Kaydı</h3>
+            <form method="post">
+                <input type="hidden" asp-for="InteractionForm.CustomerId" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="InteractionForm.InteractionDate" class="form-label"></label>
+                    <input asp-for="InteractionForm.InteractionDate" class="form-control" type="datetime-local" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="InteractionForm.InteractionType" class="form-label"></label>
+                    <input asp-for="InteractionForm.InteractionType" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="InteractionForm.Subject" class="form-label"></label>
+                    <input asp-for="InteractionForm.Subject" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="InteractionForm.Notes" class="form-label"></label>
+                    <textarea asp-for="InteractionForm.Notes" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="InteractionForm.RecordedBy" class="form-label"></label>
+                    <input asp-for="InteractionForm.RecordedBy" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-brand">Kaydı Ekle</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-section border-0 shadow-sm">
+            <h3 class="h5 mb-3">Etkileşim Kayıtları</h3>
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Tip</th>
+                        <th>Konu</th>
+                        <th>Notlar</th>
+                        <th>Kayıt Eden</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var interaction in Model.Interactions)
+                {
+                    <tr>
+                        <td>@interaction.InteractionDate.ToString("g")</td>
+                        <td>@interaction.InteractionType</td>
+                        <td>@interaction.Subject</td>
+                        <td>@interaction.Notes</td>
+                        <td>@interaction.RecordedBy</td>
+                    </tr>
+                }
+                @if (!Model.Interactions.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Etkileşim kaydı bulunmuyor.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<partial name="_ValidationScriptsPartial" />
+

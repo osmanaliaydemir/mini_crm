@@ -1,0 +1,137 @@
+@page
+@model CRM.Web.Pages.Shipments.IndexModel
+@using CRM.Domain.Enums
+@using CRM.Web
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+	ViewData["Title"] = Localizer["Shipments_Title"];
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+	<h2>@ViewData["Title"]</h2>
+	<a class="btn btn-brand" asp-page="Create">@Localizer["Shipments_Add_Button"]</a>
+</div>
+
+<div class="row g-3 mb-4">
+	<div class="col-xl-3 col-md-6">
+		<div class="card stat-card shadow-sm border-0 h-100">
+			<div class="card-body">
+				<span class="stat-label">@Localizer["Shipments_Header_Total"]</span>
+				<div class="stat-value">@Model.TotalShipments</div>
+				<small class="stat-sub ">@Localizer["Shipments_Header_Total_Subtitle"]</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-xl-3 col-md-6">
+		<div class="card stat-card shadow-sm border-0 h-100 alt">
+			<div class="card-body">
+				<span class="stat-label">@Localizer["Shipments_Header_Active"]</span>
+				<div class="stat-value text-primary">@Model.ActiveShipments</div>
+				<small class="stat-sub ">@Localizer["Shipments_Header_Active_Subtitle"]</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-xl-3 col-md-6">
+		<div class="card stat-card shadow-sm border-0 h-100 accent">
+			<div class="card-body">
+				<span class="stat-label">@Localizer["Shipments_Header_Delivered"]</span>
+				<div class="stat-value text-success">@Model.DeliveredShipments</div>
+				<small class="stat-sub ">@Localizer["Shipments_Header_Delivered_Subtitle"]</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-xl-3 col-md-6">
+		<div class="card stat-card shadow-sm border-0 h-100">
+			<div class="card-body">
+				<span class="stat-label">@Localizer["Shipments_Header_Customs"]</span>
+				<div class="stat-value text-warning">@Model.CustomsShipments</div>
+				<small class="stat-sub ">@Localizer["Shipments_Header_Customs_Subtitle"]</small>
+			</div>
+		</div>
+	</div>
+</div>
+
+@if (Model.StatusSummaries.Count > 0)
+{
+	<div class="dashboard-section mb-4">
+		<h5 class="mb-3">@Localizer["Shipments_Status_Breakdown_Title"]</h5>
+		<div class="d-flex flex-wrap gap-2">
+			@foreach (var summary in Model.StatusSummaries)
+			{
+				<span class="badge bg-dark-subtle text-dark fw-semibold px-3 py-2">
+					@Localizer[$"Shipments_Status_{summary.Status}"] · @summary.Count
+				</span>
+			}
+		</div>
+	</div>
+}
+
+<div class="dashboard-section">
+	<table class="table table-hover align-middle"
+		   data-crm-datatable="true"
+		   data-responsive="true"
+		   data-order-column="5">
+		<thead>
+			<tr>
+				<th>@Localizer["Shipments_Table_Reference"]</th>
+				<th>@Localizer["Shipments_Table_Supplier"]</th>
+				<th>@Localizer["Shipments_Table_Customer"]</th>
+				<th>@Localizer["Shipments_Table_Status"]</th>
+				<th>@Localizer["Shipments_Table_LastUpdate"]</th>
+				<th>@Localizer["Shipments_Table_ShipmentDate"]</th>
+				<th>@Localizer["Shipments_Table_EstimatedArrival"]</th>
+				<th class="text-end">@Localizer["Shipments_Table_Actions"]</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var shipment in Model.Shipments)
+			{
+				var badgeClass = Model.GetStatusBadgeClass(shipment.Status);
+				<tr>
+					<td>
+						<div class="fw-semibold">@shipment.ReferenceNumber</div>
+						@if (!string.IsNullOrWhiteSpace(shipment.LastStageNotes))
+						{
+							<div class=" small">@shipment.LastStageNotes</div>
+						}
+				</td>
+				<td>@shipment.SupplierName</td>
+				<td>@shipment.CustomerName</td>
+				<td>
+					<span class="badge @badgeClass">
+						@Localizer[$"Shipments_Status_{shipment.Status}"]
+					</span>
+				</td>
+				<td>
+					@(shipment.LastStageUpdate.HasValue
+										? shipment.LastStageUpdate.Value.ToLocalTime().ToString("g")
+										: Localizer["Shipments_Table_NoUpdate"].Value)
+																  				</td>
+																  				<td>@shipment.ShipmentDate.ToLocalTime().ToString("d")</td>
+																  				<td>
+					@(shipment.EstimatedArrival.HasValue
+										? shipment.EstimatedArrival.Value.ToLocalTime().ToString("d")
+										: "-")
+				</td>
+				<td class="text-end">
+					<a class="btn btn-sm btn-outline-primary" asp-page="Details" asp-route-id="@shipment.Id">
+						@Localizer["Shipments_Action_Details"]
+					</a>
+					<a class="btn btn-sm btn-outline-secondary" asp-page="Edit" asp-route-id="@shipment.Id">
+						@Localizer["Shipments_Action_Edit"]
+					</a>
+				</td>
+			</tr>
+						}
+			@if (!Model.Shipments.Any())
+			{
+				<tr>
+					<td colspan="8" class="text-center ">@Localizer["Shipments_Table_Empty"]</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+

@@ -1,0 +1,158 @@
+﻿@using System.Globalization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@using CRM.Infrastructure.Identity
+@using Microsoft.Extensions.Localization
+@using CRM.Web
+@inject IStringLocalizer<SharedResource> Localizer
+@inject SignInManager<ApplicationUser> SignInManager
+
+@{
+    var isAuthenticated = SignInManager.IsSignedIn(User);
+    var rawUserName = User.Identity?.Name;
+    var userDisplayName = isAuthenticated
+        ? (!string.IsNullOrWhiteSpace(rawUserName) ? rawUserName : "Kullanıcı")
+        : null;
+    var userInitial = isAuthenticated
+        ? (string.IsNullOrWhiteSpace(userDisplayName) ? "?" : userDisplayName.Trim()[0].ToString().ToUpperInvariant())
+        : null;
+    var isAdmin = User.IsInRole("Admin");
+    var isPersonnel = User.IsInRole("Personel");
+    var roleSummary = isAuthenticated
+        ? string.Join(", ", User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value))
+        : string.Empty;
+}
+
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName" dir="@(CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @Localizer["AppTitle"]</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CRM.Web.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-shell">
+        <header class="portal-header gradient-border">
+            <nav class="navbar navbar-expand-lg navbar-dark portal-navbar py-3">
+                <div class="container-fluid px-lg-5">
+                    <a class="navbar-brand d-flex align-items-center gap-3" asp-area="" asp-page="/Index">
+                        <img src="~/images/gms_logo.png" class="brand-logo" asp-append-version="true" alt="GMS Logo" />
+                        <div class="d-flex flex-column lh-1 brand-text">
+                            <span class="brand-accent">@Localizer["AppTitle"]</span>
+                            @* <small class="text-white-50">Timber Operations Portal</small> *@
+                        </div>
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar"
+                            aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="mainNavbar">
+                        <ul class="navbar-nav me-auto align-items-lg-center gap-lg-2">
+                            @if (isAuthenticated)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Index">@Localizer["Navigation_Home"]</a>
+                                </li>
+
+                                if (isAdmin || isPersonnel)
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-page="/Suppliers/Index">@Localizer["Navigation_Suppliers"]</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-page="/Shipments/Index">@Localizer["Navigation_Shipments"]</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-page="/Warehouses/Index">@Localizer["Navigation_Warehouses"]</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-page="/Customers/Index">@Localizer["Navigation_Customers"]</a>
+                                    </li>
+                                }
+
+                                if (isAdmin)
+                                {
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">@Localizer["Navigation_PaymentPlans"]</a>
+                                        <div class="dropdown-menu shadow-sm border-0 rounded-4 py-2">
+                                            <a class="dropdown-item" asp-page="/Finance/PaymentPlans/Index">@Localizer["Navigation_PaymentPlans"]</a>
+                                            <a class="dropdown-item" asp-page="/Finance/Cashbox/Index">@Localizer["Navigation_Cashbox"]</a>
+                                        </div>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                        <ul class="navbar-nav ms-lg-auto align-items-lg-center gap-lg-2">
+                            @await Html.PartialAsync("_LanguageSelector")
+                            @if (!isAuthenticated)
+                            {
+                                <li class="nav-item">
+                                    <a class="btn btn-brand" asp-area="" asp-page="/Auth/Login">@Localizer["Navigation_Login"]</a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
+                                        <span class="user-avatar">@userInitial</span>
+                                        <div class="d-flex flex-column lh-1 text-start">
+                                            <span class="fw-semibold">@userDisplayName</span>
+                                            @if (!string.IsNullOrWhiteSpace(roleSummary))
+                                            {
+                                                <small class="text-white-50">@roleSummary</small>
+                                            }
+                                        </div>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 py-2">
+                                        <span class="dropdown-item-text text-muted small">
+                                            Son Oturum: @DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm")
+                                        </span>
+                                        <div class="dropdown-divider"></div>
+                                        <form method="post" asp-page="/Auth/Logout" asp-route-returnUrl="@($"{Context.Request.Path}{Context.Request.QueryString}")">
+                                            <button type="submit" class="dropdown-item text-danger">@Localizer["Logout_Button"]</button>
+                                        </form>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <div class="container-fluid content-wrapper px-lg-5 my-4">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
+
+        <footer class="mt-auto text-muted portal-footer py-4">
+            <div class="container-fluid px-lg-5 d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+                <div>
+                    <span>&copy; @DateTime.UtcNow.Year · @Localizer["AppTitle"]</span>
+                    <small class="text-secondary d-block">v0.1 · GMS Operations CRM</small>
+                </div>
+                <div class="d-flex align-items-center gap-3 text-secondary small">
+                    <span>@Localizer["Footer_Secure"]</span>
+                    <span>TR · EN · AR</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.3/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.3/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

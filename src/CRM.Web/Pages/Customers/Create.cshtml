@@ -1,0 +1,89 @@
+@page
+@model CRM.Web.Pages.Customers.CreateModel
+
+@{
+    ViewData["Title"] = "Yeni Müşteri";
+}
+
+<div class="col-lg-7">
+    <div class="dashboard-section border-0 shadow-sm">
+        <h2 class="mb-3">@ViewData["Title"]</h2>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <fieldset class="mb-3">
+                <legend class="h5">Temel Bilgiler</legend>
+                <div class="mb-3">
+                    <label asp-for="Customer.Name" class="form-label"></label>
+                    <input asp-for="Customer.Name" class="form-control" />
+                    <span asp-validation-for="Customer.Name" class="text-danger small"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.LegalName" class="form-label"></label>
+                        <input asp-for="Customer.LegalName" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.TaxNumber" class="form-label"></label>
+                        <input asp-for="Customer.TaxNumber" class="form-control" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.Email" class="form-label"></label>
+                        <input asp-for="Customer.Email" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.Phone" class="form-label"></label>
+                        <input asp-for="Customer.Phone" class="form-control" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Customer.Address" class="form-label"></label>
+                    <textarea asp-for="Customer.Address" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.Segment" class="form-label"></label>
+                        <input asp-for="Customer.Segment" class="form-control" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Customer.Notes" class="form-label"></label>
+                    <textarea asp-for="Customer.Notes" class="form-control" rows="3"></textarea>
+                </div>
+            </fieldset>
+
+            <fieldset class="mb-4">
+                <legend class="h5">İlk İletişim</legend>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.PrimaryContactName" class="form-label"></label>
+                        <input asp-for="Customer.PrimaryContactName" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.PrimaryContactPosition" class="form-label"></label>
+                        <input asp-for="Customer.PrimaryContactPosition" class="form-control" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.PrimaryContactEmail" class="form-label"></label>
+                        <input asp-for="Customer.PrimaryContactEmail" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Customer.PrimaryContactPhone" class="form-label"></label>
+                        <input asp-for="Customer.PrimaryContactPhone" class="form-control" />
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="d-flex justify-content-between">
+                <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
+                <button type="submit" class="btn btn-brand">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<partial name="_ValidationScriptsPartial" />
+

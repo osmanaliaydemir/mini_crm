@@ -1,0 +1,19 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Suppliers.DeleteModel
+
+@{
+    ViewData["Title"] = "Tedarikçi Sil";
+}
+
+<div class="dashboard-section border-0 shadow-sm col-lg-5">
+    <h2 class="mb-3 text-danger">@ViewData["Title"]</h2>
+    <p><strong>@Model.SupplierName</strong> kaydını silmek üzeresiniz. Devam etmek istediğinize emin misiniz?</p>
+    <form method="post">
+        <input type="hidden" asp-for="SupplierId" />
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
+            <button type="submit" class="btn btn-danger">Sil</button>
+        </div>
+    </form>
+</div>
+

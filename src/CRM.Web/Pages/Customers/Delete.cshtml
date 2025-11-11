@@ -1,0 +1,19 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Customers.DeleteModel
+
+@{
+    ViewData["Title"] = "Müşteri Sil";
+}
+
+<div class="dashboard-section border-0 shadow-sm col-lg-5">
+    <h2 class="mb-3 text-danger">@ViewData["Title"]</h2>
+    <p><strong>@Model.CustomerName</strong> kaydını silmek üzeresiniz. Devam etmek istediğinize emin misiniz?</p>
+    <form method="post">
+        <input type="hidden" asp-for="CustomerId" />
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
+            <button type="submit" class="btn btn-danger">Sil</button>
+        </div>
+    </form>
+</div>
+

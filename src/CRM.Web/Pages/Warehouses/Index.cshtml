@@ -1,0 +1,217 @@
+@page
+@model CRM.Web.Pages.Warehouses.IndexModel
+@using System.Globalization
+@using CRM.Web
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Navigation_Warehouses"];
+
+    string FormatLocation(string location) =>
+        location == CRM.Web.Pages.Warehouses.IndexModel.UnspecifiedLocationLabel
+            ? Localizer["Warehouses_Location_Unspecified"].Value
+            : location;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@ViewData["Title"]</h2>
+    <a class="btn btn-brand" asp-page="Create">@Localizer["Warehouses_AddWarehouse_Button"]</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Warehouses_Header_TotalWarehouses"]</span>
+                <div class="stat-value">@Model.TotalWarehouses</div>
+                <small class="stat-sub">@Localizer["Warehouses_Header_Active_Value", Model.ActiveWarehousesCount]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100 alt">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Warehouses_Header_Locations"]</span>
+                <div class="stat-value">@Model.DistinctLocationCount</div>
+                <small class="stat-sub">@Localizer["Warehouses_Header_Locations_Subtitle"]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100 accent">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Warehouses_Header_RecentUnloading"]</span>
+                <div class="stat-value">@Model.RecentUnloadingCount</div>
+                <small class="stat-sub">@Localizer["Warehouses_Header_RecentUnloading_Subtitle", Model.RecentUnloadingCount]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Warehouses_Header_TopLocation"]</span>
+                <div class="stat-value">
+                    @FormatLocation(Model.TopLocationName)
+                </div>
+                <small class="stat-sub">@Localizer["Warehouses_Header_TopLocation_Value", Model.TopLocationWarehouseCount]</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 h-100 chart-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="card-title mb-1">@Localizer["Warehouses_Chart_MonthlyVolume_Title"]</h5>
+                        <p class="card-subtitle text-muted small mb-0">@Localizer["Warehouses_Chart_MonthlyVolume_Description"]</p>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="warehouseVolumeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-3">@Localizer["Warehouses_TopWarehouses_Title"]</h5>
+                <ul class="list-group list-group-flush warehouse-list">
+                    @if (Model.TopWarehouseStats.Any())
+                    {
+                        foreach (var stat in Model.TopWarehouseStats)
+                        {
+                            <li class="list-group-item">
+                                <div class="d-flex flex-column gap-1">
+                                    <div>
+                                        <div class="fw-semibold">@stat.Name</div>
+                                        <div class="text-muted small">@FormatLocation(stat.Location)</div>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">@Localizer["Warehouses_TopWarehouses_Volume", stat.TotalVolume]</div>
+                                        <div class="text-muted small">
+                                            @Localizer["Warehouses_TopWarehouses_Trips", stat.TripCount]
+                                            ·
+                                            @Localizer["Warehouses_TopWarehouses_LastUnloaded", stat.LastUnloadedAt.ToLocalTime().ToString("d", CultureInfo.CurrentUICulture)]
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="list-group-item text-muted small">@Localizer["Warehouses_TopWarehouses_NoData"]</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <table class="table table-hover align-middle"
+           data-crm-datatable="true"
+           data-disable-last-column="true"
+           data-order-column="0">
+        <thead>
+            <tr>
+                <th>@Localizer["Warehouses_Table_Name"]</th>
+                <th>@Localizer["Warehouses_Table_Location"]</th>
+                <th>@Localizer["Warehouses_Table_Contact"]</th>
+                <th class="text-end">@Localizer["Warehouses_Table_Actions"]</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var warehouse in Model.Warehouses)
+        {
+            <tr>
+                <td>@warehouse.Name</td>
+                <td>@FormatLocation(warehouse.Location ?? CRM.Web.Pages.Warehouses.IndexModel.UnspecifiedLocationLabel)</td>
+                <td>
+                    <div>@warehouse.ContactPerson</div>
+                    <div>@warehouse.ContactPhone</div>
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" asp-page="Details" asp-route-id="@warehouse.Id">@Localizer["Warehouses_Action_Details"]</a>
+                    <a class="btn btn-sm btn-outline-secondary" asp-page="Edit" asp-route-id="@warehouse.Id">@Localizer["Warehouses_Action_Edit"]</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const canvas = document.getElementById('warehouseVolumeChart');
+            if (!canvas || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const labels = @Html.Raw(Model.MonthlyVolumeLabelsJson);
+            const data = @Html.Raw(Model.MonthlyVolumeDataJson);
+
+            if (!Array.isArray(labels) || labels.length === 0 || !Array.isArray(data) || data.length === 0 || data.every(v => v === 0)) {
+                const container = canvas.parentElement;
+                if (container) {
+                    container.innerHTML = '<div class="text-muted small">@Localizer["Warehouses_Chart_NoData"]</div>';
+                }
+                return;
+            }
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        fill: true,
+                        tension: 0.35,
+                        borderColor: '#1f7a8c',
+                        backgroundColor: 'rgba(31, 122, 140, 0.18)',
+                        pointBackgroundColor: '#1f7a8c',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#0f2b3a' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#0f2b3a',
+                                callback: function (value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.parsed.y.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + ' m³';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,56 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Suppliers.EditModel
+
+@{
+    ViewData["Title"] = "Tedarikçi Düzenle";
+}
+
+<div class="col-lg-6">
+    <div class="dashboard-section border-0 shadow-sm">
+        <h2 class="mb-3">@ViewData["Title"]</h2>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <input type="hidden" asp-for="Supplier.Id" />
+            <div class="mb-3">
+                <label asp-for="Supplier.Name" class="form-label"></label>
+                <input asp-for="Supplier.Name" class="form-control" />
+                <span asp-validation-for="Supplier.Name" class="text-danger small"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Supplier.Country" class="form-label"></label>
+                    <input asp-for="Supplier.Country" class="form-control" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Supplier.TaxNumber" class="form-label"></label>
+                    <input asp-for="Supplier.TaxNumber" class="form-control" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Supplier.ContactEmail" class="form-label"></label>
+                    <input asp-for="Supplier.ContactEmail" class="form-control" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Supplier.ContactPhone" class="form-label"></label>
+                    <input asp-for="Supplier.ContactPhone" class="form-control" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Supplier.AddressLine" class="form-label"></label>
+                <input asp-for="Supplier.AddressLine" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Supplier.Notes" class="form-label"></label>
+                <textarea asp-for="Supplier.Notes" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
+                <button type="submit" class="btn btn-brand">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<partial name="_ValidationScriptsPartial" />
+

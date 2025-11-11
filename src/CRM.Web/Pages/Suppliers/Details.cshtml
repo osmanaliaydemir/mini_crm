@@ -1,0 +1,29 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Suppliers.DetailsModel
+
+@{
+    ViewData["Title"] = "Tedarikçi Detay";
+}
+
+<div class="dashboard-section border-0 shadow-sm col-lg-6">
+    <h2 class="mb-3">@Model.Supplier?.Name</h2>
+    <dl class="row">
+        <dt class="col-sm-4">Ülke</dt>
+        <dd class="col-sm-8">@Model.Supplier?.Country</dd>
+        <dt class="col-sm-4">Vergi No</dt>
+        <dd class="col-sm-8">@Model.Supplier?.TaxNumber</dd>
+        <dt class="col-sm-4">E-posta</dt>
+        <dd class="col-sm-8">@Model.Supplier?.ContactEmail</dd>
+        <dt class="col-sm-4">Telefon</dt>
+        <dd class="col-sm-8">@Model.Supplier?.ContactPhone</dd>
+        <dt class="col-sm-4">Adres</dt>
+        <dd class="col-sm-8">@Model.Supplier?.AddressLine</dd>
+        <dt class="col-sm-4">Notlar</dt>
+        <dd class="col-sm-8">@Model.Supplier?.Notes</dd>
+    </dl>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-page="Edit" asp-route-id="@Model.Supplier?.Id">Düzenle</a>
+        <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
+    </div>
+</div>
+

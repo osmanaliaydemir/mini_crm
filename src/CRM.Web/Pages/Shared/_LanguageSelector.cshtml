@@ -1,0 +1,28 @@
+@using System.Globalization
+
+@{
+    var currentCulture = CultureInfo.CurrentUICulture;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var encodedReturnUrl = Uri.EscapeDataString(returnUrl);
+}
+
+<li class="nav-item dropdown language-dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="cultureDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        @currentCulture.NativeName
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="cultureDropdown">
+        <li>
+            <a class="dropdown-item text-start @(currentCulture.Name == "tr-TR" ? "active" : null)"
+               href="~/culture/set?culture=tr-TR&amp;returnUrl=@encodedReturnUrl">🇹🇷 Türkçe</a>
+        </li>
+        <li>
+            <a class="dropdown-item text-start @(currentCulture.Name == "en-US" ? "active" : null)"
+               href="~/culture/set?culture=en-US&amp;returnUrl=@encodedReturnUrl">🇺🇸 English</a>
+        </li>
+        <li>
+            <a class="dropdown-item text-start @(currentCulture.Name == "ar-SA" ? "active" : null)"
+               href="~/culture/set?culture=ar-SA&amp;returnUrl=@encodedReturnUrl">🇸🇦 العربية</a>
+        </li>
+    </ul>
+</li>
+

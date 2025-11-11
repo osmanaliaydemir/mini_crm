@@ -1,0 +1,142 @@
+@page
+@model CRM.Web.Pages.Finance.PaymentPlans.CreateModel
+
+@{
+    ViewData["Title"] = "Yeni Ödeme Planı";
+}
+
+<div class="col-lg-8">
+    <div class="dashboard-section border-0 shadow-sm">
+        <h2 class="mb-3">@ViewData["Title"]</h2>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.CustomerId" class="form-label"></label>
+                    <select asp-for="Input.CustomerId" class="form-select" asp-items="Model.CustomerOptions">
+                        <option value="">Müşteri seçiniz...</option>
+                    </select>
+                    <span asp-validation-for="Input.CustomerId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.ShipmentId" class="form-label"></label>
+                    <select asp-for="Input.ShipmentId" class="form-select" asp-items="Model.ShipmentOptions">
+                        <option value="">Sevkiyat seçiniz...</option>
+                    </select>
+                    <span asp-validation-for="Input.ShipmentId" class="text-danger small"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Input.PlanType" class="form-label"></label>
+                    <select asp-for="Input.PlanType" class="form-select" asp-items="Model.PlanTypeOptions"></select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Input.TotalAmount" class="form-label"></label>
+                    <input asp-for="Input.TotalAmount" class="form-control" />
+                    <span asp-validation-for="Input.TotalAmount" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Input.Currency" class="form-label"></label>
+                    <input asp-for="Input.Currency" class="form-control" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Input.StartDate" class="form-label"></label>
+                    <input asp-for="Input.StartDate" class="form-control" type="date" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Input.PeriodicityWeeks" class="form-label"></label>
+                    <input asp-for="Input.PeriodicityWeeks" class="form-control" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Notes" class="form-label"></label>
+                <textarea asp-for="Input.Notes" class="form-control" rows="3"></textarea>
+            </div>
+
+            <fieldset class="mt-4">
+                <legend class="h5 d-flex justify-content-between align-items-center">
+                    <span>Taksit Planı</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="generateInstallments">Takvim Oluştur</button>
+                </legend>
+                <div id="installments-container" class="row g-3">
+                    <!-- Dinamik taksit alanları script ile eklenecek -->
+                </div>
+            </fieldset>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
+                <button type="submit" class="btn btn-brand">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<partial name="_ValidationScriptsPartial" />
+
+<script>
+    (function () {
+        const planTypeSelect = document.getElementById("Input_PlanType");
+        const amountInput = document.getElementById("Input_TotalAmount");
+        const startDateInput = document.getElementById("Input_StartDate");
+        const periodicityInput = document.getElementById("Input_PeriodicityWeeks");
+        const container = document.getElementById("installments-container");
+        const generateButton = document.getElementById("generateInstallments");
+
+        function renderInstallmentRow(index, dueDate, amount) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "col-12 col-lg-6";
+
+            wrapper.innerHTML = `
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Taksit #${index + 1}</h6>
+                            <button type="button" class="btn-close btn-remove" aria-label="Kaldır"></button>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Vade Tarihi</label>
+                            <input name="Installments[${index}].DueDate" class="form-control" type="date" value="${dueDate}"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tutar</label>
+                            <input name="Installments[${index}].Amount" class="form-control" value="${amount.toFixed(2)}"/>
+                        </div>
+                        <input type="hidden" name="Installments[${index}].InstallmentNumber" value="${index + 1}" />
+                    </div>
+                </div>`;
+
+            wrapper.querySelector(".btn-remove").addEventListener("click", () => {
+                wrapper.remove();
+            });
+
+            container.appendChild(wrapper);
+        }
+
+        generateButton.addEventListener("click", () => {
+            container.innerHTML = "";
+
+            if (planTypeSelect.value !== "Installment") {
+                return;
+            }
+
+            const total = parseFloat(amountInput.value || "0");
+            const periodicity = parseInt(periodicityInput.value || "4", 10);
+            const start = new Date(startDateInput.value || new Date().toISOString().substring(0, 10));
+
+            if (total <= 0) return;
+
+            const installments = 4;
+            const amount = total / installments;
+
+            for (let i = 0; i < installments; i++) {
+                const dueDate = new Date(start);
+                dueDate.setDate(start.getDate() + (i * periodicity * 7));
+                renderInstallmentRow(i, dueDate.toISOString().substring(0, 10), amount);
+            }
+        });
+    })();
+</script>
+

@@ -1,0 +1,92 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Warehouses.DetailsModel
+
+@{
+    ViewData["Title"] = "Depo Detay";
+}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="dashboard-section border-0 shadow-sm">
+            <h2 class="mb-3">@Model.Warehouse?.Name</h2>
+            <dl class="row">
+                <dt class="col-sm-4">Lokasyon</dt>
+                <dd class="col-sm-8">@Model.Warehouse?.Location</dd>
+                <dt class="col-sm-4">İrtibat</dt>
+                <dd class="col-sm-8">
+                    <div>@Model.Warehouse?.ContactPerson</div>
+                    <div>@Model.Warehouse?.ContactPhone</div>
+                </dd>
+                <dt class="col-sm-4">Notlar</dt>
+                <dd class="col-sm-8">@Model.Warehouse?.Notes</dd>
+            </dl>
+            <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-section border-0 shadow-sm">
+            <h3 class="h5 mb-3">Tır Boşaltma Kaydı</h3>
+            <form method="post">
+                <input type="hidden" asp-for="UnloadingInput.WarehouseId" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="UnloadingInput.ShipmentId" class="form-label"></label>
+                    <select asp-for="UnloadingInput.ShipmentId" class="form-select" asp-items="Model.ShipmentOptions">
+                        <option value="">Seçiniz...</option>
+                    </select>
+                    <span asp-validation-for="UnloadingInput.ShipmentId" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="UnloadingInput.TruckPlate" class="form-label"></label>
+                    <input asp-for="UnloadingInput.TruckPlate" class="form-control" />
+                    <span asp-validation-for="UnloadingInput.TruckPlate" class="text-danger small"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="UnloadingInput.UnloadedAt" class="form-label"></label>
+                        <input asp-for="UnloadingInput.UnloadedAt" class="form-control" type="datetime-local" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="UnloadingInput.UnloadedVolume" class="form-label"></label>
+                        <input asp-for="UnloadingInput.UnloadedVolume" class="form-control" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="UnloadingInput.Notes" class="form-label"></label>
+                    <textarea asp-for="UnloadingInput.Notes" class="form-control" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-brand">Kaydı Ekle</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-section border-0 shadow-sm mt-4">
+    <h3 class="h5 mb-3">Boşaltma Kayıtları</h3>
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Sevkiyat</th>
+                <th>Tır Plaka</th>
+                <th>Tarih</th>
+                <th>Hacim (m3)</th>
+                <th>Notlar</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var unloading in Model.Unloadings)
+        {
+            <tr>
+                <td>@unloading.ShipmentId</td>
+                <td>@unloading.TruckPlate</td>
+                <td>@unloading.UnloadedAt.ToString("g")</td>
+                <td>@unloading.UnloadedVolume</td>
+                <td>@unloading.Notes</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<partial name="_ValidationScriptsPartial" />
+

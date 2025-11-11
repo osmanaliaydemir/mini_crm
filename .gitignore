@@ -1,0 +1,26 @@
+# Build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Rider / VS
+.vs/
+*.user
+*.suo
+
+# Logs / coverage
+*.log
+*.trx
+TestResults/
+coverage/
+
+# OS artifacts
+Thumbs.db
+.DS_Store
+
+# Local tooling
+.idea/
+.vscode/
+
+

@@ -1,0 +1,259 @@
+@page
+@model CRM.Web.Pages.Customers.IndexModel
+@using System.Globalization
+@using CRM.Web
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Navigation_Customers"];
+
+    string FormatSegment(string segment) =>
+        segment == CRM.Web.Pages.Customers.IndexModel.UnspecifiedSegmentLabel
+            ? Localizer["Customers_Segment_Unspecified"].Value
+            : segment;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@ViewData["Title"]</h2>
+    <a class="btn btn-brand" asp-page="Create">@Localizer["Customers_AddCustomer_Button"]</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Customers_Header_TotalCustomers"]</span>
+                <div class="stat-value">@Model.TotalCustomers</div>
+                <small class="stat-sub">@Localizer["Customers_Header_New_Value", Model.NewCustomersCount]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100 alt">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Customers_Header_Segments"]</span>
+                <div class="stat-value">@Model.DistinctSegmentCount</div>
+                <small class="stat-sub">@Localizer["Customers_Header_Segments_Subtitle"]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Customers_Header_Interactions"]</span>
+                <div class="stat-value">@Model.RecentInteractionsCount</div>
+                <small class="stat-sub">@Localizer["Customers_Header_Interactions_Subtitle"]</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12 col-md-6">
+        <div class="card stat-card shadow-sm border-0 h-100 accent">
+            <div class="card-body">
+                <span class="stat-label">@Localizer["Customers_Header_TopSegment"]</span>
+                <div class="stat-value">@FormatSegment(Model.TopSegmentName)</div>
+                <small class="stat-sub">@Localizer["Customers_Header_TopSegment_Value", Model.TopSegmentCustomerCount]</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 h-100 chart-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="card-title mb-1">@Localizer["Customers_Chart_MonthlyInteractions_Title"]</h5>
+                        <p class="card-subtitle text-muted small mb-0">@Localizer["Customers_Chart_MonthlyInteractions_Description"]</p>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="customerInteractionsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-3">@Localizer["Customers_TopCustomers_Title"]</h5>
+                <ul class="list-group list-group-flush customer-list">
+                    @if (Model.TopCustomerStats.Any())
+                    {
+                        foreach (var stat in Model.TopCustomerStats)
+                        {
+                            <li class="list-group-item">
+                                <div class="d-flex flex-column gap-1">
+                                    <div>
+                                        <div class="fw-semibold">@stat.Name</div>
+                                        <div class="text-muted small">@FormatSegment(stat.Segment)</div>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <span class="fw-semibold text-primary">@Localizer["Customers_TopCustomers_Interactions", stat.InteractionCount]</span>
+                                        ·
+                                        @Localizer["Customers_TopCustomers_LastInteraction", stat.LastInteractionAt.ToLocalTime().ToString("d", CultureInfo.CurrentUICulture)]
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="list-group-item text-muted small">@Localizer["Customers_TopCustomers_NoData"]</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-3">@Localizer["Customers_TopSegments_Title"]</h5>
+                <ul class="list-group list-group-flush customer-list">
+                    @if (Model.CustomerSegmentStats.Any())
+                    {
+                        var rank = 1;
+                        foreach (var segment in Model.CustomerSegmentStats.Take(5))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge badge-brand">@rank</span>
+                                    <span class="fw-semibold">@FormatSegment(segment.Segment)</span>
+                                </div>
+                                <span class="text-muted small fw-semibold">@Localizer["Customers_TopSegments_Count", segment.CustomerCount]</span>
+                            </li>
+                            rank++;
+                        }
+                    }
+                    else
+                    {
+                        <li class="list-group-item text-muted small">@Localizer["Customers_TopSegments_NoData"]</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-6">
+            <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="@Localizer["Customers_Search_Placeholder"]" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-primary">@Localizer["Customers_Search_Button"]</button>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-outline-secondary" asp-page="Index">@Localizer["Customers_Clear_Button"]</a>
+        </div>
+    </form>
+
+    <table class="table table-hover align-middle"
+           data-crm-datatable="true"
+           data-disable-last-column="true"
+           data-order-column="0">
+        <thead>
+            <tr>
+                <th>@Localizer["Customers_Table_Name"]</th>
+                <th>@Localizer["Customers_Table_Segment"]</th>
+                <th>@Localizer["Customers_Table_Contact"]</th>
+                <th>@Localizer["Customers_Table_Notes"]</th>
+                <th class="text-end">@Localizer["Customers_Table_Actions"]</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var customer in Model.Customers)
+        {
+            <tr>
+                <td>
+                    <div class="fw-semibold">@customer.Name</div>
+                    <div class="text-muted small">@customer.LegalName</div>
+                </td>
+                <td>@FormatSegment(customer.Segment ?? CRM.Web.Pages.Customers.IndexModel.UnspecifiedSegmentLabel)</td>
+                <td>
+                    <div>@customer.Email</div>
+                    <div>@customer.Phone</div>
+                </td>
+                <td class="text-muted small">@customer.Notes</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" asp-page="Details" asp-route-id="@customer.Id">@Localizer["Customers_Action_Details"]</a>
+                    <a class="btn btn-sm btn-outline-secondary" asp-page="Edit" asp-route-id="@customer.Id">@Localizer["Customers_Action_Edit"]</a>
+                    <a class="btn btn-sm btn-outline-danger" asp-page="Delete" asp-route-id="@customer.Id">@Localizer["Customers_Action_Delete"]</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const canvas = document.getElementById('customerInteractionsChart');
+            if (!canvas || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const labels = @Html.Raw(Model.MonthlyInteractionLabelsJson);
+            const data = @Html.Raw(Model.MonthlyInteractionDataJson);
+
+            if (!Array.isArray(labels) || labels.length === 0 || !Array.isArray(data) || data.length === 0 || data.every(v => v === 0)) {
+                const container = canvas.parentElement;
+                if (container) {
+                    container.innerHTML = '<div class="text-muted small">@Localizer["Customers_Chart_NoData"]</div>';
+                }
+                return;
+            }
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        fill: true,
+                        tension: 0.35,
+                        borderColor: '#f2994a',
+                        backgroundColor: 'rgba(242, 153, 74, 0.18)',
+                        pointBackgroundColor: '#f2994a',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#0f2b3a' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#0f2b3a',
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.parsed.y.toLocaleString() + ' @Localizer["Customers_Chart_Point_Label"]';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}
