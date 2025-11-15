@@ -1,0 +1,119 @@
+.delete-header {
+    margin-bottom: 24px;
+}
+
+.delete-card {
+    max-width: 520px;
+    margin: 0 auto;
+    border-radius: 26px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(248, 113, 113, 0.32);
+    box-shadow: 0 28px 42px rgba(8, 16, 32, 0.38);
+    padding: 36px 34px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.delete-card::before {
+    content: "";
+    position: absolute;
+    inset: -40% auto auto -25%;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(248, 113, 113, 0.25), transparent 70%);
+}
+
+.delete-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -28% -38% auto;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 70%);
+}
+
+.delete-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.delete-icon {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: rgba(248, 113, 113, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(248, 113, 113, 0.88);
+}
+
+.delete-message {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: rgba(248, 250, 252, 0.92);
+}
+
+.delete-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(239, 68, 68, 0.28);
+}
+
+.btn-ghost {
+    border-radius: 14px;
+    padding: 12px 24px;
+}
+
+:root[data-theme='light'] .delete-card {
+    background: rgba(255, 255, 255, 0.97);
+    border-color: rgba(248, 113, 113, 0.4);
+    box-shadow: 0 24px 38px rgba(248, 113, 113, 0.16);
+}
+
+:root[data-theme='light'] .delete-message {
+    color: rgba(51, 65, 85, 0.9);
+}
+
+:root[data-theme='light'] .btn-danger {
+    background: linear-gradient(135deg, #f97316, #ef4444);
+}
+
+@media (max-width: 640px) {
+    .delete-card {
+        padding: 28px 24px;
+    }
+
+    .delete-actions {
+        flex-direction: column-reverse;
+        width: 100%;
+    }
+
+    .delete-actions .btn {
+        width: 100%;
+    }
+}
+

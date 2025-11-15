@@ -1,0 +1,63 @@
+@import "../../suppliers/form.css";
+
+.installments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.installment-card .card {
+    border-radius: 18px;
+    border: 1px solid rgba(71, 85, 105, 0.24);
+    background: rgba(15, 23, 42, 0.75);
+    box-shadow: 0 18px 28px rgba(8, 16, 32, 0.24);
+}
+
+.installment-card .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.installment-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.installment-heading h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.installment-card .btn-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    color: rgba(148, 163, 184, 0.8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.installment-card .btn-remove:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(248, 113, 113, 0.4);
+    color: rgba(248, 113, 113, 0.9);
+}
+
+:root[data-theme='light'] .installment-card .card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(203, 213, 225, 0.45);
+    box-shadow: 0 18px 26px rgba(15, 23, 42, 0.1);
+}
+
+:root[data-theme='light'] .installment-card .btn-remove {
+    background: rgba(248, 250, 252, 0.92);
+    border-color: rgba(203, 213, 225, 0.5);
+    color: rgba(100, 116, 139, 0.75);
+}
+

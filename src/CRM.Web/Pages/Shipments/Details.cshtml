@@ -1,11 +1,11 @@
 @page "{id:guid}"
 @model CRM.Web.Pages.Shipments.DetailsModel
 @using CRM.Domain.Enums
-@using CRM.Web
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
 
 @{
+    Layout = "_DashboardLayout";
     if (Model.Shipment is null)
     {
         ViewData["Title"] = Localizer["Shipments_Details_NotFound_Title"];
@@ -16,212 +16,244 @@
     }
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/shipments/details.css" asp-append-version="true" />
+}
+
 @if (Model.Shipment is null)
 {
-    <div class="alert alert-warning">
-        @Localizer["Shipments_Details_NotFound_Message"]
-    </div>
+    <section class="details-empty">
+        <article class="details-card">
+            <h2>@Localizer["Shipments_Details_NotFound_Title"]</h2>
+            <p>@Localizer["Shipments_Details_NotFound_Message"]</p>
+            <div class="details-actions">
+                <a class="btn btn-primary" asp-page="Index">@Localizer["Shipments_Action_Back"]</a>
+            </div>
+        </article>
+    </section>
 }
 else
 {
     var shipment = Model.Shipment;
+    var firstStage = shipment.Stages.FirstOrDefault();
+    var lastStage = shipment.Stages.LastOrDefault();
+    string ResolveStageClass(ShipmentStatus status) => status switch
+    {
+        ShipmentStatus.DeliveredToDealer or ShipmentStatus.InWarehouse => "timeline-marker status-positive",
+        ShipmentStatus.Cancelled => "timeline-marker status-warning",
+        ShipmentStatus.InCustoms or ShipmentStatus.OnTruck or ShipmentStatus.AtPort => "timeline-marker status-warning",
+        _ => "timeline-marker"
+    };
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <section class="page-header details-header">
         <div>
-            <h2 class="mb-1">@ViewData["Title"]</h2>
-            <div class="text-muted">@Localizer[$"Shipments_Status_{shipment.Status}"]</div>
+            <h1>@Localizer["Shipments_Details_Title"]</h1>
+            <p class="subtitle">@shipment.ReferenceNumber</p>
         </div>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" asp-page="Index">@Localizer["Shipments_Action_Back"]</a>
-            <a class="btn btn-brand" asp-page="Edit" asp-route-id="@shipment.Id">@Localizer["Shipments_Action_Edit"]</a>
+        <div class="header-actions">
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["Shipments_Action_Back"]</a>
+            <a class="btn btn-primary" asp-page="Edit" asp-route-id="@shipment.Id">@Localizer["Shipments_Action_Edit"]</a>
         </div>
-    </div>
+    </section>
 
-    <div class="row g-3 mb-4">
-        <div class="col-lg-5">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">@Localizer["Shipments_Details_Overview_Title"]</h5>
-                    <dl class="row mb-0">
-                        <dt class="col-5 text-muted">@Localizer["Shipments_Form_Reference"]</dt>
-                        <dd class="col-7">@shipment.ReferenceNumber</dd>
-                        <dt class="col-5 text-muted">@Localizer["Shipments_Form_Supplier"]</dt>
-                        <dd class="col-7">@shipment.SupplierName</dd>
-                        <dt class="col-5 text-muted">@Localizer["Shipments_Form_Customer"]</dt>
-                        <dd class="col-7">@(shipment.CustomerName ?? Localizer["Shipments_Value_None"].Value)</dd>
-                        <dt class="col-5 text-muted">@Localizer["Shipments_Form_ShipmentDate"]</dt>
-                        <dd class="col-7">@shipment.ShipmentDate.ToLocalTime().ToString("g")</dd>
-                        <dt class="col-5 text-muted">@Localizer["Shipments_Form_EstimatedArrival"]</dt>
-                        <dd class="col-7">@(shipment.EstimatedArrival?.ToLocalTime().ToString("g") ?? "-")</dd>
-                        <dt class="col-5 text-muted">@Localizer["Shipments_Form_LoadingPort"]</dt>
-                        <dd class="col-7">@(!string.IsNullOrWhiteSpace(shipment.LoadingPort) ? shipment.LoadingPort : "-")</dd>
-                        <dt class="col-5 text-muted">@Localizer["Shipments_Form_DischargePort"]</dt>
-                        <dd class="col-7">@(!string.IsNullOrWhiteSpace(shipment.DischargePort) ? shipment.DischargePort : "-")</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-7">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">@Localizer["Shipments_Details_Notes_Title"]</h5>
-                    @if (!string.IsNullOrWhiteSpace(shipment.Notes))
-                    {
-                        <p class="mb-0">@shipment.Notes</p>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0">@Localizer["Shipments_Details_Notes_Empty"]</p>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
+    <section class="details-summary">
+        <article class="details-summary-card">
+            <span class="summary-label">@Localizer["Shipments_Form_Status"]</span>
+            <div class="summary-value">@Localizer[$"Shipments_Status_{shipment.Status}"]</div>
+            <span class="summary-meta">@Localizer["Shipments_Form_Reference"] · @shipment.ReferenceNumber</span>
+        </article>
+        <article class="details-summary-card">
+            <span class="summary-label">@Localizer["Shipments_Form_ShipmentDate"]</span>
+            <div class="summary-value">@shipment.ShipmentDate.ToLocalTime().ToString("d")</div>
+            <span class="summary-meta">@shipment.ShipmentDate.ToLocalTime().ToString("t")</span>
+        </article>
+        <article class="details-summary-card">
+            <span class="summary-label">@Localizer["Shipments_Form_EstimatedArrival"]</span>
+            <div class="summary-value">@(shipment.EstimatedArrival?.ToLocalTime().ToString("d") ?? "-")</div>
+            <span class="summary-meta">@shipment.EstimatedArrival?.ToLocalTime().ToString("t")</span>
+        </article>
+        <article class="details-summary-card">
+            <span class="summary-label">@Localizer["Shipments_Form_Supplier"]</span>
+            <div class="summary-value">@(shipment.SupplierName ?? "-")</div>
+            <span class="summary-meta">@Localizer["Shipments_Form_Customer"] · @(shipment.CustomerName ?? "-")</span>
+        </article>
+    </section>
 
-    <div class="row g-3 mb-4">
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">@Localizer["Shipments_Details_Stages_Title"]</h5>
-                    @if (shipment.Stages.Count == 0)
-                    {
-                        <div class="text-muted small">@Localizer["Shipments_Timeline_NoStages"]</div>
-                    }
-                    else
-                    {
-                        <ul class="list-group list-group-flush timeline-list">
-                            @foreach (var stage in shipment.Stages)
-                            {
-                                <li class="list-group-item px-0">
-                                    <div class="d-flex justify-content-between align-items-start gap-3">
-                                        <div>
-                                            <div class="fw-semibold">@Localizer[$"Shipments_Status_{stage.Status}"]</div>
-                                            <div class="text-muted small">
-                                                @stage.StartedAt.ToLocalTime().ToString("g")
-                                                @if (stage.CompletedAt.HasValue)
-                                                {
-                                                    <span> · </span>
-                                                    <span>
-                                                        @Localizer["Shipments_Details_Stage_TimeRange", stage.CompletedAt.Value.ToLocalTime().ToString("g")]
-                                                    </span>
-                                                }
-                                            </div>
-                                            @if (!string.IsNullOrWhiteSpace(stage.Notes))
-                                            {
-                                                <div class="small">@stage.Notes</div>
-                                            }
-                                        </div>
-                                        <span class="badge bg-secondary-subtle text-secondary">@Localizer[$"Shipments_Status_{stage.Status}"]</span>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
-                    }
+    <section class="details-grid">
+        <article class="details-card overview-card">
+            <header>
+                <h2>@Localizer["Shipments_Details_Overview_Title"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Shipments_Form_LoadingPort"]</dt>
+                    <dd>@(!string.IsNullOrWhiteSpace(shipment.LoadingPort) ? shipment.LoadingPort : "-")</dd>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">@Localizer["Shipments_Details_Customs_Title"]</h5>
-                    @if (shipment.Customs is null)
-                    {
-                        <div class="text-muted small">@Localizer["Shipments_Details_Customs_Empty"]</div>
-                    }
-                    else
-                    {
-                        <dl class="row mb-0">
-                            <dt class="col-5 text-muted">@Localizer["Shipments_Details_Customs_Status"]</dt>
-                            <dd class="col-7">@Localizer[$"Customs_Status_{shipment.Customs.Status}"]</dd>
-                            <dt class="col-5 text-muted">@Localizer["Shipments_Details_Customs_Started"]</dt>
-                            <dd class="col-7">@shipment.Customs.StartedAt.ToLocalTime().ToString("g")</dd>
-                            <dt class="col-5 text-muted">@Localizer["Shipments_Details_Customs_Completed"]</dt>
-                            <dd class="col-7">@(shipment.Customs.CompletedAt?.ToLocalTime().ToString("g") ?? "-")</dd>
-                            <dt class="col-5 text-muted">@Localizer["Shipments_Details_Customs_Document"]</dt>
-                            <dd class="col-7">@(!string.IsNullOrWhiteSpace(shipment.Customs.DocumentNumber) ? shipment.Customs.DocumentNumber : "-")</dd>
-                            <dt class="col-5 text-muted">@Localizer["Shipments_Details_Customs_Notes"]</dt>
-                            <dd class="col-7">@(!string.IsNullOrWhiteSpace(shipment.Customs.Notes) ? shipment.Customs.Notes : "-")</dd>
-                        </dl>
-                    }
+                <div>
+                    <dt>@Localizer["Shipments_Form_DischargePort"]</dt>
+                    <dd>@(!string.IsNullOrWhiteSpace(shipment.DischargePort) ? shipment.DischargePort : "-")</dd>
                 </div>
-            </div>
-        </div>
-    </div>
+                <div>
+                    <dt>@Localizer["Shipments_Details_Stage_First"]</dt>
+                    <dd>@(firstStage?.StartedAt.ToLocalTime().ToString("g") ?? "-")</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Shipments_Details_Stage_Last"]</dt>
+                    <dd>@(lastStage?.CompletedAt?.ToLocalTime().ToString("g") ?? "-")</dd>
+                </div>
+            </dl>
+        </article>
 
-    <div class="row g-3">
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">@Localizer["Shipments_Details_Items_Title"]</h5>
-                    @if (shipment.Items.Count == 0)
+        <article class="details-card notes-card">
+            <header>
+                <h2>@Localizer["Shipments_Details_Notes_Title"]</h2>
+            </header>
+            @if (!string.IsNullOrWhiteSpace(shipment.Notes))
+            {
+                <p>@shipment.Notes</p>
+            }
+            else
+            {
+                <p class="empty">@Localizer["Shipments_Details_Notes_Empty"]</p>
+            }
+        </article>
+
+        <article class="details-card timeline-card">
+            <header>
+                <h2>@Localizer["Shipments_Details_Stages_Title"]</h2>
+            </header>
+            @if (shipment.Stages.Count == 0)
+            {
+                <p class="empty">@Localizer["Shipments_Timeline_NoStages"]</p>
+            }
+            else
+            {
+                <ul class="timeline">
+                    @foreach (var stage in shipment.Stages)
                     {
-                        <div class="text-muted small">@Localizer["Shipments_Details_Items_Empty"]</div>
-                    }
-                    else
-                    {
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>@Localizer["Shipments_Details_Items_Variant"]</th>
-                                        <th>@Localizer["Shipments_Details_Items_Quantity"]</th>
-                                        <th>@Localizer["Shipments_Details_Items_Volume"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @foreach (var item in shipment.Items)
+                        <li class="timeline-entry">
+                            <div class="@ResolveStageClass(stage.Status)"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">@Localizer[$"Shipments_Status_{stage.Status}"]</div>
+                                <div class="timeline-dates">
+                                    <span>@stage.StartedAt.ToLocalTime().ToString("g")</span>
+                                    @if (stage.CompletedAt.HasValue)
+                                    {
+                                        <span>· @Localizer["Shipments_Details_Stage_TimeRange", stage.CompletedAt.Value.ToLocalTime().ToString("g")]</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(stage.Notes))
                                 {
-                                    <tr>
-                                        <td>
-                                            <div class="fw-semibold">@item.VariantName</div>
-                                            <div class="text-muted small">@item.VariantId</div>
-                                        </td>
-                                        <td>@item.Quantity</td>
-                                        <td>@item.Volume</td>
-                                    </tr>
+                                    <p>@stage.Notes</p>
                                 }
-                                </tbody>
-                            </table>
-                        </div>
+                            </div>
+                        </li>
                     }
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">@Localizer["Shipments_Details_TransportUnits_Title"]</h5>
-                    @if (shipment.TransportUnits.Count == 0)
-                    {
-                        <div class="text-muted small">@Localizer["Shipments_Details_TransportUnits_Empty"]</div>
-                    }
-                    else
-                    {
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>@Localizer["Shipments_Details_TransportUnits_Mode"]</th>
-                                        <th>@Localizer["Shipments_Details_TransportUnits_Identifier"]</th>
-                                        <th>@Localizer["Shipments_Details_TransportUnits_Count"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @foreach (var unit in shipment.TransportUnits)
-                                {
-                                    <tr>
-                                        <td>@Localizer[$"Transport_Mode_{unit.Mode}"]</td>
-                                        <td>@unit.Identifier</td>
-                                        <td>@unit.Count</td>
-                                    </tr>
-                                }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
+                </ul>
+            }
+        </article>
+
+        <article class="details-card customs-card">
+            <header>
+                <h2>@Localizer["Shipments_Details_Customs_Title"]</h2>
+            </header>
+            @if (shipment.Customs is null)
+            {
+                <p class="empty">@Localizer["Shipments_Details_Customs_Empty"]</p>
+            }
+            else
+            {
+                <dl class="details-definition compact">
+                    <div>
+                        <dt>@Localizer["Shipments_Details_Customs_Status"]</dt>
+                        <dd>@Localizer[$"Customs_Status_{shipment.Customs.Status}"]</dd>
+                    </div>
+                    <div>
+                        <dt>@Localizer["Shipments_Details_Customs_Document"]</dt>
+                        <dd>@(!string.IsNullOrWhiteSpace(shipment.Customs.DocumentNumber) ? shipment.Customs.DocumentNumber : "-")</dd>
+                    </div>
+                    <div>
+                        <dt>@Localizer["Shipments_Details_Customs_Started"]</dt>
+                        <dd>@shipment.Customs.StartedAt.ToLocalTime().ToString("g")</dd>
+                    </div>
+                    <div>
+                        <dt>@Localizer["Shipments_Details_Customs_Completed"]</dt>
+                        <dd>@(shipment.Customs.CompletedAt?.ToLocalTime().ToString("g") ?? "-")</dd>
+                    </div>
+                    <div class="full">
+                        <dt>@Localizer["Shipments_Details_Customs_Notes"]</dt>
+                        <dd>@(!string.IsNullOrWhiteSpace(shipment.Customs.Notes) ? shipment.Customs.Notes : "-")</dd>
+                    </div>
+                </dl>
+            }
+        </article>
+
+        <article class="details-card list-card">
+            <header>
+                <h2>@Localizer["Shipments_Details_Items_Title"]</h2>
+            </header>
+            @if (shipment.Items.Count == 0)
+            {
+                <p class="empty">@Localizer["Shipments_Details_Items_Empty"]</p>
+            }
+            else
+            {
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["Shipments_Details_Items_Variant"]</th>
+                            <th>@Localizer["Shipments_Details_Items_Quantity"]</th>
+                            <th>@Localizer["Shipments_Details_Items_Volume"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in shipment.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.VariantName</strong>
+                                    <span class="muted">@item.VariantId</span>
+                                </td>
+                                <td>@item.Quantity</td>
+                                <td>@item.Volume</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </article>
+
+        <article class="details-card list-card">
+            <header>
+                <h2>@Localizer["Shipments_Details_TransportUnits_Title"]</h2>
+            </header>
+            @if (shipment.TransportUnits.Count == 0)
+            {
+                <p class="empty">@Localizer["Shipments_Details_TransportUnits_Empty"]</p>
+            }
+            else
+            {
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["Shipments_Details_TransportUnits_Mode"]</th>
+                            <th>@Localizer["Shipments_Details_TransportUnits_Identifier"]</th>
+                            <th>@Localizer["Shipments_Details_TransportUnits_Count"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var unit in shipment.TransportUnits)
+                        {
+                            <tr>
+                                <td>@Localizer[$"Transport_Mode_{unit.Mode}"]</td>
+                                <td>@(!string.IsNullOrWhiteSpace(unit.Identifier) ? unit.Identifier : "-")</td>
+                                <td>@unit.Count</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </article>
+    </section>
 }
 

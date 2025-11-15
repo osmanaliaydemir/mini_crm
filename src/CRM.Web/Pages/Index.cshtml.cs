@@ -21,6 +21,7 @@ public class IndexModel : PageModel
     public IReadOnlyList<TimeSeriesPoint> WarehouseVolumeTrend { get; private set; } = Array.Empty<TimeSeriesPoint>();
     public IReadOnlyList<TimeSeriesPoint> CashFlowTrend { get; private set; } = Array.Empty<TimeSeriesPoint>();
     public IReadOnlyList<TimeSeriesPoint> CustomerInteractionTrend { get; private set; } = Array.Empty<TimeSeriesPoint>();
+    public Dictionary<string, IReadOnlyList<ActivityEvent>> ActivityFeed { get; private set; } = new();
 
     public static string SupplierUnspecifiedToken => UnspecifiedLabel;
 
@@ -147,6 +148,14 @@ public class IndexModel : PageModel
             WarehouseUnloadingsLast30: warehouseUnloadingsLast30,
             CashNetLast30: cashNetLast30,
             CustomerInteractionsLast30: interactionsLast30);
+
+        var nowUtc = DateTime.UtcNow;
+        ActivityFeed = new Dictionary<string, IReadOnlyList<ActivityEvent>>
+        {
+            ["7d"] = BuildActivityEvents(shipments, nowUtc, 7),
+            ["30d"] = BuildActivityEvents(shipments, nowUtc, 30),
+            ["90d"] = BuildActivityEvents(shipments, nowUtc, 90)
+        };
     }
 
     private static IReadOnlyList<DateTime> BuildMonthSeries(DateTime referenceUtc, int months)
@@ -185,5 +194,41 @@ public class IndexModel : PageModel
     {
         public static DashboardSummary Empty { get; } = new(
             0, 0, 0, 0, 0, 0, 0, 0, 0m, 0);
+    }
+
+    public sealed record ActivityEvent(DateTime OccurredAt, ShipmentStatus Status, string ReferenceNumber, string? CustomerDisplay);
+
+    private static IReadOnlyList<ActivityEvent> BuildActivityEvents(IEnumerable<CRM.Domain.Shipments.Shipment> shipments, DateTime referenceUtc, int dayWindow)
+    {
+        var threshold = referenceUtc.AddDays(-dayWindow);
+
+        return shipments
+            .Select(shipment =>
+            {
+                var latestStage = shipment.Stages
+                    ?.OrderByDescending(stage => stage.CompletedAt ?? stage.StartedAt)
+                    .FirstOrDefault();
+
+                var stageMoment = latestStage != null ? (latestStage.CompletedAt ?? latestStage.StartedAt) : (DateTime?)null;
+                var occurredAt = shipment.LastModifiedAt
+                                  ?? stageMoment
+                                  ?? shipment.CreatedAt;
+
+                var customerDisplay = shipment.Customer != null
+                    ? shipment.Customer.Name
+                    : shipment.CustomerId.HasValue
+                        ? shipment.CustomerId.Value.ToString("N")
+                        : null;
+
+                return new ActivityEvent(
+                    occurredAt,
+                    shipment.Status,
+                    shipment.ReferenceNumber,
+                    customerDisplay);
+            })
+            .Where(activity => activity.OccurredAt >= threshold)
+            .OrderByDescending(activity => activity.OccurredAt)
+            .Take(6)
+            .ToList();
     }
 }

@@ -1,90 +1,136 @@
 @page "{id:guid}"
 @model CRM.Web.Pages.Customers.EditModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = "Müşteri Düzenle";
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Customers_Form_Header_Edit"];
 }
 
-<div class="col-lg-7">
-    <div class="dashboard-section border-0 shadow-sm">
-        <h2 class="mb-3">@ViewData["Title"]</h2>
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-            <input type="hidden" asp-for="Customer.Id" />
-            <fieldset class="mb-3">
-                <legend class="h5">Temel Bilgiler</legend>
-                <div class="mb-3">
-                    <label asp-for="Customer.Name" class="form-label"></label>
-                    <input asp-for="Customer.Name" class="form-control" />
-                    <span asp-validation-for="Customer.Name" class="text-danger small"></span>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.LegalName" class="form-label"></label>
-                        <input asp-for="Customer.LegalName" class="form-control" />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.TaxNumber" class="form-label"></label>
-                        <input asp-for="Customer.TaxNumber" class="form-control" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.Email" class="form-label"></label>
-                        <input asp-for="Customer.Email" class="form-control" />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.Phone" class="form-label"></label>
-                        <input asp-for="Customer.Phone" class="form-control" />
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Customer.Address" class="form-label"></label>
-                    <textarea asp-for="Customer.Address" class="form-control" rows="2"></textarea>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.Segment" class="form-label"></label>
-                        <input asp-for="Customer.Segment" class="form-control" />
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Customer.Notes" class="form-label"></label>
-                    <textarea asp-for="Customer.Notes" class="form-control" rows="3"></textarea>
-                </div>
-            </fieldset>
+@section Styles {
+    <link rel="stylesheet" href="~/css/customers/form.css" asp-append-version="true" />
+}
 
-            <fieldset class="mb-4">
-                <legend class="h5">İlk İletişim</legend>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.PrimaryContactName" class="form-label"></label>
-                        <input asp-for="Customer.PrimaryContactName" class="form-control" />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.PrimaryContactPosition" class="form-label"></label>
-                        <input asp-for="Customer.PrimaryContactPosition" class="form-control" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.PrimaryContactEmail" class="form-label"></label>
-                        <input asp-for="Customer.PrimaryContactEmail" class="form-control" />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Customer.PrimaryContactPhone" class="form-label"></label>
-                        <input asp-for="Customer.PrimaryContactPhone" class="form-control" />
-                    </div>
-                </div>
-            </fieldset>
-
-            <div class="d-flex justify-content-between">
-                <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
-                <button type="submit" class="btn btn-brand">Kaydet</button>
-            </div>
-        </form>
+<section class="page-header form-header">
+    <div>
+        <h1>@Localizer["Customers_Form_Header_Edit"]</h1>
+        <p class="subtitle">@Localizer["Customers_Form_Edit_Subtitle"]</p>
     </div>
-</div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Customers_Action_Back"]</a>
+    </div>
+</section>
 
-<partial name="_ValidationScriptsPartial" />
+<form method="post" class="form-shell" novalidate>
+    <input type="hidden" asp-for="Customer.Id" />
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+    <div class="form-sections">
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Customers_Form_General_Title"]</h2>
+                <p>@Localizer["Customers_Form_General_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Customer.Name">@Localizer["Customers_Field_Name"]</label>
+                    <input asp-for="Customer.Name" class="input-control" />
+                    <span asp-validation-for="Customer.Name" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.LegalName">@Localizer["Customers_Field_LegalName"]</label>
+                    <input asp-for="Customer.LegalName" class="input-control" />
+                    <span asp-validation-for="Customer.LegalName" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.TaxNumber">@Localizer["Customers_Field_TaxNumber"]</label>
+                    <input asp-for="Customer.TaxNumber" class="input-control" />
+                    <span asp-validation-for="Customer.TaxNumber" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.Segment">@Localizer["Customers_Table_Segment"]</label>
+                    <input asp-for="Customer.Segment" class="input-control" />
+                    <span asp-validation-for="Customer.Segment" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.Address">@Localizer["Customers_Field_Address"]</label>
+                    <textarea asp-for="Customer.Address" class="input-control textarea" rows="2"></textarea>
+                    <span asp-validation-for="Customer.Address" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Customers_Form_Contact_Title"]</h2>
+                <p>@Localizer["Customers_Form_Contact_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Customer.Email">@Localizer["Customers_Field_Email"]</label>
+                    <input asp-for="Customer.Email" class="input-control" />
+                    <span asp-validation-for="Customer.Email" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.Phone">@Localizer["Customers_Field_Phone"]</label>
+                    <input asp-for="Customer.Phone" class="input-control" />
+                    <span asp-validation-for="Customer.Phone" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Customers_Form_PrimaryContact_Title"]</h2>
+                <p>@Localizer["Customers_Form_PrimaryContact_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Customer.PrimaryContactName">@Localizer["Customers_Field_PrimaryContactName"]</label>
+                    <input asp-for="Customer.PrimaryContactName" class="input-control" />
+                    <span asp-validation-for="Customer.PrimaryContactName" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.PrimaryContactPosition">@Localizer["Customers_Field_PrimaryContactPosition"]</label>
+                    <input asp-for="Customer.PrimaryContactPosition" class="input-control" />
+                    <span asp-validation-for="Customer.PrimaryContactPosition" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.PrimaryContactEmail">@Localizer["Customers_Field_PrimaryContactEmail"]</label>
+                    <input asp-for="Customer.PrimaryContactEmail" class="input-control" />
+                    <span asp-validation-for="Customer.PrimaryContactEmail" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Customer.PrimaryContactPhone">@Localizer["Customers_Field_PrimaryContactPhone"]</label>
+                    <input asp-for="Customer.PrimaryContactPhone" class="input-control" />
+                    <span asp-validation-for="Customer.PrimaryContactPhone" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Customers_Form_Notes_Title"]</h2>
+                <p>@Localizer["Customers_Form_Notes_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field full">
+                    <label asp-for="Customer.Notes">@Localizer["Customers_Field_Notes"]</label>
+                    <textarea asp-for="Customer.Notes" class="input-control textarea" rows="3"></textarea>
+                    <span asp-validation-for="Customer.Notes" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="form-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Customers_Form_Cancel"]</a>
+        <button type="submit" class="btn btn-primary">@Localizer["Customers_Form_Submit"]</button>
+    </footer>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
 

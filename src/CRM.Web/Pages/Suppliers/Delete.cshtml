@@ -1,19 +1,43 @@
 @page "{id:guid}"
 @model CRM.Web.Pages.Suppliers.DeleteModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = "Tedarikçi Sil";
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Suppliers_Delete_Title"];
+    var supplierName = string.IsNullOrWhiteSpace(Model.SupplierName)
+        ? Localizer["Suppliers_Field_Name"].Value
+        : Model.SupplierName;
 }
 
-<div class="dashboard-section border-0 shadow-sm col-lg-5">
-    <h2 class="mb-3 text-danger">@ViewData["Title"]</h2>
-    <p><strong>@Model.SupplierName</strong> kaydını silmek üzeresiniz. Devam etmek istediğinize emin misiniz?</p>
-    <form method="post">
+@section Styles {
+    <link rel="stylesheet" href="~/css/suppliers/delete.css" asp-append-version="true" />
+}
+
+<section class="page-header delete-header">
+    <div>
+        <h1>@Localizer["Suppliers_Delete_Title"]</h1>
+        <p class="subtitle">@Localizer["Suppliers_Delete_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Suppliers_Action_Back"]</a>
+    </div>
+</section>
+
+<section class="delete-card">
+    <div class="delete-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v5" />
+            <path d="M12 16h.01" />
+        </svg>
+    </div>
+    <p class="delete-message">@string.Format(Localizer["Suppliers_Delete_Message"].Value, supplierName)</p>
+    <form method="post" class="delete-actions">
         <input type="hidden" asp-for="SupplierId" />
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
-            <button type="submit" class="btn btn-danger">Sil</button>
-        </div>
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Suppliers_Form_Cancel"]</a>
+        <button type="submit" class="btn btn-danger">@Localizer["Suppliers_Action_Delete"]</button>
     </form>
-</div>
+</section>
 

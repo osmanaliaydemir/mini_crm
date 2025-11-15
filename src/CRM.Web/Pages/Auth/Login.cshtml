@@ -5,45 +5,122 @@
 @inject IStringLocalizer<SharedResource> Localizer
 
 @{
+    Layout = null;
     ViewData["Title"] = Localizer["Navigation_Login"];
 }
 
-<section class="row justify-content-center">
-    <div class="col-lg-5 col-md-8">
-        <div class="dashboard-section border-0 shadow-sm">
-            <div class="text-center">
-                <img src="~/images/gms_logo.png" class="login-logo" asp-append-version="true" alt="GMS Logo" />
-            </div>
-            <h2 class="mb-1">@Localizer["Navigation_Login"]</h2>
-            <p class="text-secondary mb-4">@Localizer["Login_Subtitle","Kereste operasyon paneli"]</p>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Localizer["Navigation_Login"] · @Localizer["AppTitle"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('dashboardTheme');
+                if (savedTheme === 'light' || savedTheme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                }
+            } catch (err) {
+                // ignore storage errors
+            }
+        })();
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/login/login.css" asp-append-version="true" />
+</head>
+<body class="login-minimal">
+    <div class="brand-ribbon brand-ribbon--one" data-depth="0.28" data-range="70" style="--ribbon-rotation:12deg"></div>
+    <div class="brand-ribbon brand-ribbon--two" data-depth="0.22" data-range="70" style="--ribbon-rotation:-16deg"></div>
+    <div class="brand-glow brand-glow--one" data-depth="0.16" data-range="45"></div>
+    <div class="brand-glow brand-glow--two" data-depth="0.12" data-range="45"></div>
+    <div class="brand-orbit" data-depth="0.18" data-range="50"></div>
+    <div class="brand-particles" data-depth="0.08" data-range="35"></div>
+    <div class="brand-spark brand-spark--one" data-depth="0.32" data-range="30"></div>
+    <div class="brand-spark brand-spark--two" data-depth="0.28" data-range="30"></div>
+    <div class="brand-spark brand-spark--three" data-depth="0.26" data-range="30"></div>
 
-            <form method="post" class="needs-validation" novalidate>
+    <div class="minimal-shell">
+        <div class="minimal-card">
+            <button type="button" class="theme-toggle" data-theme-toggle aria-label="Tema değiştir">
+                <span class="sun">☀️</span>
+                <span class="moon">🌙</span>
+            </button>
+            <div class="minimal-logo">
+                <img src="~/images/gms_logo.png" asp-append-version="true" alt="GMS Logo" />
+            </div>
+
+            <div class="minimal-heading">
+                <h2>GMS Portal'a Hoş Geldin</h2>
+                <p>@Localizer["Login_Subtitle", "Kereste operasyon paneli"]</p>
+            </div>
+
+            <form id="minimal-login-form" method="post" novalidate>
+                @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="ReturnUrl" />
+
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-                <div class="mb-3">
-                    <label class="form-label" for="Input_UserNameOrEmail">@Localizer["Login_UserName"]</label>
-                    <input asp-for="Input.UserNameOrEmail" class="form-control form-control-lg" autocomplete="username" />
-                    <span asp-validation-for="Input.UserNameOrEmail" class="text-danger small"></span>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="Input_Password">@Localizer["Login_Password"]</label>
-                    <input asp-for="Input.Password" class="form-control form-control-lg" type="password" autocomplete="current-password" />
-                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="form-check">
-                        <input class="form-check-input" asp-for="Input.RememberMe" />
-                        <label class="form-check-label" for="Input_RememberMe">@Localizer["Login_RememberMe"]</label>
+
+                <div class="form-field">
+                    <label for="email" class="form-label">@Localizer["Login_UserName"]</label>
+                    <div class="form-control" data-field="email">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 8l9 6 9-6" />
+                            <path d="M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
+                        </svg>
+                        <input asp-for="Input.UserNameOrEmail" id="email" class="form-input" autocomplete="username" placeholder="sen@firma.com" />
                     </div>
-                    <a class="small text-decoration-none" asp-page="/Auth/ForgotPassword">@Localizer["Login_ForgotPassword"]</a>
+                    <div class="error-message" data-error="email">
+                        <span class="error-dot"></span>
+                        <span>E-posta adresini gir.</span>
+                        <span class="d-none" asp-validation-for="Input.UserNameOrEmail"></span>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-lg btn-brand w-100">@Localizer["Navigation_Login"]</button>
+
+                <div class="form-field">
+                    <label for="password" class="form-label">@Localizer["Login_Password"]</label>
+                    <div class="form-control" data-field="password">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11z" />
+                            <path d="M18 21v-2a6 6 0 1 0-12 0v2" />
+                        </svg>
+                        <input asp-for="Input.Password" id="password" class="form-input" type="password" autocomplete="current-password" placeholder="••••••••" />
+                        <button type="button" class="toggle-visibility" data-toggle="password">Göster</button>
+                    </div>
+                    <div class="error-message" data-error="password">
+                        <span class="error-dot"></span>
+                        <span>Parola boş bırakılamaz.</span>
+                        <span class="d-none" asp-validation-for="Input.Password"></span>
+                    </div>
+                </div>
+
+                <div class="form-foot">
+                    <label class="form-check-label">
+                        <input class="form-check-input" asp-for="Input.RememberMe" />
+                        @Localizer["Login_RememberMe"]
+                    </label>
+                    <a href="@Url.Page("/Auth/ForgotPassword")">@Localizer["Login_ForgotPassword"]</a>
+                </div>
+
+                <button type="submit" class="primary-button">
+                    @Localizer["Navigation_Login"]
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <path d="M17 8l4 4-4 4" />
+                        <path d="M3 12h18" />
+                    </svg>
+                </button>
             </form>
+
+            <p class="minimal-note">GMS Portal için güvenli giriş.</p>
         </div>
     </div>
-</section>
 
-@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <partial name="_ValidationScriptsPartial" />
-}
+    <script src="~/js/login/login.js" asp-append-version="true" defer></script>
+</body>
+</html>
 

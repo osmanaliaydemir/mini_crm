@@ -1,0 +1,516 @@
+.cashbox-header {
+    margin-bottom: 24px;
+}
+
+.cashbox-filter {
+    margin-bottom: 26px;
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.24), rgba(14, 116, 144, 0.18));
+    border: 1px solid rgba(45, 106, 79, 0.28);
+    border-radius: 22px;
+    padding: 18px 22px;
+    backdrop-filter: blur(18px);
+}
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    align-items: flex-end;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
+}
+
+.filter-field label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(226, 232, 240, 0.75);
+}
+
+.filter-field input,
+.filter-field select {
+    border-radius: 14px;
+    border: 1px solid rgba(45, 106, 79, 0.45);
+    background: rgba(15, 23, 42, 0.6);
+    padding: 10px 14px;
+    color: rgba(226, 232, 240, 0.95);
+    font-size: 0.9rem;
+}
+
+.filter-field input:focus,
+.filter-field select:focus {
+    border-color: rgba(45, 212, 191, 0.65);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.cashbox-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.cashbox-kpis .kpi-card {
+    position: relative;
+    border-radius: 22px;
+    padding: 22px 24px;
+    background: linear-gradient(135deg, rgba(4, 120, 87, 0.86), rgba(15, 118, 110, 0.72));
+    border: 1px solid rgba(16, 185, 129, 0.32);
+    box-shadow: 0 22px 32px rgba(2, 44, 34, 0.26);
+    overflow: hidden;
+}
+
+.cashbox-kpis .kpi-card::before,
+.cashbox-kpis .kpi-card::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.cashbox-kpis .kpi-card::before {
+    inset: -40% auto auto -25%;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 65%);
+}
+
+.cashbox-kpis .kpi-card::after {
+    inset: auto -28% -38% auto;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.26), transparent 70%);
+}
+
+.cashbox-kpis .kpi-card.accent {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.78), rgba(14, 165, 233, 0.68));
+    border-color: rgba(59, 130, 246, 0.32);
+    box-shadow: 0 22px 32px rgba(37, 99, 235, 0.18);
+}
+
+.cashbox-kpis .kpi-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.cashbox-kpis .kpi-value.negative {
+    color: rgba(253, 164, 175, 0.92);
+}
+
+.cashbox-insights {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.analytics-card,
+.category-card,
+.table-card {
+    border-radius: 24px;
+    border: 1px solid rgba(45, 64, 89, 0.32);
+    background: rgba(15, 23, 42, 0.82);
+    box-shadow: 0 24px 40px rgba(8, 16, 32, 0.28);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-card::after,
+.category-card::after,
+.table-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -28% -38% auto;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37, 211, 102, 0.2), transparent 70%);
+    opacity: 0.6;
+}
+
+.analytics-card > *,
+.category-card > *,
+.table-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.card-header {
+    display: flex;
+    gap: 6px;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.08rem;
+}
+
+.card-header p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: rgba(148, 163, 184, 0.78);
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 320px;
+}
+
+.chart-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(148, 163, 184, 0.72);
+    font-size: 0.9rem;
+    height: 100%;
+}
+
+.category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.category-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.22);
+}
+
+.category-list li:last-child {
+    border-bottom: none;
+}
+
+.category-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.category-meta .rank {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: rgba(16, 185, 129, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: rgba(16, 185, 129, 0.95);
+}
+
+.category-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    gap: 12px;
+    color: rgba(226, 232, 240, 0.9);
+}
+
+.category-info .balance {
+    font-weight: 600;
+}
+
+.category-info .balance.positive {
+    color: rgba(45, 212, 191, 0.92);
+}
+
+.category-info .balance.negative {
+    color: rgba(248, 113, 113, 0.88);
+}
+
+.category-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: rgba(148, 163, 184, 0.75);
+}
+
+.category-stats .income strong {
+    color: rgba(45, 212, 191, 0.92);
+}
+
+.category-stats .expense strong {
+    color: rgba(248, 113, 113, 0.88);
+}
+
+.category-list li.empty {
+    border-bottom: none;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+.cashbox-table-section .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(71, 85, 105, 0.32);
+    background: rgba(15, 23, 42, 0.75);
+    color: rgba(226, 232, 240, 0.86);
+}
+
+.search-control input[type='search'] {
+    border: none;
+    background: transparent;
+    color: rgba(226, 232, 240, 0.92);
+    font-size: 0.86rem;
+    outline: none;
+    min-width: 200px;
+}
+
+.table-wrapper {
+    overflow: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead th {
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    padding: 14px 16px;
+    color: rgba(148, 163, 184, 0.72);
+}
+
+.data-table tbody td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.22);
+    color: rgba(226, 232, 240, 0.9);
+}
+
+.cell-strong {
+    font-weight: 600;
+    color: rgba(248, 250, 252, 0.95);
+}
+
+.cell-subtext {
+    font-size: 0.78rem;
+    color: rgba(148, 163, 184, 0.75);
+    margin-top: 4px;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.status-chip--positive {
+    background: rgba(16, 185, 129, 0.18);
+    color: rgba(16, 185, 129, 0.92);
+}
+
+.status-chip--negative {
+    background: rgba(248, 113, 113, 0.18);
+    color: rgba(248, 113, 113, 0.9);
+}
+
+.empty-state {
+    padding: 28px;
+    text-align: center;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+#cashboxTable_wrapper .dt-layout-row:not(.dt-layout-table) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+#cashboxTable_wrapper .dt-info {
+    text-align: left;
+    font-size: 0.78rem;
+    color: rgba(148, 163, 184, 0.78);
+}
+
+#cashboxTable_wrapper .dt-paging {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+#cashboxTable_wrapper .dt-paging-button {
+    border-radius: 12px;
+    padding: 6px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(16, 24, 40, 0.65);
+    color: rgba(148, 163, 184, 0.82) !important;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+#cashboxTable_wrapper .dt-paging-button.current,
+#cashboxTable_wrapper .dt-paging-button:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(14, 165, 233, 0.18));
+    border-color: rgba(45, 212, 191, 0.45);
+    color: rgba(226, 232, 240, 0.95) !important;
+}
+
+#cashboxTable_wrapper .dt-paging-button.disabled,
+#cashboxTable_wrapper .dt-paging-button.disabled:hover {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(16, 24, 40, 0.4);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: rgba(148, 163, 184, 0.5) !important;
+}
+
+:root[data-theme='light'] .cashbox-filter {
+    background: rgba(240, 253, 250, 0.85);
+    border-color: rgba(134, 239, 172, 0.4);
+}
+
+:root[data-theme='light'] .filter-field label {
+    color: rgba(45, 64, 89, 0.68);
+}
+
+:root[data-theme='light'] .filter-field input,
+:root[data-theme='light'] .filter-field select {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(203, 213, 225, 0.6);
+    color: rgba(30, 41, 59, 0.9);
+}
+
+:root[data-theme='light'] .cashbox-kpis .kpi-card {
+    background: linear-gradient(135deg, rgba(187, 247, 208, 0.92), rgba(167, 243, 208, 0.74));
+    border-color: rgba(45, 212, 191, 0.32);
+    box-shadow: 0 18px 28px rgba(45, 212, 191, 0.22);
+}
+
+:root[data-theme='light'] .cashbox-kpis .kpi-card.accent {
+    background: linear-gradient(135deg, rgba(191, 219, 254, 0.96), rgba(165, 243, 252, 0.86));
+}
+
+:root[data-theme='light'] .analytics-card,
+:root[data-theme='light'] .category-card,
+:root[data-theme='light'] .table-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(203, 213, 225, 0.52);
+    box-shadow: 0 20px 32px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .category-meta .rank {
+    background: rgba(16, 185, 129, 0.15);
+    color: rgba(16, 185, 129, 0.92);
+}
+
+:root[data-theme='light'] .category-stats {
+    color: rgba(71, 85, 105, 0.75);
+}
+
+:root[data-theme='light'] .search-control {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(203, 213, 225, 0.6);
+    color: rgba(71, 85, 105, 0.85);
+}
+
+:root[data-theme='light'] .search-control input[type='search'] {
+    color: rgba(30, 41, 59, 0.92);
+}
+
+:root[data-theme='light'] .data-table tbody td {
+    border-color: rgba(226, 232, 240, 0.7);
+    color: rgba(30, 41, 59, 0.9);
+}
+
+:root[data-theme='light'] #cashboxTable_wrapper .dt-paging-button {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(203, 213, 225, 0.65);
+    color: rgba(71, 85, 105, 0.8) !important;
+}
+
+:root[data-theme='light'] #cashboxTable_wrapper .dt-paging-button.current,
+:root[data-theme='light'] #cashboxTable_wrapper .dt-paging-button:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(14, 165, 233, 0.12));
+    border-color: rgba(45, 212, 191, 0.45);
+    color: rgba(30, 41, 59, 0.95) !important;
+}
+
+:root[data-theme='light'] .empty-state {
+    color: rgba(100, 116, 139, 0.7);
+}
+
+@media (max-width: 1024px) {
+    .cashbox-insights {
+        grid-template-columns: 1fr;
+    }
+
+    .cashbox-table-section .card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 680px) {
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-field {
+        width: 100%;
+    }
+
+    .filter-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .table-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .search-control input[type='search'] {
+        min-width: 0;
+        width: 160px;
+    }
+}
+

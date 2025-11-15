@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Operasyon Analitiği · GMS Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('dashboardTheme');
+                if (savedTheme === 'light' || savedTheme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                }
+            } catch (err) {
+                // storage unavailable, keep default
+            }
+        })();
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./dashboard.css" />
+</head>
+<body class="dashboard-body">
+    <div class="layout-grid">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="nav-trigger" data-sidebar-toggle aria-label="Menüyü aç/kapat">
+                    <span></span><span></span><span></span>
+                </button>
+                <span class="topbar-logo">GMS</span>
+                <span class="topbar-title">Operasyon Yönetimi</span>
+            </div>
+            <div class="topbar-right">
+                <button class="theme-toggle" data-theme-toggle aria-label="Tema değiştir">
+                    <span class="sun">☀️</span>
+                    <span class="moon">🌙</span>
+                </button>
+                <div class="quick-actions">
+                    <button class="btn btn-ghost">Bildirimler</button>
+                    <button class="btn btn-ghost">Analizler</button>
+                    <div class="language-dropdown" data-lang-dropdown>
+                        <button class="lang-trigger" type="button" aria-haspopup="true" aria-expanded="false" data-selected-lang>TR</button>
+                        <div class="lang-panel" role="menu">
+                            <button type="button" data-lang-option="tr">Türkçe</button>
+                            <button type="button" data-lang-option="en">English</button>
+                            <button type="button" data-lang-option="ar">العربية</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="status-bar" data-status-bar></div>
+                <div class="user-dropdown" data-user-menu>
+                    <button class="user-trigger" aria-haspopup="true" aria-expanded="false">
+                        <span class="avatar">BA</span>
+                        <div class="user-meta">
+                            <strong>Berkay Arslan</strong>
+                            <small>Operasyon Müdürü</small>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="dropdown-panel" role="menu">
+                        <a href="#" role="menuitem">Profil & Ayarlar</a>
+                        <a href="#" role="menuitem">Bildirim Tercihleri</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="danger" href="#" role="menuitem">Çıkış Yap</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <aside class="sidebar" data-sidebar>
+            <div class="sidebar-header">
+                <div class="brand-avatar">G</div>
+                <div class="brand-info">
+                    <strong>Global Timber</strong>
+                    <span>Operasyon Suite</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">İşlemler</span>
+                    <a class="nav-item active" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"/></svg>
+                        </span>
+                        <span>Özet</span>
+                        <span class="nav-badge">Canlı</span>
+                        <span class="nav-active-indicator"></span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/></svg>
+                        </span>
+                        <span>Sevkiyatlar</span>
+                        <span class="nav-badge subtle">12</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5a2 2 0 012-2h5l2 2h5a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg>
+                        </span>
+                        <span>Tedarikçiler</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V7a2 2 0 00-1-1.73l-6-3.46a2 2 0 00-2 0l-6 3.46A2 2 0 004 7v6m16 0v4a2 2 0 01-1 1.73l-6 3.46a2 2 0 01-2 0l-6-3.46A2 2 0 014 17v-4m16 0H4"/></svg>
+                        </span>
+                        <span>Depolar</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Finans & CRM</span>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 1.373-3 3.066C9 13.76 12 16 12 16s3-2.24 3-4.934C15 9.373 13.657 8 12 8z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7V5m0 14v-2M7 12H5m14 0h-2"/></svg>
+                        </span>
+                        <span>Mali Durum</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m-4 4h10M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2z"/></svg>
+                        </span>
+                        <span>CRM Kayıtları</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3h.02A9 9 0 0121 12.79z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l-4 4m0-4l4 4"/></svg>
+                        </span>
+                        <span>Alacak Yönetimi</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Analitik</span>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 13l3 3 4-6 5 5"/></svg>
+                        </span>
+                        <span>Operasyon Analitiği</span>
+                        <span class="nav-badge info">4</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 12l9-5-9-5-9 5 9 5z"/></svg>
+                        </span>
+                        <span>Rapor Şablonları</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <span class="small-label">Aktif Kullanıcı</span>
+                <div class="user-card">
+                    <div class="avatar">BA</div>
+                    <div>
+                        <strong>Berkay Arslan</strong>
+                        <span>Operasyon Müdürü</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content">
+            <header class="page-header">
+                <div>
+                    <h1>GMS Portal'a Hoş Geldin</h1>
+                    <p class="subtitle">Sevkiyat, finans ve müşteri operasyonlarını tek panelden yönet.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-ghost">Haftalık Rapor</button>
+                    <button class="btn btn-primary">Yeni Sevkiyat</button>
+                </div>
+            </header>
+
+            <section class="filter-bar">
+                <div class="filter-group" data-filter-group="range" role="group" aria-label="Tarih aralığı">
+                    <button class="filter-chip" data-filter-value="7d" aria-pressed="false">7 Gün</button>
+                    <button class="filter-chip active" data-filter-value="30d" aria-pressed="true">30 Gün</button>
+                    <button class="filter-chip" data-filter-value="90d" aria-pressed="false">90 Gün</button>
+                </div>
+                <div class="filter-group" data-filter-group="depot" role="group" aria-label="Depo">
+                    <button class="filter-chip active" data-filter-value="all" aria-pressed="true">Tüm Depolar</button>
+                    <button class="filter-chip" data-filter-value="istanbul" aria-pressed="false">İstanbul</button>
+                    <button class="filter-chip" data-filter-value="izmir" aria-pressed="false">İzmir</button>
+                </div>
+                <div class="filter-group" data-filter-group="supplier" role="group" aria-label="Tedarikçi">
+                    <button class="filter-chip active" data-filter-value="all" aria-pressed="true">Tümü</button>
+                    <button class="filter-chip" data-filter-value="eu" aria-pressed="false">Avrupa</button>
+                    <button class="filter-chip" data-filter-value="asia" aria-pressed="false">Asya</button>
+                </div>
+            </section>
+
+            <section class="kpi-grid">
+                <article class="kpi-card" data-kpi="activeShipments">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Aktif Sevkiyat</span>
+                        <span class="trend-chip positive" data-kpi-trend>
+                            <span data-kpi-trend-value>+12%</span>
+                        </span>
+                    </div>
+                    <div class="kpi-value" data-kpi-value>132</div>
+                    <span class="kpi-meta" data-kpi-meta>Son 30 gün</span>
+                </article>
+                <article class="kpi-card" data-kpi="customsShipments">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Gümrükte Bekleyen</span>
+                        <span class="trend-chip warning" data-kpi-trend>
+                            <span data-kpi-trend-value>5 risk</span>
+                        </span>
+                    </div>
+                    <div class="kpi-value" data-kpi-value>17</div>
+                    <span class="kpi-meta" data-kpi-meta>Takip edilen dosya</span>
+                </article>
+                <article class="kpi-card" data-kpi="cashNet">
+                    <div class="kpi-top">
+                        <span class="kpi-label">30 Günlük Net Nakit</span>
+                        <span class="trend-chip positive" data-kpi-trend>
+                            <span data-kpi-trend-value>%8</span>
+                        </span>
+                    </div>
+                    <div class="kpi-value" data-kpi-value>₺2.45M</div>
+                    <span class="kpi-meta" data-kpi-meta>Son 30 gün net</span>
+                </article>
+                <article class="kpi-card" data-kpi="satisfaction">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Memnuniyet Skoru</span>
+                        <span class="trend-chip neutral" data-kpi-trend>
+                            <span data-kpi-trend-value>Sabitledi</span>
+                        </span>
+                    </div>
+                    <div class="kpi-value" data-kpi-value>4.6 / 5</div>
+                    <span class="kpi-meta" data-kpi-meta>Son anket</span>
+                </article>
+            </section>
+
+            <section class="insight-grid">
+                <article class="card chart-card">
+                    <header class="card-header">
+                        <div>
+                            <h2>Sevkiyat Durumları</h2>
+                            <p>Güncel operasyon görünümü</p>
+                        </div>
+                        <select id="shipmentStatusRange" aria-label="Sevkiyat aralığı">
+                            <option value="7d">Son 7 gün</option>
+                            <option value="30d" selected>Son 30 gün</option>
+                            <option value="90d">Son 90 gün</option>
+                        </select>
+                    </header>
+                    <canvas id="shipmentStatusChart" role="img" aria-describedby="shipmentStatusDesc"></canvas>
+                    <p id="shipmentStatusDesc" class="sr-only">Sevkiyatların durum dağılımı: Depoda 32, Gümrükte 17, Yolda 54, Bayiye teslim 29.</p>
+                </article>
+
+                <article class="card chart-card">
+                    <header class="card-header">
+                        <div>
+                            <h2>Tedarikçi Ülke Dağılımı</h2>
+                            <p>Aktif sipariş verilen ülkeler</p>
+                        </div>
+                    </header>
+                    <canvas id="supplierCountryChart" role="img" aria-describedby="supplierDesc"></canvas>
+                    <p id="supplierDesc" class="sr-only">Aktif tedarikçi ülke dağılımı.</p>
+                </article>
+
+                <article class="card chart-card wide">
+                    <header class="card-header">
+                        <div>
+                            <h2>Gelir / Gider Trendi</h2>
+                            <p>Finansal akış (₺)</p>
+                        </div>
+                        <div class="legend">
+                            <span class="legend-pill income">Gelir</span>
+                            <span class="legend-pill expense">Gider</span>
+                        </div>
+                    </header>
+                    <canvas id="cashFlowChart" role="img" aria-describedby="cashFlowDesc"></canvas>
+                    <p id="cashFlowDesc" class="sr-only">Son dönem gelir ve gider karşılaştırması.</p>
+                </article>
+
+                <article class="card table-card">
+                    <header class="card-header">
+                        <div>
+                            <h2>Riskli Sevkiyatlar</h2>
+                            <p>Gecikme veya kritik durumdaki operasyonlar</p>
+                        </div>
+                        <button class="btn btn-ghost">Tümü</button>
+                    </header>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Sevkiyat</th>
+                                    <th>Müşteri</th>
+                                    <th>Durum</th>
+                                    <th>Tahmini Varış</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riskShipmentTable"></tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="card todo-card">
+                    <header class="card-header">
+                        <div>
+                            <h2>Operasyon Görevleri</h2>
+                            <p>Bugün tamamlanması gereken işler</p>
+                        </div>
+                        <button class="btn btn-ghost">Yeni Görev</button>
+                    </header>
+                    <ul id="taskList" class="task-list"></ul>
+                </article>
+
+                <article class="card feed-card">
+                    <header class="card-header">
+                        <div>
+                            <h2>Operasyon Akışı</h2>
+                            <p>Son aksiyon ve kayıtlar</p>
+                        </div>
+                        <button class="btn btn-ghost">Tümünü Gör</button>
+                    </header>
+                    <ul id="activityFeed" class="activity-feed"></ul>
+                </article>
+
+            </section>
+        </main>
+        <button class="fab" aria-label="Yeni Sevkiyat oluştur">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+            </svg>
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="./dashboard.js"></script>
+</body>
+</html>
+

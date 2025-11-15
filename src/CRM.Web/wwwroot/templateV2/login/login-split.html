@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CRM Login • Split View</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles-login.css" />
+</head>
+<body class="login-split">
+    <section class="split-visual">
+        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80" alt="Operations">
+        <div class="split-overlay">
+            <div class="overlay-top">
+                <div class="overlay-pill">
+                    <span class="overlay-dot"></span>
+                    CRM Insights
+                </div>
+                <h1 style="font-size:2.6rem;font-weight:600;line-height:1.25;">Gelişmiş raporlama, uçtan uca sevkiyat takibi ve müşteri deneyimi bir arada.</h1>
+                <p style="max-width:360px;font-size:0.95rem;opacity:0.85;">
+                    Her rol için optimize edilmiş paneller, gerçek zamanlı veri akışı ve güvenli erişim.
+                </p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:26px;">
+                <blockquote class="overlay-quote">
+                    “Yeni CRM Suite, saha ekiplerimizin karar alma hızını %45 artırdı. En kritik müşterilerimiz için proaktif aksiyon alabiliyoruz.”
+                    <footer>
+                        <img src="https://i.pravatar.cc/100?img=48" alt="Profil" style="width:42px;height:42px;border-radius:50%;border:2px solid rgba(248,250,252,0.4);">
+                        <div>
+                            <strong>Selin Uysal</strong><br />
+                            <span style="opacity:0.7;">Operasyon Müdürü</span>
+                        </div>
+                    </footer>
+                </blockquote>
+                <div class="overlay-chips">
+                    <span class="overlay-chip">120K+ sevkiyat / yıl</span>
+                    <span class="overlay-chip">%99.2 SLA</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="split-form-wrapper">
+        <div class="split-card">
+            <header>
+                <div class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 6v12m6-6H6" />
+                    </svg>
+                </div>
+                <h2>Kişisel paneline giriş yap</h2>
+                <p class="muted">Yetkin doğrulama ile CRM deneyimini başlat.</p>
+            </header>
+
+            <form>
+                <div class="form-field">
+                    <label for="split-email" class="form-label" style="color:#1e293b;">Kullanıcı adı veya e-posta</label>
+                    <input id="split-email" type="email" class="form-input" style="border-radius:18px;border:1px solid rgba(148,163,184,0.35);background:#fff;color:#1f2937;padding:12px 16px;" placeholder="ad.soyad@firma.com" />
+                </div>
+
+                <div class="form-field">
+                    <label for="split-password" class="form-label" style="color:#1e293b;">Parola</label>
+                    <div style="display:flex;gap:10px;">
+                        <input id="split-password" type="password" class="form-input" style="flex:1;border-radius:18px;border:1px solid rgba(148,163,184,0.35);background:#fff;color:#1f2937;padding:12px 16px;" placeholder="••••••••" />
+                        <button type="button" class="flat-button" style="padding:12px 16px;">Göster</button>
+                    </div>
+                </div>
+
+                <div class="form-foot" style="color:#64748b;">
+                    <label>
+                        <input type="checkbox" style="margin-right:6px;" />
+                        Oturum açık kalsın
+                    </label>
+                    <a class="link-accent" href="#" style="color:#0f172a;">Yardım al</a>
+                </div>
+
+                <button type="submit" class="primary-button" style="background:linear-gradient(135deg,#111827,#1f2937);">
+                    Giriş yap
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <path d="M4 6h16M4 12h16M4 18h7" />
+                    </svg>
+                </button>
+            </form>
+
+            <div class="form-divider">veya hızlı erişimle</div>
+            <div class="provider-grid">
+                <button type="button" class="provider-button">
+                    <img src="https://www.vectorlogo.zone/logos/microsoft/microsoft-icon.svg" alt="Microsoft">
+                    Microsoft
+                </button>
+                <button type="button" class="provider-button">
+                    <img src="https://www.vectorlogo.zone/logos/google/google-icon.svg" alt="Google">
+                    Google
+                </button>
+            </div>
+
+            <p class="fineprint">
+                Bu sistem güvenlik amaçlı izlenmektedir. Yetkisiz erişimler yasal süreç başlatabilir.
+            </p>
+        </div>
+    </main>
+</body>
+</html>
+
+

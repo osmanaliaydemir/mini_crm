@@ -1,0 +1,388 @@
+@using System.Globalization
+@using System.Security.Claims
+@using System.Linq
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.Extensions.Localization
+@using CRM.Domain.Finance
+@using CRM.Infrastructure.Identity
+@using CRM.Infrastructure.Persistence
+@using CRM.Web
+@inject IStringLocalizer<SharedResource> Localizer
+@inject SignInManager<ApplicationUser> SignInManager
+@inject CRMDbContext DbContext
+
+@{
+    var isAuthenticated = SignInManager.IsSignedIn(User);
+    var rawUserName = User.Identity?.Name;
+    var userDisplayName = isAuthenticated
+        ? (!string.IsNullOrWhiteSpace(rawUserName) ? rawUserName : "Kullanıcı")
+        : null;
+    var userInitial = isAuthenticated
+        ? (string.IsNullOrWhiteSpace(userDisplayName) ? "?" : userDisplayName.Trim()[0].ToString().ToUpperInvariant())
+        : null;
+    var roleSummary = isAuthenticated
+        ? string.Join(", ", User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value))
+        : string.Empty;
+
+    var currentCulture = CultureInfo.CurrentUICulture;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var encodedReturnUrl = Uri.EscapeDataString(returnUrl);
+
+    string CultureShortName(string cultureName) => cultureName switch
+    {
+        "tr-TR" => "TR",
+        "en-US" => "EN",
+        "ar-SA" => "AR",
+        _ => "TR"
+    };
+
+    var layoutLang = CultureShortName(currentCulture.Name);
+    var layoutDir = currentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+    var hideStatusBar = string.Equals(currentPage, "/Index", StringComparison.OrdinalIgnoreCase);
+
+    bool IsActive(string page) =>
+        string.Equals(currentPage, page, StringComparison.OrdinalIgnoreCase);
+
+    bool IsInSection(string sectionPrefix) =>
+        currentPage.StartsWith(sectionPrefix, StringComparison.OrdinalIgnoreCase);
+
+    var shipmentsTotalCount = DbContext?.Shipments.Count() ?? 0;
+
+    decimal cashIncomeTotal = 0m;
+    decimal cashExpenseTotal = 0m;
+    decimal cashNetBalance = 0m;
+    DateTime? cashLastTransaction = null;
+
+    if (DbContext is not null)
+    {
+        cashIncomeTotal = DbContext.CashTransactions
+            .Where(t => t.TransactionType == CashTransactionType.Income)
+            .Sum(t => (decimal?)t.Amount) ?? 0m;
+
+        cashExpenseTotal = DbContext.CashTransactions
+            .Where(t => t.TransactionType == CashTransactionType.Expense)
+            .Sum(t => (decimal?)t.Amount) ?? 0m;
+
+        cashNetBalance = cashIncomeTotal - cashExpenseTotal;
+
+        cashLastTransaction = DbContext.CashTransactions
+            .OrderByDescending(t => t.TransactionDate)
+            .Select(t => (DateTime?)t.TransactionDate)
+            .FirstOrDefault();
+    }
+
+    string FormatCurrency(decimal value) => value.ToString("C2", currentCulture);
+    var cashLastTransactionDisplay = cashLastTransaction?.ToLocalTime().ToString("dd MMM HH:mm", currentCulture);
+    var cashNetPositive = cashNetBalance >= 0;
+}
+
+<!DOCTYPE html>
+<html lang="@currentCulture.TwoLetterISOLanguageName" dir="@layoutDir" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - @Localizer["AppTitle"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('dashboardTheme');
+                if (savedTheme === 'light' || savedTheme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                }
+            } catch (err) {
+                // storage unavailable, keep default
+            }
+        })();
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.dataTables.min.css" />
+    <link rel="stylesheet" href="~/templateV2/dashboard/dashboard.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
+</head>
+<body class="dashboard-body">
+    <div class="page-loader is-active" data-page-loader>
+        <div class="page-loader__spinner" aria-hidden="true"></div>
+        <span class="page-loader__text">@Localizer["App_Loading"]</span>
+    </div>
+    <div class="layout-grid">
+        <header class="topbar">
+            <div class="topbar-left">
+
+                <div class="brand-avatar">GMS</div>
+                <div class="brand-info">
+                    <strong>Global</strong>
+                    <span>@Localizer["Dashboard_Title"]</span>
+                </div>
+               @*  <button class="nav-trigger" data-sidebar-toggle aria-label="Menüyü aç/kapat">
+                    <span></span><span></span><span></span>
+                </button>
+                <a class="topbar-logo" asp-page="/Index">GMS</a>
+                <span class="topbar-title"></span> *@
+            </div>
+            <div class="topbar-right">
+                <button class="theme-toggle" data-theme-toggle aria-label="Tema değiştir">
+                    <span class="sun">☀️</span>
+                    <span class="moon">🌙</span>
+                </button>
+                <div class="quick-actions">
+                    <a class="btn btn-ghost" asp-page="/Notifications/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
+                    <a class="btn btn-ghost" asp-page="/Analytics/Index">Analizler</a>
+                    <div class="language-dropdown" data-lang-dropdown>
+                        <button class="lang-trigger" type="button" aria-haspopup="true" aria-expanded="false" data-selected-lang>@CultureShortName(currentCulture.Name)</button>
+                        <div class="lang-panel" role="menu">
+                            <a href="~/culture/set?culture=tr-TR&amp;returnUrl=@encodedReturnUrl" role="menuitem" data-lang-option="tr" aria-current="@(currentCulture.Name == "tr-TR" ? "true" : "false")">Türkçe</a>
+                            <a href="~/culture/set?culture=en-US&amp;returnUrl=@encodedReturnUrl" role="menuitem" data-lang-option="en" aria-current="@(currentCulture.Name == "en-US" ? "true" : "false")">English</a>
+                            <a href="~/culture/set?culture=ar-SA&amp;returnUrl=@encodedReturnUrl" role="menuitem" data-lang-option="ar" aria-current="@(currentCulture.Name == "ar-SA" ? "true" : "false")">العربية</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="cashbox-quick">
+                    <div class="cashbox-quick__actions">
+                        <a class="cashbox-chip cashbox-chip--compact" asp-page="/Finance/Cashbox/Create" title="@Localizer["Topbar_Cashbox_QuickEntry"]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <path d="M12 5v14"></path>
+                                <path d="M5 12h14"></path>
+                            </svg>
+                            <span>@Localizer["Topbar_Cashbox_QuickEntry"]</span>
+                        </a>
+                        <a class="cashbox-chip cashbox-chip--compact" asp-page="/Finance/Cashbox/Index" title="@Localizer["Topbar_Cashbox_List"]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <path d="M3 3h18v18H3z"></path>
+                                <path d="M3 9h18"></path>
+                                <path d="M3 15h18"></path>
+                            </svg>
+                            <span>@Localizer["Topbar_Cashbox_List"]</span>
+                        </a>
+                        <a class="cashbox-chip cashbox-chip--status @(cashNetPositive ? "is-positive" : "is-negative")" asp-page="/Finance/Cashbox/Index" asp-fragment="overview" title="@Localizer["Topbar_Cashbox_CurrentBalance"]">
+                            <div class="cashbox-chip__status-content">
+                                <span class="cashbox-chip__label">@Localizer["Topbar_Cashbox_CurrentBalance"]</span>
+                                <strong class="cashbox-chip__value">@FormatCurrency(cashNetBalance)</strong>
+                            </div>
+                            @if (cashLastTransactionDisplay is not null)
+                            {
+                                <small>@string.Format(Localizer["Topbar_Cashbox_LastUpdate"], cashLastTransactionDisplay)</small>
+                            }
+                        </a>
+                    </div>
+                </div>
+                @if (isAuthenticated)
+                {
+                    <div class="user-dropdown" data-user-menu>
+                        <button class="user-trigger" aria-haspopup="true" aria-expanded="false">
+                            <span class="avatar">@userInitial</span>
+                            <div class="user-meta">
+                                <strong>@userDisplayName</strong>
+                                @if (!string.IsNullOrWhiteSpace(roleSummary))
+                                {
+                                    <small>@roleSummary</small>
+                                }
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+                        </button>
+                        <div class="dropdown-panel" role="menu">
+                            <a asp-page="/Profile/Index" role="menuitem">Profil & Ayarlar</a>
+                            <a asp-page="/Notifications/Preferences" role="menuitem">Bildirim Tercihleri</a>
+                            <div class="dropdown-divider"></div>
+                            <form method="post" asp-page="/Auth/Logout" asp-route-returnUrl="@returnUrl">
+                                <button type="submit" class="danger" role="menuitem">@Localizer["Logout_Button"]</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a class="btn btn-primary" asp-page="/Auth/Login">@Localizer["Navigation_Login"]</a>
+                }
+            </div>
+        </header>
+        <aside class="sidebar" data-sidebar>
+            <div class="sidebar-header">
+                
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">@Localizer["Dashboard_Title"]</span>
+                    <a class="nav-item @(IsActive("/Index") ? "active" : null)" asp-page="/Index">
+                        @* <span class="nav-active-indicator"></span> *@
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" /></svg>
+                        </span>
+                        <span>@Localizer["Navigation_Home"]</span>
+                        <span class="nav-badge">Canlı</span>
+                        
+                    </a>
+                    <a class="nav-item @(IsInSection("/Shipments") ? "active" : null)" asp-page="/Shipments/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18" /></svg>
+                        </span>
+                        <span>@Localizer["Navigation_Shipments"]</span>
+                        <span class="nav-badge subtle">@shipmentsTotalCount</span>
+                    </a>
+                    <a class="nav-item @(IsActive("/Suppliers/Index") ? "active" : null)" asp-page="/Suppliers/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5a2 2 0 012-2h5l2 2h5a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2z" /></svg>
+                        </span>
+                        <span>@Localizer["Navigation_Suppliers"]</span>
+                    </a>
+                    <a class="nav-item @(IsActive("/Warehouses/Index") ? "active" : null)" asp-page="/Warehouses/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V7a2 2 0 00-1-1.73l-6-3.46a2 2 0 00-2 0l-6 3.46A2 2 0 004 7v6m16 0v4a2 2 0 01-1 1.73l-6 3.46a2 2 0 01-2 0l-6-3.46A2 2 0 014 17v-4m16 0H4" /></svg>
+                        </span>
+                        <span>@Localizer["Navigation_Warehouses"]</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <span class="nav-section-title">@Localizer["Dashboard_Section_Finance"]</span>
+                    <a class="nav-item @(IsActive("/Finance/Cashbox/Index") ? "active" : null)" asp-page="/Finance/Cashbox/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 1.373-3 3.066C9 13.76 12 16 12 16s3-2.24 3-4.934C15 9.373 13.657 8 12 8z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7V5m0 14v-2M7 12H5m14 0h-2" /></svg>
+                        </span>
+                        <span>@Localizer["Dashboard_Section_Finance"]</span>
+                    </a>
+                    <a class="nav-item @(IsActive("/Customers/Index") ? "active" : null)" asp-page="/Customers/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m-4 4h10M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2z" /></svg>
+                        </span>
+                        <span>@Localizer["Dashboard_Section_CRM"]</span>
+                    </a>
+                    <a class="nav-item @(IsActive("/Finance/PaymentPlans/Index") ? "active" : null)" asp-page="/Finance/PaymentPlans/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3h.02A9 9 0 0121 12.79z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l-4 4m0-4l4 4" /></svg>
+                        </span>
+                        <span>@Localizer["Navigation_PaymentPlans"]</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <span class="nav-section-title">Analitik</span>
+                    <a class="nav-item @(IsActive("/Analytics/Operations") ? "active" : null)" asp-page="/Analytics/Operations">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18" /><path stroke-linecap="round" stroke-linejoin="round" d="M7 13l3 3 4-6 5 5" /></svg>
+                        </span>
+                        <span>Operasyon Analitikleri</span>
+                        <span class="nav-badge info">4</span>
+                    </a>
+                    <a class="nav-item @(IsActive("/Analytics/Templates") ? "active" : null)" asp-page="/Analytics/Templates">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 12l9-5-9-5-9 5 9 5z" /></svg>
+                        </span>
+                        <span>Rapor Şablonları</span>
+                    </a>
+                </div>
+            </nav>
+            @if (isAuthenticated)
+            {
+                <div class="sidebar-footer">
+                    <span class="small-label">Aktif Kullanıcı</span>
+                    <div class="user-card">
+                        <div class="avatar">@userInitial</div>
+                        <div>
+                            <strong>@userDisplayName</strong>
+                            @if (!string.IsNullOrWhiteSpace(roleSummary))
+                            {
+                                <span>@roleSummary</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </aside>
+        <main class="content">
+            @{
+                var statusMessage = TempData["StatusMessage"] as string;
+                var statusMessageType = TempData["StatusMessageType"] as string ?? "info";
+            }
+            @if (!string.IsNullOrWhiteSpace(statusMessage))
+            {
+                <div class="flash-message @statusMessageType" role="status" data-flash-message>
+                    <span class="flash-message__icon" aria-hidden="true"></span>
+                    <span class="flash-message__text">@statusMessage</span>
+                </div>
+            }
+            @RenderBody()
+        </main>
+        <button class="fab" aria-label="Yeni Sevkiyat oluştur">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+            </svg>
+        </button>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.3/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/templateV2/dashboard/dashboard.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const flash = document.querySelector('[data-flash-message]');
+            if (flash) {
+                setTimeout(() => {
+                    flash.classList.add('is-hidden');
+                    setTimeout(() => flash.remove(), 220);
+                }, 4000);
+            }
+
+            const loader = document.querySelector('[data-page-loader]');
+            if (!loader) {
+                return;
+            }
+
+            const showLoader = () => loader.classList.add('is-active');
+            const hideLoader = () => loader.classList.remove('is-active');
+
+            const shouldIgnoreLink = (link) => {
+                if (!link) {
+                    return true;
+                }
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
+                    return true;
+                }
+                if (link.target && link.target.toLowerCase() === '_blank') {
+                    return true;
+                }
+                if (link.hasAttribute('download') || link.dataset.noLoader === 'true') {
+                    return true;
+                }
+                if (link.origin && link.origin !== window.location.origin) {
+                    return true;
+                }
+                return false;
+            };
+
+            window.addEventListener('pageshow', hideLoader, { once: true });
+            document.addEventListener('DOMContentLoaded', hideLoader, { once: true });
+
+            window.addEventListener('beforeunload', () => {
+                showLoader();
+            });
+
+            document.addEventListener('click', (event) => {
+                const link = event.target.closest('a');
+                if (shouldIgnoreLink(link)) {
+                    return;
+                }
+                showLoader();
+            });
+
+            document.addEventListener('submit', (event) => {
+                const form = event.target;
+                if (!form || form.dataset.noLoader === 'true') {
+                    return;
+                }
+                showLoader();
+            }, true);
+        })();
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+

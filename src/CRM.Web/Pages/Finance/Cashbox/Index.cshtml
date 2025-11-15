@@ -1,288 +1,213 @@
 @page
 @model CRM.Web.Pages.Finance.Cashbox.IndexModel
-@using CRM.Web
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = Localizer["Finance_Cashbox_Title"];
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Finance_Cashbox_Page_Title"];
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>@ViewData["Title"]</h2>
-    <a class="btn btn-brand" asp-page="Create">@Localizer["Finance_Cashbox_CreateButton"]</a>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tarekraafat/autocomplete.js@10.2.7/dist/css/autoComplete.min.css" integrity="sha384-H7Uyx3SOzxHnF/YBCfS7qiL1FyB1Hp5zXwGrgFw1xI1BEgYHEi5lqgd9j5u6fEji" crossorigin="anonymous">
+    <link rel="stylesheet" href="~/css/finance/cashbox/list.css" asp-append-version="true" />
+}
 
-<div class="dashboard-section mb-4">
-    <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label">@Localizer["Finance_Cashbox_Filter_From"]</label>
-            <input type="date" name="from" value="@Model.Filter.From?.ToString("yyyy-MM-dd")" class="form-control" />
+<section class="page-header cashbox-header">
+    <div>
+        <h1>@Localizer["Finance_Cashbox_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Finance_Cashbox_Page_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary" asp-page="Create">@Localizer["Finance_Cashbox_Action_Create"]</a>
+    </div>
+</section>
+
+<section class="filter-bar cashbox-filter">
+    <form method="get" class="filter-form">
+        <div class="filter-field">
+            <label for="cashbox-from">@Localizer["Finance_Cashbox_Filter_From"]</label>
+            <input id="cashbox-from"
+                   type="date"
+                   name="from"
+                   value="@Model.Filter.From?.ToString("yyyy-MM-dd")" />
         </div>
-        <div class="col-md-3">
-            <label class="form-label">@Localizer["Finance_Cashbox_Filter_To"]</label>
-            <input type="date" name="to" value="@Model.Filter.To?.ToString("yyyy-MM-dd")" class="form-control" />
+        <div class="filter-field">
+            <label for="cashbox-to">@Localizer["Finance_Cashbox_Filter_To"]</label>
+            <input id="cashbox-to"
+                   type="date"
+                   name="to"
+                   value="@Model.Filter.To?.ToString("yyyy-MM-dd")" />
         </div>
-        <div class="col-md-3">
-            <label class="form-label">@Localizer["Finance_Cashbox_Filter_Type"]</label>
-            <select name="type" class="form-select">
+        <div class="filter-field">
+            <label for="cashbox-type">@Localizer["Finance_Cashbox_Filter_Type"]</label>
+            <select id="cashbox-type" name="type">
                 <option value="">@Localizer["Finance_Cashbox_Filter_Type_All"]</option>
                 @foreach (var option in Model.TransactionTypeOptions)
                 {
-                    <option value="@option.Value" selected="@(Model.Filter.Type == option.Value)">@option.Text</option>
+                    <option value="@option.Value" selected="@(Model.Filter.Type == option.Value)">
+                        @option.Text
+                    </option>
                 }
             </select>
         </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-outline-primary flex-fill">@Localizer["Finance_Cashbox_Filter_Search"]</button>
-            <a class="btn btn-outline-secondary flex-fill" asp-page="Index">@Localizer["Finance_Cashbox_Filter_Clear"]</a>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">@Localizer["Finance_Cashbox_Filter_Search"]</button>
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["Finance_Cashbox_Filter_Clear"]</a>
         </div>
     </form>
-</div>
+</section>
 
-<div class="row g-3 mb-4">
-    <div class="col-xl-4 col-md-6">
-        <div class="card stat-card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <span class="stat-label">@Localizer["Finance_Cashbox_Header_TotalIncome"]</span>
-                <div class="stat-value text-success">@Model.Summary.TotalIncome.ToString("C2")</div>
-                <small class="stat-sub text-muted">@Localizer["Finance_Cashbox_Header_TotalIncome_Subtitle"]</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-4 col-md-6">
-        <div class="card stat-card shadow-sm border-0 h-100 alt">
-            <div class="card-body">
-                <span class="stat-label">@Localizer["Finance_Cashbox_Header_TotalExpense"]</span>
-                <div class="stat-value text-danger">@Model.Summary.TotalExpense.ToString("C2")</div>
-                <small class="stat-sub text-muted">@Localizer["Finance_Cashbox_Header_TotalExpense_Subtitle"]</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-4 col-md-12">
-        <div class="card stat-card shadow-sm border-0 h-100 accent">
-            <div class="card-body">
-                <span class="stat-label">@Localizer["Finance_Cashbox_Header_NetBalance"]</span>
-                <div class="stat-value">@Model.Summary.NetBalance.ToString("C2")</div>
-                <small class="stat-sub text-muted">@Localizer["Finance_Cashbox_Header_NetBalance_Subtitle"]</small>
-            </div>
-        </div>
-    </div>
-</div>
+<section class="kpi-grid cashbox-kpis">
+    <article class="kpi-card">
+        <span class="kpi-label">@Localizer["Finance_Cashbox_Header_TotalIncome"]</span>
+        <div class="kpi-value">@Model.Summary.TotalIncome.ToString("C2")</div>
+        <span class="kpi-meta">@Localizer["Finance_Cashbox_Header_TotalIncome_Subtitle"]</span>
+    </article>
+    <article class="kpi-card">
+        <span class="kpi-label">@Localizer["Finance_Cashbox_Header_TotalExpense"]</span>
+        <div class="kpi-value negative">@Model.Summary.TotalExpense.ToString("C2")</div>
+        <span class="kpi-meta">@Localizer["Finance_Cashbox_Header_TotalExpense_Subtitle"]</span>
+    </article>
+    <article class="kpi-card accent">
+        <span class="kpi-label">@Localizer["Finance_Cashbox_Header_NetBalance"]</span>
+        <div class="kpi-value">@Model.Summary.NetBalance.ToString("C2")</div>
+        <span class="kpi-meta">@Localizer["Finance_Cashbox_Header_NetBalance_Subtitle"]</span>
+    </article>
+</section>
 
-<div class="row g-3 mb-4">
-    <div class="col-lg-8">
-        <div class="card shadow-sm border-0 h-100 chart-card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Finance_Cashbox_Chart_Monthly_Title"]</h5>
-                        <p class="card-subtitle text-muted small mb-0">@Localizer["Finance_Cashbox_Chart_Monthly_Description"]</p>
-                    </div>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="cashboxMonthlyChart"></canvas>
-                </div>
+<section class="cashbox-insights">
+    <article class="card analytics-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Finance_Cashbox_Chart_Monthly_Title"]</h2>
+                <p>@Localizer["Finance_Cashbox_Chart_Monthly_Description"]</p>
             </div>
+        </header>
+        <div class="chart-wrapper">
+            <canvas id="cashboxMonthlyChart" data-cashbox-chart></canvas>
         </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <h5 class="card-title mb-3">@Localizer["Finance_Cashbox_Category_Title"]</h5>
-                <ul class="list-group list-group-flush country-list">
-                    @if (Model.CategorySummaries.Any())
-                    {
-                        var rank = 1;
-                        foreach (var stat in Model.CategorySummaries)
-                        {
-                            var netClass = stat.NetAmount >= 0 ? "text-success" : "text-danger";
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center gap-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge badge-brand">@rank</span>
-                                        <span class="fw-semibold">@((stat.CategoryName) ?? Localizer["Finance_Cashbox_Category_Unspecified"])</span>
-                                    </div>
-                                    <span class="small fw-semibold @netClass">@stat.NetAmount.ToString("C2")</span>
-                                </div>
-                                <div class="d-flex justify-content-between small text-muted mt-2">
-                                    <span class="text-success">@Localizer["Finance_Cashbox_Category_Income"]</span>
-                                    <span class="text-success">@stat.IncomeAmount.ToString("C2")</span>
-                                </div>
-                                <div class="d-flex justify-content-between small text-muted">
-                                    <span class="text-danger">@Localizer["Finance_Cashbox_Category_Expense"]</span>
-                                    <span class="text-danger">-@stat.ExpenseAmount.ToString("C2")</span>
-                                </div>
-                            </li>
-                            rank++;
-                        }
-                    }
-                    else
-                    {
-                        <li class="list-group-item text-muted small">@Localizer["Finance_Cashbox_Category_NoData"]</li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+    </article>
+    <article class="card category-card">
+        <header class="card-header">
+            <h2>@Localizer["Finance_Cashbox_Category_Title"]</h2>
+        </header>
+        <ul class="category-list">
+            @if (Model.CategorySummaries.Any())
+            {
+                var rank = 1;
+                foreach (var stat in Model.CategorySummaries)
+                {
+                    <li>
+                        <div class="category-meta">
+                            <span class="rank">@rank</span>
+                            <div class="category-info">
+                                <span class="name">@((stat.CategoryName) ?? Localizer["Finance_Cashbox_Category_Unspecified"].Value)</span>
+                                <span class="balance @(stat.NetAmount >= 0 ? "positive" : "negative")">
+                                    @stat.NetAmount.ToString("C2")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="category-stats">
+                            <span class="income">
+                                @Localizer["Finance_Cashbox_Category_Income"]:
+                                <strong>@stat.IncomeAmount.ToString("C2")</strong>
+                            </span>
+                            <span class="expense">
+                                @Localizer["Finance_Cashbox_Category_Expense"]:
+                                <strong>-@stat.ExpenseAmount.ToString("C2")</strong>
+                            </span>
+                        </div>
+                    </li>
+                    rank++;
+                }
+            }
+            else
+            {
+                <li class="empty">@Localizer["Finance_Cashbox_Category_NoData"]</li>
+            }
+        </ul>
+    </article>
+</section>
 
-<div class="dashboard-section">
-    <table class="table table-hover align-middle"
-           data-crm-datatable="true"
-           data-responsive="true"
-           data-order-column="0">
-        <thead>
-            <tr>
-                <th>@Localizer["Finance_Cashbox_Table_Date"]</th>
-                <th>@Localizer["Finance_Cashbox_Table_Type"]</th>
-                <th>@Localizer["Finance_Cashbox_Table_Category"]</th>
-                <th>@Localizer["Finance_Cashbox_Table_Description"]</th>
-                <th class="text-end">@Localizer["Finance_Cashbox_Table_Amount"]</th>
-                <th>@Localizer["Finance_Cashbox_Table_Customer"]</th>
-                <th>@Localizer["Finance_Cashbox_Table_Shipment"]</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var tx in Model.Transactions)
-        {
-            <tr>
-                <td>@tx.TransactionDate.ToString("g")</td>
-                <td>
-                    @if (tx.TransactionType == CRM.Domain.Finance.CashTransactionType.Income)
-                    {
-                        <span class="badge bg-success-subtle text-success">@Localizer["Finance_Cashbox_Type_Income"]</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger-subtle text-danger">@Localizer["Finance_Cashbox_Type_Expense"]</span>
-                    }
-                </td>
-                <td>@(string.IsNullOrWhiteSpace(tx.Category) ? Localizer["Finance_Cashbox_Category_Unspecified"] : tx.Category)</td>
-                <td>@tx.Description</td>
-                <td class="text-end">
-                    <div>@tx.Amount.ToString("C2")</div>
-                    <div class="text-muted small">@tx.Currency</div>
-                </td>
-                <td>@(tx.CustomerName ?? Localizer["Finance_Cashbox_Value_None"])</td>
-                <td>@(tx.ShipmentReference ?? Localizer["Finance_Cashbox_Value_None"])</td>
-            </tr>
-        }
-        @if (!Model.Transactions.Any())
-        {
-            <tr>
-                <td colspan="7" class="text-center text-muted">@Localizer["Finance_Cashbox_Table_NoRecords"]</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+<section class="cashbox-table-section">
+    <article class="card table-card wide">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Finance_Cashbox_Table_Title"]</h2>
+                <p>@Localizer["Finance_Cashbox_Table_Subtitle"]</p>
+            </div>
+            <div class="table-actions">
+                <label class="search-control">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <input type="search" data-cashbox-search placeholder="@Localizer["Finance_Cashbox_Search_Placeholder"].Value" />
+                </label>
+                <button type="button" class="btn btn-ghost" data-cashbox-search-clear>@Localizer["Finance_Cashbox_Filter_Clear"]</button>
+            </div>
+        </header>
+        <div class="table-wrapper">
+            <table id="cashboxTable" class="data-table" data-order-column="0">
+                <thead>
+                    <tr>
+                        <th>@Localizer["Finance_Cashbox_Table_Date"]</th>
+                        <th>@Localizer["Finance_Cashbox_Table_Type"]</th>
+                        <th>@Localizer["Finance_Cashbox_Table_Category"]</th>
+                        <th>@Localizer["Finance_Cashbox_Table_Description"]</th>
+                        <th class="text-end">@Localizer["Finance_Cashbox_Table_Amount"]</th>
+                        <th>@Localizer["Finance_Cashbox_Table_Customer"]</th>
+                        <th>@Localizer["Finance_Cashbox_Table_Shipment"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var tx in Model.Transactions)
+                {
+                    <tr>
+                        <td>@tx.TransactionDate.ToString("g")</td>
+                        <td>
+                            <span class="status-chip @(tx.TransactionType == CRM.Domain.Finance.CashTransactionType.Income ? "status-chip--positive" : "status-chip--negative")">
+                                @(tx.TransactionType == CRM.Domain.Finance.CashTransactionType.Income
+                                    ? Localizer["Finance_Cashbox_Type_Income"]
+                                    : Localizer["Finance_Cashbox_Type_Expense"])
+                            </span>
+                        </td>
+                        <td>@(string.IsNullOrWhiteSpace(tx.Category) ? Localizer["Finance_Cashbox_Category_Unspecified"] : tx.Category)</td>
+                        <td>@tx.Description</td>
+                        <td class="text-end">
+                            <div class="cell-strong">@tx.Amount.ToString("C2")</div>
+                            <div class="cell-subtext">@tx.Currency</div>
+                        </td>
+                        <td>@(tx.CustomerName ?? Localizer["Finance_Cashbox_Value_None"].Value)</td>
+                        <td>@(tx.ShipmentReference ?? Localizer["Finance_Cashbox_Value_None"].Value)</td>
+                    </tr>
+                }
+                @if (!Model.Transactions.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="empty-state">@Localizer["Finance_Cashbox_Table_NoRecords"]</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" integrity="sha384-XwU4NLexM4ZRMeNZFmVDk4LvyTgT4X8JNRlmVzDeQu5C65Qxe5neg+KMRJ0Pfi3b" crossorigin="anonymous"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const canvas = document.getElementById('cashboxMonthlyChart');
-            if (!canvas || typeof Chart === 'undefined') {
-                return;
+        window.cashboxDashboard = {
+            chart: {
+                labels: @Html.Raw(Model.MonthlyLabelsJson ?? "[]"),
+                income: @Html.Raw(Model.MonthlyIncomeDataJson ?? "[]"),
+                expense: @Html.Raw(Model.MonthlyExpenseDataJson ?? "[]"),
+                net: @Html.Raw(Model.MonthlyNetDataJson ?? "[]"),
+                noDataMessage: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Finance_Cashbox_Chart_NoData"].Value))
             }
-
-            const container = canvas.closest('.chart-wrapper');
-            const labels = @Html.Raw(Model.MonthlyLabelsJson);
-            const incomeData = @Html.Raw(Model.MonthlyIncomeDataJson);
-            const expenseData = @Html.Raw(Model.MonthlyExpenseDataJson);
-            const netData = @Html.Raw(Model.MonthlyNetDataJson);
-
-            if (!labels || labels.length === 0) {
-                if (container) {
-                    container.innerHTML = '<div class="text-muted small">@Localizer["Finance_Cashbox_Chart_NoData"]</div>';
-                }
-                return;
-            }
-
-            const locale = document.documentElement.lang || 'tr';
-            const numberFormatter = new Intl.NumberFormat(locale, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-
-            new Chart(canvas, {
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: 'bar',
-                            label: '@Localizer["Finance_Cashbox_Chart_Income"]',
-                            data: incomeData,
-                            backgroundColor: 'rgba(34, 197, 94, 0.75)',
-                            borderRadius: 8,
-                            maxBarThickness: 40
-                        },
-                        {
-                            type: 'bar',
-                            label: '@Localizer["Finance_Cashbox_Chart_Expense"]',
-                            data: expenseData,
-                            backgroundColor: 'rgba(239, 68, 68, 0.65)',
-                            borderRadius: 8,
-                            maxBarThickness: 40
-                        },
-                        {
-                            type: 'line',
-                            label: '@Localizer["Finance_Cashbox_Chart_Net"]',
-                            data: netData,
-                            borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37, 99, 235, 0.18)',
-                            tension: 0.35,
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#2563eb',
-                            fill: false,
-                            yAxisID: 'y'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(148, 163, 184, 0.2)'
-                            },
-                            ticks: {
-                                callback: function (value) {
-                                    return numberFormatter.format(value);
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                usePointStyle: true
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const value = context.parsed.y ?? context.parsed;
-                                    return `${context.dataset.label}: ${numberFormatter.format(value)}`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
+        };
     </script>
+    <script src="~/js/finance/cashbox/list.js" asp-append-version="true"></script>
 }
+

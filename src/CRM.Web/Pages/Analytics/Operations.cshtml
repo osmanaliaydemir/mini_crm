@@ -1,0 +1,172 @@
+@page
+@model CRM.Web.Pages.Analytics.OperationsModel
+@using System.Text.Json
+@using CRM.Domain.Enums
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["OperationsAnalytics_Title"];
+    var serializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var statusData = Model.StatusBreakdown
+        .Select(item => new
+        {
+            label = Localizer[$"Shipments_Status_{item.Status}"].Value,
+            value = item.Count
+        }).ToList();
+    var trendLabels = Model.CompletionTrend.Select(point => point.PeriodStart.ToLocalTime().ToString("dd MMM")).ToList();
+    var trendValues = Model.CompletionTrend.Select(point => point.CompletedCount).ToList();
+    var throughputData = Model.WarehouseThroughput.Select(item => new
+    {
+        label = item.WarehouseName,
+        unloadings = item.UnloadingCount,
+        volume = item.TotalVolume
+    }).ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/analytics/operations.css" asp-append-version="true" />
+}
+
+<section class="page-header analytics-header">
+    <div>
+        <h1>@Localizer["OperationsAnalytics_Title"]</h1>
+        <p class="subtitle">@Localizer["OperationsAnalytics_Subtitle"]</p>
+    </div>
+</section>
+
+<section class="analytics-summary">
+    <article class="summary-card">
+        <span class="summary-label">@Localizer["OperationsAnalytics_Summary_TotalShipments"]</span>
+        <span class="summary-value">@Model.Summary.TotalShipments</span>
+    </article>
+    <article class="summary-card">
+        <span class="summary-label">@Localizer["OperationsAnalytics_Summary_Active"]</span>
+        <span class="summary-value">@Model.Summary.ActiveShipments</span>
+    </article>
+    <article class="summary-card">
+        <span class="summary-label">@Localizer["OperationsAnalytics_Summary_AvgTransit"]</span>
+        <span class="summary-value">@Model.Summary.AvgTransitDays.ToString("0.0")</span>
+        <span class="summary-meta">@Localizer["OperationsAnalytics_Summary_AvgTransit_Unit"]</span>
+    </article>
+    <article class="summary-card">
+        <span class="summary-label">@Localizer["OperationsAnalytics_Summary_CustomsBacklog"]</span>
+        <span class="summary-value">@Model.Summary.CustomsBacklogDays.ToString("0.0")</span>
+        <span class="summary-meta">@Localizer["OperationsAnalytics_Summary_CustomsBacklog_Unit"]</span>
+    </article>
+</section>
+
+<section class="analytics-grid">
+    <article class="card analytics-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["OperationsAnalytics_Status_Title"]</h2>
+                <p>@Localizer["OperationsAnalytics_Status_Subtitle"]</p>
+            </div>
+        </header>
+        <canvas id="opsStatusChart"></canvas>
+    </article>
+
+    <article class="card analytics-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["OperationsAnalytics_Trend_Title"]</h2>
+                <p>@Localizer["OperationsAnalytics_Trend_Subtitle"]</p>
+            </div>
+        </header>
+        <canvas id="opsTrendChart"></canvas>
+    </article>
+
+    <article class="card analytics-card wide">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["OperationsAnalytics_Throughput_Title"]</h2>
+                <p>@Localizer["OperationsAnalytics_Throughput_Subtitle"]</p>
+            </div>
+        </header>
+        @if (Model.WarehouseThroughput.Any())
+        {
+            <canvas id="opsThroughputChart"></canvas>
+            <div class="throughput-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>@Localizer["Warehouses_Table_Name"]</th>
+                            <th>@Localizer["OperationsAnalytics_Table_Days"]</th>
+                            <th>@Localizer["Warehouses_Unloading_Table_Volume"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.WarehouseThroughput)
+                        {
+                            <tr>
+                                <td>@row.WarehouseName</td>
+                                <td>@row.UnloadingCount</td>
+                                <td>@row.TotalVolume.ToString("0.0") @Localizer["OperationsAnalytics_Throughput_VolumeUnit"]</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">@Localizer["OperationsAnalytics_Throughput_Empty"]</div>
+        }
+    </article>
+
+    <article class="card analytics-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["OperationsAnalytics_Delays_Title"]</h2>
+                <p>@Localizer["OperationsAnalytics_Delays_Subtitle"]</p>
+            </div>
+        </header>
+        @if (Model.DelayShipments.Any())
+        {
+            <div class="table-wrapper">
+                <table class="delay-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["OperationsAnalytics_Table_Shipment"]</th>
+                            <th>@Localizer["OperationsAnalytics_Table_Customer"]</th>
+                            <th>@Localizer["OperationsAnalytics_Table_Status"]</th>
+                            <th class="text-end">@Localizer["OperationsAnalytics_Table_Days"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var delay in Model.DelayShipments)
+                        {
+                            <tr>
+                                <td>@delay.ReferenceNumber</td>
+                                <td>@(string.IsNullOrWhiteSpace(delay.CustomerDisplay) ? Localizer["Dashboard_Unspecified"].Value : delay.CustomerDisplay)</td>
+                                <td>@Localizer[$"Shipments_Status_{delay.Status}"]</td>
+                                <td class="text-end">@delay.DaysInStage.ToString("0.0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">@Localizer["OperationsAnalytics_Delays_Empty"]</div>
+        }
+    </article>
+</section>
+
+@section Scripts {
+    <script>
+        window.operationsAnalyticsData = {
+            status: @Html.Raw(JsonSerializer.Serialize(statusData, serializerOptions)),
+            trend: {
+                labels: @Html.Raw(JsonSerializer.Serialize(trendLabels, serializerOptions)),
+                values: @Html.Raw(JsonSerializer.Serialize(trendValues, serializerOptions))
+            },
+            throughput: @Html.Raw(JsonSerializer.Serialize(throughputData, serializerOptions))
+        };
+    </script>
+    <script src="~/js/analytics/operations.js" asp-append-version="true"></script>
+}
+

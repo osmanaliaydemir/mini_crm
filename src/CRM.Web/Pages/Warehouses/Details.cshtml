@@ -1,92 +1,177 @@
 @page "{id:guid}"
 @model CRM.Web.Pages.Warehouses.DetailsModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = "Depo Detay";
+    Layout = "_DashboardLayout";
+    if (Model.Warehouse is null)
+    {
+        ViewData["Title"] = Localizer["Warehouses_Details_NotFound_Title"];
+    }
+    else
+    {
+        ViewData["Title"] = $"{Localizer["Warehouses_Details_Title"]} · {Model.Warehouse.Name}";
+    }
 }
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="dashboard-section border-0 shadow-sm">
-            <h2 class="mb-3">@Model.Warehouse?.Name</h2>
-            <dl class="row">
-                <dt class="col-sm-4">Lokasyon</dt>
-                <dd class="col-sm-8">@Model.Warehouse?.Location</dd>
-                <dt class="col-sm-4">İrtibat</dt>
-                <dd class="col-sm-8">
-                    <div>@Model.Warehouse?.ContactPerson</div>
-                    <div>@Model.Warehouse?.ContactPhone</div>
-                </dd>
-                <dt class="col-sm-4">Notlar</dt>
-                <dd class="col-sm-8">@Model.Warehouse?.Notes</dd>
+@section Styles {
+    <link rel="stylesheet" href="~/css/warehouses/details.css" asp-append-version="true" />
+}
+
+@if (Model.Warehouse is null)
+{
+    <section class="details-empty">
+        <article class="details-card">
+            <h1>@Localizer["Warehouses_Details_NotFound_Title"]</h1>
+            <p>@Localizer["Warehouses_Details_NotFound_Message"]</p>
+            <div class="details-actions">
+                <a class="btn btn-primary" asp-page="Index">@Localizer["Warehouses_Action_Back"]</a>
+            </div>
+        </article>
+    </section>
+}
+else
+{
+    var warehouse = Model.Warehouse;
+
+    <section class="page-header details-header">
+        <div>
+            <h1>@warehouse.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(warehouse.Location))
+            {
+                <p class="subtitle">@warehouse.Location</p>
+            }
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["Warehouses_Action_Back"]</a>
+            <a class="btn btn-primary" asp-page="Edit" asp-route-id="@warehouse.Id">@Localizer["Warehouses_Action_Edit"]</a>
+        </div>
+    </section>
+
+    <section class="details-grid">
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Warehouses_Details_Overview_Title"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Warehouses_Field_Name"]</dt>
+                    <dd>@warehouse.Name</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Warehouses_Field_Location"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(warehouse.Location) ? Localizer["Warehouses_Location_Unspecified"].Value : warehouse.Location)</dd>
+                </div>
             </dl>
-            <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="dashboard-section border-0 shadow-sm">
-            <h3 class="h5 mb-3">Tır Boşaltma Kaydı</h3>
-            <form method="post">
+        </article>
+
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Warehouses_Details_Contact_Title"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Warehouses_Field_ContactPerson"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(warehouse.ContactPerson) ? "-" : warehouse.ContactPerson)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Warehouses_Field_ContactPhone"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(warehouse.ContactPhone) ? "-" : warehouse.ContactPhone)</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="details-card details-card--wide">
+            <header>
+                <h2>@Localizer["Warehouses_Details_Notes_Title"]</h2>
+            </header>
+            @if (string.IsNullOrWhiteSpace(warehouse.Notes))
+            {
+                <p class="empty">@Localizer["Warehouses_Details_Notes_Empty"]</p>
+            }
+            else
+            {
+                <p>@warehouse.Notes</p>
+            }
+        </article>
+
+        <article class="details-card form-card">
+            <header>
+                <h2>@Localizer["Warehouses_Unloading_Title"]</h2>
+            </header>
+            <form method="post" class="inline-form">
                 <input type="hidden" asp-for="UnloadingInput.WarehouseId" />
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-                <div class="mb-3">
-                    <label asp-for="UnloadingInput.ShipmentId" class="form-label"></label>
-                    <select asp-for="UnloadingInput.ShipmentId" class="form-select" asp-items="Model.ShipmentOptions">
-                        <option value="">Seçiniz...</option>
-                    </select>
-                    <span asp-validation-for="UnloadingInput.ShipmentId" class="text-danger small"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="UnloadingInput.TruckPlate" class="form-label"></label>
-                    <input asp-for="UnloadingInput.TruckPlate" class="form-control" />
-                    <span asp-validation-for="UnloadingInput.TruckPlate" class="text-danger small"></span>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="UnloadingInput.UnloadedAt" class="form-label"></label>
-                        <input asp-for="UnloadingInput.UnloadedAt" class="form-control" type="datetime-local" />
+                <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+                <div class="form-grid">
+                    <div class="input-field">
+                        <label asp-for="UnloadingInput.ShipmentId">@Localizer["Shipments_Form_Reference"]</label>
+                        <select asp-for="UnloadingInput.ShipmentId" class="input-control" asp-items="Model.ShipmentOptions">
+                            <option value="">@Localizer["Warehouses_Unloading_SelectShipment"]</option>
+                        </select>
+                        <span asp-validation-for="UnloadingInput.ShipmentId" class="input-error"></span>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="UnloadingInput.UnloadedVolume" class="form-label"></label>
-                        <input asp-for="UnloadingInput.UnloadedVolume" class="form-control" />
+                    <div class="input-field">
+                        <label asp-for="UnloadingInput.TruckPlate">@Localizer["Warehouses_Unloading_Table_Truck"]</label>
+                        <input asp-for="UnloadingInput.TruckPlate" class="input-control" />
+                        <span asp-validation-for="UnloadingInput.TruckPlate" class="input-error"></span>
+                    </div>
+                    <div class="input-field">
+                        <label asp-for="UnloadingInput.UnloadedAt">@Localizer["Warehouses_Unloading_Table_Date"]</label>
+                        <input asp-for="UnloadingInput.UnloadedAt" class="input-control" type="datetime-local" />
+                    </div>
+                    <div class="input-field">
+                        <label asp-for="UnloadingInput.UnloadedVolume">@Localizer["Warehouses_Unloading_Table_Volume"]</label>
+                        <input asp-for="UnloadingInput.UnloadedVolume" class="input-control" />
+                    </div>
+                    <div class="input-field full">
+                        <label asp-for="UnloadingInput.Notes">@Localizer["Warehouses_Unloading_Table_Notes"]</label>
+                        <textarea asp-for="UnloadingInput.Notes" class="input-control textarea" rows="2"></textarea>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label asp-for="UnloadingInput.Notes" class="form-label"></label>
-                    <textarea asp-for="UnloadingInput.Notes" class="form-control" rows="2"></textarea>
-                </div>
-                <button type="submit" class="btn btn-brand">Kaydı Ekle</button>
+                <button type="submit" class="btn btn-primary">@Localizer["Warehouses_Form_Submit"]</button>
             </form>
-        </div>
-    </div>
-</div>
+        </article>
 
-<div class="dashboard-section border-0 shadow-sm mt-4">
-    <h3 class="h5 mb-3">Boşaltma Kayıtları</h3>
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>Sevkiyat</th>
-                <th>Tır Plaka</th>
-                <th>Tarih</th>
-                <th>Hacim (m3)</th>
-                <th>Notlar</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var unloading in Model.Unloadings)
-        {
-            <tr>
-                <td>@unloading.ShipmentId</td>
-                <td>@unloading.TruckPlate</td>
-                <td>@unloading.UnloadedAt.ToString("g")</td>
-                <td>@unloading.UnloadedVolume</td>
-                <td>@unloading.Notes</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+        <article class="details-card details-card--wide table-card">
+            <header>
+                <h2>@Localizer["Warehouses_Unloading_List_Title"]</h2>
+            </header>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["Warehouses_Unloading_Table_Shipment"]</th>
+                            <th>@Localizer["Warehouses_Unloading_Table_Truck"]</th>
+                            <th>@Localizer["Warehouses_Unloading_Table_Date"]</th>
+                            <th>@Localizer["Warehouses_Unloading_Table_Volume"]</th>
+                            <th>@Localizer["Warehouses_Unloading_Table_Notes"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var unloading in Model.Unloadings)
+                    {
+                        <tr>
+                            <td>@unloading.ShipmentId</td>
+                            <td>@unloading.TruckPlate</td>
+                            <td>@unloading.UnloadedAt.ToString("g")</td>
+                            <td>@unloading.UnloadedVolume</td>
+                            <td>@(!string.IsNullOrWhiteSpace(unloading.Notes) ? unloading.Notes : "-")</td>
+                        </tr>
+                    }
+                    @if (!Model.Unloadings.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="empty-state">@Localizer["Warehouses_TopWarehouses_NoData"]</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+}
 
-<partial name="_ValidationScriptsPartial" />
-
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CRM Login • Illustrated</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles-login.css" />
+</head>
+<body class="login-illustrated">
+    <div class="illustrated-wrapper">
+        <div class="illustrated-bg">
+            <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1600&q=80" alt="CRM ekibi">
+        </div>
+        <div class="illustrated-content">
+            <section class="illustrated-intro">
+                <div class="intro-pill">
+                    <span></span>
+                    CRM Ops ekibi çevrim içi
+                </div>
+                <h1>Performans, sevkiyat ve müşteri memnuniyeti tek panelde.</h1>
+                <p>Modern CRM experience ile tüm operasyonları gerçek zamanlı takip et, ekip verimini artır, müşterilere kusursuz hizmet sun.</p>
+
+                <div class="highlight-grid">
+                    <article class="highlight-card">
+                        <div>
+                            <p class="muted" style="font-size:0.75rem;letter-spacing:0.18em;text-transform:uppercase;">Sıfır Sapma</p>
+                            <h3>Yetki yönetimi</h3>
+                            <p>Rol bazlı erişim ve MFA ile güvenli giriş.</p>
+                        </div>
+                        <span class="badge">AAA güvenlik</span>
+                    </article>
+                    <article class="highlight-card">
+                        <div>
+                            <p class="muted" style="font-size:0.75rem;letter-spacing:0.18em;text-transform:uppercase;">Gerçek zamanlı</p>
+                            <h3>Sevkiyat kontrol kulesi</h3>
+                            <p>AI destekli gecikme tahminleri ve uyarılar.</p>
+                        </div>
+                        <span class="badge">%98 doğruluk</span>
+                    </article>
+                </div>
+            </section>
+
+            <section class="illustrated-form">
+                <div>
+                    <h2>Giriş yap</h2>
+                    <p>Kurumsal hesabınla oturum aç.</p>
+                </div>
+
+                <form>
+                    <div class="form-field">
+                        <label for="illustrated-email" class="form-label" style="color:#1e293b;">Kurumsal e-posta</label>
+                        <input id="illustrated-email" type="email" class="form-input" style="border-radius:18px;border:1px solid rgba(148,163,184,0.35);background:#fff;color:#1f2937;padding:12px 16px;" placeholder="ad.soyad@firma.com" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="illustrated-password" class="form-label" style="color:#1e293b;">Parola</label>
+                        <div class="form-control" style="background:#fff;border:1px solid rgba(148,163,184,0.35);color:#1f2937;">
+                            <input id="illustrated-password" type="password" class="form-input" style="color:#0f172a;" placeholder="••••••••" />
+                            <button type="button" class="toggle-visibility" style="color:#4f46e5;">Göster</button>
+                        </div>
+                    </div>
+
+                    <div class="form-foot" style="color:#64748b;">
+                        <label>
+                            <input type="checkbox" style="margin-right:6px;" />
+                            Beni hatırla
+                        </label>
+                        <a class="link-accent" href="#">Parolamı unuttum</a>
+                    </div>
+
+                    <button type="submit" class="primary-button" style="background:linear-gradient(135deg,#1f2937,#111827);">
+                        Oturum aç
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <path d="M17 8l4 4-4 4" />
+                            <path d="M3 12h18" />
+                        </svg>
+                    </button>
+                </form>
+
+                <div>
+                    <div class="form-hint">
+                        <span class="on"></span>
+                        2FA aktif kullanıcılar için hızlı giriş.
+                    </div>
+                    <div class="form-hint">
+                        <span class="warn"></span>
+                        Yeni kullanıcı talepleri için <a href="#" class="link-accent">destek ekibiyle</a> iletişime geç.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>
+
+

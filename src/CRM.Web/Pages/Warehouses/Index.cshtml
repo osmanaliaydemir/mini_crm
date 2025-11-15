@@ -1,12 +1,12 @@
 @page
 @model CRM.Web.Pages.Warehouses.IndexModel
 @using System.Globalization
-@using CRM.Web
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = Localizer["Navigation_Warehouses"];
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Warehouses_Page_Title"];
 
     string FormatLocation(string location) =>
         location == CRM.Web.Pages.Warehouses.IndexModel.UnspecifiedLocationLabel
@@ -14,204 +14,173 @@
             : location;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>@ViewData["Title"]</h2>
-    <a class="btn btn-brand" asp-page="Create">@Localizer["Warehouses_AddWarehouse_Button"]</a>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/warehouses/list.css" asp-append-version="true" />
+}
 
-<div class="row g-3 mb-4">
-    <div class="col-xl-3 col-lg-4 col-md-6">
-        <div class="card stat-card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <span class="stat-label">@Localizer["Warehouses_Header_TotalWarehouses"]</span>
-                <div class="stat-value">@Model.TotalWarehouses</div>
-                <small class="stat-sub">@Localizer["Warehouses_Header_Active_Value", Model.ActiveWarehousesCount]</small>
-            </div>
-        </div>
+<section class="page-header warehouses-header">
+    <div>
+        <h1>@Localizer["Warehouses_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Warehouses_Page_Subtitle"]</p>
     </div>
-    <div class="col-xl-3 col-lg-4 col-md-6">
-        <div class="card stat-card shadow-sm border-0 h-100 alt">
-            <div class="card-body">
-                <span class="stat-label">@Localizer["Warehouses_Header_Locations"]</span>
-                <div class="stat-value">@Model.DistinctLocationCount</div>
-                <small class="stat-sub">@Localizer["Warehouses_Header_Locations_Subtitle"]</small>
-            </div>
-        </div>
+    <div class="header-actions">
+        <a class="btn btn-primary" asp-page="Create">@Localizer["Warehouses_Action_Create"]</a>
     </div>
-    <div class="col-xl-3 col-lg-4 col-md-6">
-        <div class="card stat-card shadow-sm border-0 h-100 accent">
-            <div class="card-body">
-                <span class="stat-label">@Localizer["Warehouses_Header_RecentUnloading"]</span>
-                <div class="stat-value">@Model.RecentUnloadingCount</div>
-                <small class="stat-sub">@Localizer["Warehouses_Header_RecentUnloading_Subtitle", Model.RecentUnloadingCount]</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-12 col-md-6">
-        <div class="card stat-card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <span class="stat-label">@Localizer["Warehouses_Header_TopLocation"]</span>
-                <div class="stat-value">
-                    @FormatLocation(Model.TopLocationName)
-                </div>
-                <small class="stat-sub">@Localizer["Warehouses_Header_TopLocation_Value", Model.TopLocationWarehouseCount]</small>
-            </div>
-        </div>
-    </div>
-</div>
+</section>
 
-<div class="row g-3 mb-4">
-    <div class="col-lg-8">
-        <div class="card shadow-sm border-0 h-100 chart-card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Warehouses_Chart_MonthlyVolume_Title"]</h5>
-                        <p class="card-subtitle text-muted small mb-0">@Localizer["Warehouses_Chart_MonthlyVolume_Description"]</p>
-                    </div>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="warehouseVolumeChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <h5 class="card-title mb-3">@Localizer["Warehouses_TopWarehouses_Title"]</h5>
-                <ul class="list-group list-group-flush warehouse-list">
-                    @if (Model.TopWarehouseStats.Any())
-                    {
-                        foreach (var stat in Model.TopWarehouseStats)
-                        {
-                            <li class="list-group-item">
-                                <div class="d-flex flex-column gap-1">
-                                    <div>
-                                        <div class="fw-semibold">@stat.Name</div>
-                                        <div class="text-muted small">@FormatLocation(stat.Location)</div>
-                                    </div>
-                                    <div>
-                                        <div class="fw-semibold">@Localizer["Warehouses_TopWarehouses_Volume", stat.TotalVolume]</div>
-                                        <div class="text-muted small">
-                                            @Localizer["Warehouses_TopWarehouses_Trips", stat.TripCount]
-                                            ·
-                                            @Localizer["Warehouses_TopWarehouses_LastUnloaded", stat.LastUnloadedAt.ToLocalTime().ToString("d", CultureInfo.CurrentUICulture)]
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                        }
-                    }
-                    else
-                    {
-                        <li class="list-group-item text-muted small">@Localizer["Warehouses_TopWarehouses_NoData"]</li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+<section class="kpi-grid warehouses-kpis">
+    <article class="kpi-card">
+        <span class="kpi-label">@Localizer["Warehouses_Header_TotalWarehouses"]</span>
+        <div class="kpi-value">@Model.TotalWarehouses</div>
+        <span class="kpi-meta">@Localizer["Warehouses_Header_Active_Value", Model.ActiveWarehousesCount]</span>
+    </article>
+    <article class="kpi-card">
+        <span class="kpi-label">@Localizer["Warehouses_Header_Locations"]</span>
+        <div class="kpi-value">@Model.DistinctLocationCount</div>
+        <span class="kpi-meta">@Localizer["Warehouses_Header_Locations_Subtitle"]</span>
+    </article>
+    <article class="kpi-card">
+        <span class="kpi-label">@Localizer["Warehouses_Header_RecentUnloading"]</span>
+        <div class="kpi-value">@Model.RecentUnloadingCount</div>
+        <span class="kpi-meta">@Localizer["Warehouses_Header_RecentUnloading_Subtitle", Model.RecentUnloadingCount]</span>
+    </article>
+    <article class="kpi-card">
+        <span class="kpi-label">@Localizer["Warehouses_Header_TopLocation"]</span>
+        <div class="kpi-value">@FormatLocation(Model.TopLocationName)</div>
+        <span class="kpi-meta">@Localizer["Warehouses_Header_TopLocation_Value", Model.TopLocationWarehouseCount]</span>
+    </article>
+</section>
 
-<div class="dashboard-section">
-    <table class="table table-hover align-middle"
-           data-crm-datatable="true"
-           data-disable-last-column="true"
-           data-order-column="0">
-        <thead>
-            <tr>
-                <th>@Localizer["Warehouses_Table_Name"]</th>
-                <th>@Localizer["Warehouses_Table_Location"]</th>
-                <th>@Localizer["Warehouses_Table_Contact"]</th>
-                <th class="text-end">@Localizer["Warehouses_Table_Actions"]</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var warehouse in Model.Warehouses)
-        {
-            <tr>
-                <td>@warehouse.Name</td>
-                <td>@FormatLocation(warehouse.Location ?? CRM.Web.Pages.Warehouses.IndexModel.UnspecifiedLocationLabel)</td>
-                <td>
-                    <div>@warehouse.ContactPerson</div>
-                    <div>@warehouse.ContactPhone</div>
-                </td>
-                <td class="text-end">
-                    <a class="btn btn-sm btn-outline-primary" asp-page="Details" asp-route-id="@warehouse.Id">@Localizer["Warehouses_Action_Details"]</a>
-                    <a class="btn btn-sm btn-outline-secondary" asp-page="Edit" asp-route-id="@warehouse.Id">@Localizer["Warehouses_Action_Edit"]</a>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+<section class="warehouses-insights">
+    <article class="card analytics-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Warehouses_Chart_MonthlyVolume_Title"]</h2>
+                <p>@Localizer["Warehouses_Chart_MonthlyVolume_Description"]</p>
+            </div>
+        </header>
+        <div class="chart-wrapper">
+            <canvas id="warehousesVolumeChart" data-warehouses-chart></canvas>
+        </div>
+    </article>
+    <article class="card top-warehouses-card">
+        <header class="card-header">
+            <h2>@Localizer["Warehouses_TopWarehouses_Title"]</h2>
+        </header>
+        <ul class="top-warehouses-list">
+            @if (Model.TopWarehouseStats.Any())
+            {
+                foreach (var stat in Model.TopWarehouseStats)
+                {
+                    <li>
+                        <div class="warehouse-meta">
+                            <span class="name">@stat.Name</span>
+                            <span class="location">@FormatLocation(stat.Location)</span>
+                        </div>
+                        <div class="warehouse-stats">
+                            <span>@Localizer["Warehouses_TopWarehouses_Volume", stat.TotalVolume]</span>
+                            <span>
+                                @Localizer["Warehouses_TopWarehouses_Trips", stat.TripCount]
+                                ·
+                                @Localizer["Warehouses_TopWarehouses_LastUnloaded", stat.LastUnloadedAt.ToLocalTime().ToString("d", CultureInfo.CurrentUICulture)]
+                            </span>
+                        </div>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="empty">@Localizer["Warehouses_TopWarehouses_NoData"]</li>
+            }
+        </ul>
+    </article>
+</section>
+
+<section class="warehouses-table-section">
+    <article class="card table-card wide">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Warehouses_Table_Title"]</h2>
+                <p>@Localizer["Warehouses_Table_Subtitle"]</p>
+            </div>
+            <div class="table-actions">
+                <label class="search-control">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <input type="search" data-warehouses-search placeholder="@Localizer["Warehouses_Search_Placeholder"].Value" />
+                </label>
+                <button type="button" class="btn btn-ghost" data-warehouses-search-clear>@Localizer["Customers_Clear_Button"]</button>
+            </div>
+        </header>
+        <div class="table-wrapper">
+            <table id="warehousesTable" class="data-table" data-order-column="0">
+                <thead>
+                    <tr>
+                        <th>@Localizer["Warehouses_Table_Name"]</th>
+                        <th>@Localizer["Warehouses_Table_Location"]</th>
+                        <th>@Localizer["Warehouses_Table_Contact"]</th>
+                        <th class="text-end">@Localizer["Warehouses_Table_Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var warehouse in Model.Warehouses)
+                {
+                    <tr>
+                        <td>
+                            <div class="cell-strong">@warehouse.Name</div>
+                            @if (!string.IsNullOrWhiteSpace(warehouse.Notes))
+                            {
+                                <div class="cell-subtext">@warehouse.Notes</div>
+                            }
+                        </td>
+                        <td>@FormatLocation(warehouse.Location ?? CRM.Web.Pages.Warehouses.IndexModel.UnspecifiedLocationLabel)</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(warehouse.ContactPerson))
+                            {
+                                <div class="cell-strong">@warehouse.ContactPerson</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(warehouse.ContactPhone))
+                            {
+                                <div class="cell-subtext">@warehouse.ContactPhone</div>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-icon" asp-page="Details" asp-route-id="@warehouse.Id" title="@Localizer["Warehouses_Action_Details"]">
+                                <img src="~/images/detail.png" alt="@Localizer["Warehouses_Action_Details"]" width="18" height="18" loading="lazy" />
+                            </a>
+                            <a class="btn btn-icon" asp-page="Edit" asp-route-id="@warehouse.Id" title="@Localizer["Warehouses_Action_Edit"]">
+                                <img src="~/images/edit.png" alt="@Localizer["Warehouses_Action_Edit"]" width="18" height="18" loading="lazy" />
+                            </a>
+                            <a class="btn btn-icon" asp-page="Delete" asp-route-id="@warehouse.Id" title="@Localizer["Warehouses_Action_Delete"]">
+                                <img src="~/images/delete.png" alt="@Localizer["Warehouses_Action_Delete"]" width="18" height="18" loading="lazy" />
+                            </a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Warehouses.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="empty-state">@Localizer["Warehouses_Table_NoRecords"]</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
     <script>
-        (function () {
-            const canvas = document.getElementById('warehouseVolumeChart');
-            if (!canvas || typeof Chart === 'undefined') {
-                return;
+        window.warehousesDashboard = {
+            chart: {
+                labels: @Html.Raw(Model.MonthlyVolumeLabelsJson ?? "[]"),
+                data: @Html.Raw(Model.MonthlyVolumeDataJson ?? "[]"),
+                noDataMessage: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Warehouses_Chart_NoData"].Value))
             }
-
-            const labels = @Html.Raw(Model.MonthlyVolumeLabelsJson);
-            const data = @Html.Raw(Model.MonthlyVolumeDataJson);
-
-            if (!Array.isArray(labels) || labels.length === 0 || !Array.isArray(data) || data.length === 0 || data.every(v => v === 0)) {
-                const container = canvas.parentElement;
-                if (container) {
-                    container.innerHTML = '<div class="text-muted small">@Localizer["Warehouses_Chart_NoData"]</div>';
-                }
-                return;
-            }
-
-            new Chart(canvas, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        fill: true,
-                        tension: 0.35,
-                        borderColor: '#1f7a8c',
-                        backgroundColor: 'rgba(31, 122, 140, 0.18)',
-                        pointBackgroundColor: '#1f7a8c',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#0f2b3a' }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#0f2b3a',
-                                callback: function (value) {
-                                    return value.toLocaleString();
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return context.parsed.y.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + ' m³';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        })();
+        };
     </script>
+    <script src="~/js/warehouses/list.js" asp-append-version="true"></script>
 }

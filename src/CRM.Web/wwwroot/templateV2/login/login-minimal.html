@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CRM Login • Minimal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./login-minimal.css" />
+</head>
+<body class="login-minimal">
+    <div class="brand-ribbon brand-ribbon--one" data-depth="0.28" data-range="70" style="--ribbon-rotation:12deg"></div>
+    <div class="brand-ribbon brand-ribbon--two" data-depth="0.22" data-range="70" style="--ribbon-rotation:-16deg"></div>
+    <div class="brand-glow brand-glow--one" data-depth="0.16" data-range="45"></div>
+    <div class="brand-glow brand-glow--two" data-depth="0.12" data-range="45"></div>
+    <div class="brand-orbit" data-depth="0.18" data-range="50"></div>
+    <div class="brand-particles" data-depth="0.08" data-range="35"></div>
+    <div class="brand-spark brand-spark--one" data-depth="0.32" data-range="30"></div>
+    <div class="brand-spark brand-spark--two" data-depth="0.28" data-range="30"></div>
+    <div class="brand-spark brand-spark--three" data-depth="0.26" data-range="30"></div>
+    <div class="minimal-shell">
+        <div class="minimal-card">
+            <div class="minimal-logo">
+                <img src="../../images/gms_logo.png" alt="GMS Logo" />
+            </div>
+
+            <div class="minimal-heading">
+                <h2>GMS Portal'a Hoş Geldin</h2>
+                <p>Kurumsal kimlik doğrulaması ile devam et.</p>
+            </div>
+
+            <form id="minimal-login-form" novalidate>
+                <div class="form-field">
+                    <label for="email" class="form-label">E-posta</label>
+                    <div class="form-control" data-field="email">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 8l9 6 9-6" />
+                            <path d="M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
+                        </svg>
+                        <input class="form-input" id="email" type="email" placeholder="sen@firma.com" autocomplete="email" />
+                    </div>
+                    <div class="error-message" data-error="email">
+                        <span class="error-dot"></span>
+                        E-posta adresini gir.
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="password" class="form-label">Parola</label>
+                    <div class="form-control" data-field="password">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11z" />
+                            <path d="M18 21v-2a6 6 0 1 0-12 0v2" />
+                        </svg>
+                        <input class="form-input" id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+                        <button type="button" class="toggle-visibility" data-toggle="password">Göster</button>
+                    </div>
+                    <div class="error-message" data-error="password">
+                        <span class="error-dot"></span>
+                        Parola boş bırakılamaz.
+                    </div>
+                </div>
+
+                <div class="form-foot">
+                    <label>
+                        <input type="checkbox" style="margin-right:6px;" /> Beni hatırla
+                    </label>
+                    <a href="#">Parolamı unuttum</a>
+                </div>
+
+                <button type="submit" class="primary-button">
+                    GMS Portal'a giriş yap
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <path d="M17 8l4 4-4 4" />
+                        <path d="M3 12h18" />
+                    </svg>
+                </button>
+            </form>
+
+            <p class="minimal-note">
+                GMS Portal'a güvenli erişim için kullanıcı adı ve parola bilgilerinizi giriniz.
+            </p>
+        </div>
+    </div>
+
+    <script src="./login-minimal.js" defer></script>
+</body>
+</html>
+
+

@@ -1,77 +1,151 @@
 @page "{id:guid}"
 @model CRM.Web.Pages.Finance.PaymentPlans.DetailsModel
+@using System.Linq
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = "Ödeme Planı Detay";
+    Layout = "_DashboardLayout";
+    var plan = Model.Plan;
+    ViewData["Title"] = plan is null
+        ? Localizer["Finance_PaymentPlans_Details_Title"]
+        : $"{Localizer["Finance_PaymentPlans_Details_Title"]} · {plan.CustomerName}";
 }
 
-<div class="dashboard-section border-0 shadow-sm mb-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">@ViewData["Title"]</h2>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
+@section Styles {
+    <link rel="stylesheet" href="~/css/finance/payment-plans/details.css" asp-append-version="true" />
+}
+
+@if (plan is null)
+{
+    <section class="details-header">
+        <div class="details-card details-card--wide">
+            <h1>@Localizer["Finance_PaymentPlans_Details_Title"]</h1>
+            <p class="empty">@Localizer["Finance_PaymentPlans_Table_NoRecords"]</p>
+            <a class="btn btn-primary" asp-page="Index">@Localizer["Finance_PaymentPlans_Details_Back"]</a>
         </div>
-    </div>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3">Plan ID</dt>
-        <dd class="col-sm-9">@Model.Plan?.Id</dd>
+    </section>
+}
+else
+{
+    <section class="page-header details-header">
+        <div>
+            <h1>@Localizer["Finance_PaymentPlans_Details_Title"]</h1>
+            <p class="subtitle">@plan.CustomerName</p>
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["Finance_PaymentPlans_Details_Back"]</a>
+        </div>
+    </section>
 
-        <dt class="col-sm-3">Müşteri</dt>
-        <dd class="col-sm-9">@Model.Plan?.CustomerName</dd>
+    <section class="details-grid">
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Finance_PaymentPlans_Details_Overview_Title"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Finance_PaymentPlans_Field_PlanId"]</dt>
+                    <dd>@plan.Id</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Finance_PaymentPlans_Field_Customer"]</dt>
+                    <dd>@plan.CustomerName</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Finance_PaymentPlans_Field_Shipment"]</dt>
+                    <dd>@plan.ShipmentReference</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Finance_PaymentPlans_Field_Type"]</dt>
+                    <dd>@plan.PlanType</dd>
+                </div>
+            </dl>
+        </article>
 
-        <dt class="col-sm-3">Sevkiyat</dt>
-        <dd class="col-sm-9">@Model.Plan?.ShipmentReference</dd>
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Finance_PaymentPlans_Field_Total"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Finance_PaymentPlans_Field_Total"]</dt>
+                    <dd>@plan.TotalAmount.ToString("C2") @plan.Currency</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Finance_PaymentPlans_Field_StartDate"]</dt>
+                    <dd>@plan.StartDate.ToString("d")</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Finance_PaymentPlans_Field_Periodicity"]</dt>
+                    <dd>@plan.PeriodicityWeeks</dd>
+                </div>
+            </dl>
+        </article>
 
-        <dt class="col-sm-3">Plan Tipi</dt>
-        <dd class="col-sm-9">@Model.Plan?.PlanType</dd>
+        <article class="details-card details-card--wide">
+            <header>
+                <h2>@Localizer["Finance_PaymentPlans_Field_Notes"]</h2>
+            </header>
+            @if (string.IsNullOrWhiteSpace(plan.Notes))
+            {
+                <p class="empty">@Localizer["Customers_Details_Notes_Empty"]</p>
+            }
+            else
+            {
+                <p>@plan.Notes</p>
+            }
+        </article>
 
-        <dt class="col-sm-3">Toplam Tutar</dt>
-        <dd class="col-sm-9">@Model.Plan?.TotalAmount.ToString("C2") @Model.Plan?.Currency</dd>
-
-        <dt class="col-sm-3">Başlangıç Tarihi</dt>
-        <dd class="col-sm-9">@Model.Plan?.StartDate.ToString("d")</dd>
-
-        <dt class="col-sm-3">Periyot (Hafta)</dt>
-        <dd class="col-sm-9">@Model.Plan?.PeriodicityWeeks</dd>
-
-        <dt class="col-sm-3">Notlar</dt>
-        <dd class="col-sm-9">@Model.Plan?.Notes</dd>
-    </dl>
-</div>
-
-<div class="dashboard-section border-0 shadow-sm">
-    <h3 class="h5 mb-3">Taksitler</h3>
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Vade Tarihi</th>
-                <th>Tutar</th>
-                <th>Ödenen</th>
-                <th>Ödeme Tarihi</th>
-                <th>Not</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var installment in Model.Plan?.Installments ?? Enumerable.Empty<CRM.Web.Pages.Finance.PaymentPlans.DetailsModel.PaymentInstallmentView>())
-        {
-            <tr>
-                <td>@installment.InstallmentNumber</td>
-                <td>@installment.DueDate.ToString("d")</td>
-                <td>@installment.Amount.ToString("C2") @installment.Currency</td>
-                <td>@(installment.PaidAmount.HasValue ? $"{installment.PaidAmount.Value.ToString("C2")} {installment.Currency}" : "-")</td>
-                <td>@(installment.PaidAt?.ToString("g") ?? "-")</td>
-                <td>@installment.Notes</td>
-            </tr>
-        }
-        @if (!(Model.Plan?.Installments.Any() ?? false))
-        {
-            <tr>
-                <td colspan="6" class="text-center text-muted">Taksit kaydı bulunmuyor.</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+        <article class="details-card details-card--wide">
+            <header>
+                <h2>@Localizer["Finance_PaymentPlans_Installments_Title"]</h2>
+            </header>
+            <div class="table-wrapper">
+                <table class="installments-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["Finance_PaymentPlans_Installments_Number"]</th>
+                            <th>@Localizer["Finance_PaymentPlans_Installments_DueDate"]</th>
+                            <th>@Localizer["Finance_PaymentPlans_Installments_Amount"]</th>
+                            <th>@Localizer["Finance_PaymentPlans_Installments_Paid"]</th>
+                            <th>@Localizer["Finance_PaymentPlans_Installments_PaidAt"]</th>
+                            <th>@Localizer["Finance_PaymentPlans_Installments_Notes"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var installment in plan.Installments ?? Enumerable.Empty<CRM.Web.Pages.Finance.PaymentPlans.DetailsModel.PaymentInstallmentView>())
+                    {
+                        <tr>
+                            <td>@installment.InstallmentNumber</td>
+                            <td>@installment.DueDate.ToString("d")</td>
+                            <td>@installment.Amount.ToString("C2") @installment.Currency</td>
+                            <td>
+                                @if (installment.PaidAmount.HasValue)
+                                {
+                                    <span class="status-badge positive">
+                                        @installment.PaidAmount.Value.ToString("C2") @installment.Currency
+                                    </span>
+                                }
+                                else
+                                {
+                                    @Localizer["Finance_Cashbox_Value_None"]
+                                }
+                            </td>
+                            <td>@(installment.PaidAt?.ToString("g") ?? Localizer["Finance_Cashbox_Value_None"].Value)</td>
+                            <td>@(string.IsNullOrWhiteSpace(installment.Notes) ? "-" : installment.Notes)</td>
+                        </tr>
+                    }
+                    @if (!(plan.Installments?.Any() ?? false))
+                    {
+                        <tr>
+                            <td colspan="6" class="empty">@Localizer["Finance_PaymentPlans_Installments_Empty"]</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+}
 

@@ -19,6 +19,9 @@ $(function () {
 
     $('table[data-crm-datatable="true"]').each(function () {
         const $table = $(this);
+        if ($.fn.dataTable.isDataTable(this)) {
+            return;
+        }
         const disableLastColumn = $table.data('disable-last-column') === true || $table.data('disable-last-column') === 'true';
         const responsiveRequested = $table.data('responsive');
         const responsive =

@@ -1,137 +1,234 @@
 @page "{id:guid}"
 @model CRM.Web.Pages.Customers.DetailsModel
+@using Microsoft.Extensions.Localization
+@using System.Linq
+@inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = "Müşteri Detay";
+    Layout = "_DashboardLayout";
+    if (Model.Customer is null)
+    {
+        ViewData["Title"] = Localizer["Customers_Details_NotFound_Title"];
+    }
+    else
+    {
+        ViewData["Title"] = $"{Localizer["Customers_Details_Title"]} · {Model.Customer.Name}";
+    }
 }
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="dashboard-section border-0 shadow-sm">
-            <h2 class="mb-3">@Model.Customer?.Name</h2>
-            <dl class="row">
-                <dt class="col-sm-4">Ticari Unvan</dt>
-                <dd class="col-sm-8">@Model.Customer?.LegalName</dd>
-                <dt class="col-sm-4">Vergi No</dt>
-                <dd class="col-sm-8">@Model.Customer?.TaxNumber</dd>
-                <dt class="col-sm-4">Segment</dt>
-                <dd class="col-sm-8">@Model.Customer?.Segment</dd>
-                <dt class="col-sm-4">İletişim</dt>
-                <dd class="col-sm-8">
-                    <div>@Model.Customer?.Email</div>
-                    <div>@Model.Customer?.Phone</div>
-                </dd>
-                <dt class="col-sm-4">Adres</dt>
-                <dd class="col-sm-8">@Model.Customer?.Address</dd>
-                <dt class="col-sm-4">Notlar</dt>
-                <dd class="col-sm-8">@Model.Customer?.Notes</dd>
-            </dl>
-            <div class="d-flex gap-2">
-                <a class="btn btn-outline-primary" asp-page="Edit" asp-route-id="@Model.Customer?.Id">Düzenle</a>
-                <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
+@section Styles {
+    <link rel="stylesheet" href="~/css/customers/details.css" asp-append-version="true" />
+}
+
+@if (Model.Customer is null)
+{
+    <section class="details-empty">
+        <article class="details-card">
+            <h1>@Localizer["Customers_Details_NotFound_Title"]</h1>
+            <p>@Localizer["Customers_Details_NotFound_Message"]</p>
+            <div class="details-actions">
+                <a class="btn btn-primary" asp-page="Index">@Localizer["Customers_Action_Back"]</a>
             </div>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="dashboard-section border-0 shadow-sm">
-            <h3 class="h5 mb-3">İrtibat Kişileri</h3>
-            <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                        <th>Ad</th>
-                        <th>Ünvan</th>
-                        <th>E-posta</th>
-                        <th>Telefon</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var contact in Model.Contacts)
-                {
-                    <tr>
-                        <td>@contact.FullName</td>
-                        <td>@contact.Position</td>
-                        <td>@contact.Email</td>
-                        <td>@contact.Phone</td>
-                    </tr>
-                }
-                @if (!Model.Contacts.Any())
-                {
-                    <tr>
-                        <td colspan="4" class="text-center text-muted">İrtibat kaydı bulunmuyor.</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+        </article>
+    </section>
+}
+else
+{
+    var customer = Model.Customer;
 
-<div class="row g-4 mt-1">
-    <div class="col-lg-6">
-        <div class="dashboard-section border-0 shadow-sm">
-            <h3 class="h5 mb-3">Yeni Etkileşim Kaydı</h3>
-            <form method="post">
+    <section class="page-header details-header">
+        <div>
+            <h1>@customer.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(customer.Segment))
+            {
+                <p class="subtitle">@customer.Segment</p>
+            }
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["Customers_Action_Back"]</a>
+            <a class="btn btn-primary" asp-page="Edit" asp-route-id="@customer.Id">@Localizer["Customers_Action_Edit"]</a>
+        </div>
+    </section>
+
+    <section class="details-grid">
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Customers_Details_Overview_Title"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Customers_Field_Name"]</dt>
+                    <dd>@customer.Name</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Customers_Field_LegalName"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(customer.LegalName) ? "-" : customer.LegalName)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Customers_Field_TaxNumber"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(customer.TaxNumber) ? "-" : customer.TaxNumber)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Customers_Field_Address"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(customer.Address) ? "-" : customer.Address)</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Customers_Details_Contact_Title"]</h2>
+            </header>
+            @{ var primaryContact = Model.Contacts.FirstOrDefault(); }
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Customers_Field_Email"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(customer.Email) ? "-" : customer.Email)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Customers_Field_Phone"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(customer.Phone) ? "-" : customer.Phone)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Customers_Field_PrimaryContactName"]</dt>
+                    <dd>@(primaryContact is null || string.IsNullOrWhiteSpace(primaryContact.FullName) ? "-" : primaryContact.FullName)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Customers_Field_PrimaryContactEmail"]</dt>
+                    <dd>@(primaryContact is null || string.IsNullOrWhiteSpace(primaryContact.Email) ? "-" : primaryContact.Email)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Customers_Field_PrimaryContactPhone"]</dt>
+                    <dd>@(primaryContact is null || string.IsNullOrWhiteSpace(primaryContact.Phone) ? "-" : primaryContact.Phone)</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="details-card details-card--wide">
+            <header>
+                <h2>@Localizer["Customers_Details_Notes_Title"]</h2>
+            </header>
+            @if (string.IsNullOrWhiteSpace(customer.Notes))
+            {
+                <p class="empty">@Localizer["Customers_Details_Notes_Empty"]</p>
+            }
+            else
+            {
+                <p>@customer.Notes</p>
+            }
+        </article>
+
+        <article class="details-card table-card">
+            <header>
+                <h2>@Localizer["Customers_Contacts_Title"]</h2>
+            </header>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["Customers_Field_Name"]</th>
+                            <th>@Localizer["Customers_Field_PrimaryContactPhone"]</th>
+                            <th>@Localizer["Customers_Field_PrimaryContactEmail"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var contact in Model.Contacts)
+                    {
+                        <tr>
+                            <td>@contact.FullName</td>
+                            <td>@(string.IsNullOrWhiteSpace(contact.Phone) ? "-" : contact.Phone)</td>
+                            <td>@(string.IsNullOrWhiteSpace(contact.Email) ? "-" : contact.Email)</td>
+                        </tr>
+                    }
+                    @if (!Model.Contacts.Any())
+                    {
+                        <tr>
+                            <td colspan="3" class="empty">@Localizer["Customers_Contacts_Empty"]</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="details-card form-card">
+            <header>
+                <h2>@Localizer["Customers_Interactions_Create_Title"]</h2>
+            </header>
+            <form method="post" class="inline-form">
                 <input type="hidden" asp-for="InteractionForm.CustomerId" />
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-                <div class="mb-3">
-                    <label asp-for="InteractionForm.InteractionDate" class="form-label"></label>
-                    <input asp-for="InteractionForm.InteractionDate" class="form-control" type="datetime-local" />
+                <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+                <div class="form-grid">
+                    <div class="input-field">
+                        <label asp-for="InteractionForm.InteractionDate">@Localizer["Customers_Interactions_Field_Date"]</label>
+                        <input asp-for="InteractionForm.InteractionDate" class="input-control" type="datetime-local" />
+                        <span asp-validation-for="InteractionForm.InteractionDate" class="input-error"></span>
+                    </div>
+                    <div class="input-field">
+                        <label asp-for="InteractionForm.InteractionType">@Localizer["Customers_Interactions_Field_Type"]</label>
+                        <input asp-for="InteractionForm.InteractionType" class="input-control" />
+                        <span asp-validation-for="InteractionForm.InteractionType" class="input-error"></span>
+                    </div>
+                    <div class="input-field">
+                        <label asp-for="InteractionForm.Subject">@Localizer["Customers_Interactions_Field_Subject"]</label>
+                        <input asp-for="InteractionForm.Subject" class="input-control" />
+                        <span asp-validation-for="InteractionForm.Subject" class="input-error"></span>
+                    </div>
+                    <div class="input-field full">
+                        <label asp-for="InteractionForm.Notes">@Localizer["Customers_Interactions_Field_Notes"]</label>
+                        <textarea asp-for="InteractionForm.Notes" class="input-control textarea" rows="3"></textarea>
+                        <span asp-validation-for="InteractionForm.Notes" class="input-error"></span>
+                    </div>
+                    <div class="input-field">
+                        <label asp-for="InteractionForm.RecordedBy">@Localizer["Customers_Interactions_Field_RecordedBy"]</label>
+                        <input asp-for="InteractionForm.RecordedBy" class="input-control" />
+                        <span asp-validation-for="InteractionForm.RecordedBy" class="input-error"></span>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label asp-for="InteractionForm.InteractionType" class="form-label"></label>
-                    <input asp-for="InteractionForm.InteractionType" class="form-control" />
-                </div>
-                <div class="mb-3">
-                    <label asp-for="InteractionForm.Subject" class="form-label"></label>
-                    <input asp-for="InteractionForm.Subject" class="form-control" />
-                </div>
-                <div class="mb-3">
-                    <label asp-for="InteractionForm.Notes" class="form-label"></label>
-                    <textarea asp-for="InteractionForm.Notes" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="InteractionForm.RecordedBy" class="form-label"></label>
-                    <input asp-for="InteractionForm.RecordedBy" class="form-control" />
-                </div>
-                <button type="submit" class="btn btn-brand">Kaydı Ekle</button>
+                <button type="submit" class="btn btn-primary">@Localizer["Customers_Interactions_Form_Submit"]</button>
             </form>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="dashboard-section border-0 shadow-sm">
-            <h3 class="h5 mb-3">Etkileşim Kayıtları</h3>
-            <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                        <th>Tarih</th>
-                        <th>Tip</th>
-                        <th>Konu</th>
-                        <th>Notlar</th>
-                        <th>Kayıt Eden</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var interaction in Model.Interactions)
-                {
-                    <tr>
-                        <td>@interaction.InteractionDate.ToString("g")</td>
-                        <td>@interaction.InteractionType</td>
-                        <td>@interaction.Subject</td>
-                        <td>@interaction.Notes</td>
-                        <td>@interaction.RecordedBy</td>
-                    </tr>
-                }
-                @if (!Model.Interactions.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">Etkileşim kaydı bulunmuyor.</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+        </article>
 
-<partial name="_ValidationScriptsPartial" />
+        <article class="details-card table-card details-card--wide">
+            <header>
+                <h2>@Localizer["Customers_Interactions_List_Title"]</h2>
+            </header>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Localizer["Customers_Interactions_Field_Date"]</th>
+                            <th>@Localizer["Customers_Interactions_Field_Type"]</th>
+                            <th>@Localizer["Customers_Interactions_Field_Subject"]</th>
+                            <th>@Localizer["Customers_Interactions_Field_Notes"]</th>
+                            <th>@Localizer["Customers_Interactions_Field_RecordedBy"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var interaction in Model.Interactions)
+                    {
+                        <tr>
+                            <td>@interaction.InteractionDate.ToLocalTime().ToString("g")</td>
+                            <td>@interaction.InteractionType</td>
+                            <td>@interaction.Subject</td>
+                            <td>@interaction.Notes</td>
+                            <td>@interaction.RecordedBy</td>
+                        </tr>
+                    }
+                    @if (!Model.Interactions.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="empty">@Localizer["Customers_Interactions_Empty"]</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
 

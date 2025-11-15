@@ -1,64 +1,101 @@
 @page
 @model CRM.Web.Pages.Finance.Cashbox.CreateModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = "Yeni Kasa Hareketi";
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Finance_Cashbox_Form_Header_Create"];
 }
 
-<div class="col-lg-6">
-    <div class="dashboard-section border-0 shadow-sm">
-        <h2 class="mb-3">@ViewData["Title"]</h2>
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-            <div class="mb-3">
-                <label asp-for="Input.TransactionDate" class="form-label"></label>
-                <input asp-for="Input.TransactionDate" class="form-control" type="datetime-local" />
-                <span asp-validation-for="Input.TransactionDate" class="text-danger small"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Input.TransactionType" class="form-label"></label>
-                <select asp-for="Input.TransactionType" class="form-select" asp-items="Model.TransactionTypeOptions"></select>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label asp-for="Input.Amount" class="form-label"></label>
-                    <input asp-for="Input.Amount" class="form-control" />
-                    <span asp-validation-for="Input.Amount" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label asp-for="Input.Currency" class="form-label"></label>
-                    <input asp-for="Input.Currency" class="form-control" />
-                </div>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Input.Category" class="form-label"></label>
-                <input asp-for="Input.Category" class="form-control" />
-            </div>
-            <div class="mb-3">
-                <label asp-for="Input.Description" class="form-label"></label>
-                <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label asp-for="Input.RelatedCustomerId" class="form-label"></label>
-                    <select asp-for="Input.RelatedCustomerId" class="form-select" asp-items="Model.CustomerOptions">
-                        <option value="">Seçiniz...</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label asp-for="Input.RelatedShipmentId" class="form-label"></label>
-                    <select asp-for="Input.RelatedShipmentId" class="form-select" asp-items="Model.ShipmentOptions">
-                        <option value="">Seçiniz...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <a class="btn btn-outline-secondary" asp-page="Index">İptal</a>
-                <button type="submit" class="btn btn-brand">Kaydet</button>
-            </div>
-        </form>
-    </div>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/finance/cashbox/form.css" asp-append-version="true" />
+}
 
-<partial name="_ValidationScriptsPartial" />
+<section class="page-header form-header">
+    <div>
+        <h1>@Localizer["Finance_Cashbox_Form_Header_Create"]</h1>
+        <p class="subtitle">@Localizer["Finance_Cashbox_Form_Create_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Finance_Cashbox_Form_Cancel"]</a>
+    </div>
+</section>
+
+<form method="post" class="form-shell" novalidate>
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+    <div class="form-sections">
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Finance_Cashbox_Form_Transaction_Title"]</h2>
+                <p>@Localizer["Finance_Cashbox_Form_Transaction_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Input.TransactionDate"></label>
+                    <input asp-for="Input.TransactionDate" class="input-control" type="datetime-local" />
+                    <span asp-validation-for="Input.TransactionDate" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Input.TransactionType"></label>
+                    <select asp-for="Input.TransactionType" class="input-control" asp-items="Model.TransactionTypeOptions"></select>
+                    <span asp-validation-for="Input.TransactionType" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Input.Amount"></label>
+                    <input asp-for="Input.Amount" class="input-control" />
+                    <span asp-validation-for="Input.Amount" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Input.Currency"></label>
+                    <input asp-for="Input.Currency" class="input-control" />
+                    <span asp-validation-for="Input.Currency" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Input.Category"></label>
+                    <input asp-for="Input.Category" class="input-control" />
+                    <span asp-validation-for="Input.Category" class="input-error"></span>
+                </div>
+                <div class="input-field full">
+                    <label asp-for="Input.Description"></label>
+                    <textarea asp-for="Input.Description" class="input-control textarea" rows="3"></textarea>
+                    <span asp-validation-for="Input.Description" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Finance_Cashbox_Form_Association_Title"]</h2>
+                <p>@Localizer["Finance_Cashbox_Form_Association_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Input.RelatedCustomerId"></label>
+                    <select asp-for="Input.RelatedCustomerId" class="input-control" asp-items="Model.CustomerOptions">
+                        <option value="">@Localizer["Finance_Cashbox_Form_SelectCustomer"]</option>
+                    </select>
+                    <span asp-validation-for="Input.RelatedCustomerId" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Input.RelatedShipmentId"></label>
+                    <select asp-for="Input.RelatedShipmentId" class="input-control" asp-items="Model.ShipmentOptions">
+                        <option value="">@Localizer["Finance_Cashbox_Form_SelectShipment"]</option>
+                    </select>
+                    <span asp-validation-for="Input.RelatedShipmentId" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="form-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Finance_Cashbox_Form_Cancel"]</a>
+        <button type="submit" class="btn btn-primary">@Localizer["Finance_Cashbox_Form_Submit"]</button>
+    </footer>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
 

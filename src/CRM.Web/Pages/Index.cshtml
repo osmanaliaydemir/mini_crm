@@ -1,5 +1,6 @@
 ﻿@page
 @model IndexModel
+@using System.Collections.Generic
 @using System.Globalization
 @using System.Text.Json
 @using CRM.Web
@@ -7,397 +8,277 @@
 @inject IStringLocalizer<SharedResource> Localizer
 
 @{
+    Layout = "_DashboardLayout";
     ViewData["Title"] = Localizer["Dashboard_Title"];
     var currencyCulture = CultureInfo.CurrentCulture;
     var numberCulture = CultureInfo.CurrentCulture;
+
     string FormatCurrency(decimal value) => value.ToString("C0", currencyCulture);
+    string FormatNumber(int value) => value.ToString("N0", numberCulture);
+    string FormatPercent(double value) => value.ToString("P0", numberCulture);
+
+    var totalShipments = Model.Summary.TotalShipments;
+    var activeRatio = totalShipments > 0 ? (double)Model.Summary.ActiveShipments / totalShipments : 0d;
+    var customsRatio = totalShipments > 0 ? (double)Model.Summary.ShipmentsInCustoms / totalShipments : 0d;
+    var deliveredRatio = totalShipments > 0 ? (double)Model.Summary.DeliveredLast30Days / Math.Max(1, totalShipments) : 0d;
+
+    var supplierLabels = Model.SupplierCountryBreakdown
+        .Select(p => p.Label.Equals(IndexModel.SupplierUnspecifiedToken, StringComparison.OrdinalIgnoreCase)
+            ? Localizer["Dashboard_Unspecified"].Value
+            : p.Label)
+        .ToArray();
+    var supplierValues = Model.SupplierCountryBreakdown.Select(p => p.Value).ToArray();
+
+    var shipmentStatusLabels = Model.ShipmentStatusSummaries
+        .Select(s => Localizer[$"Shipments_Status_{s.Status}"].Value)
+        .ToArray();
+    var shipmentStatusData = Model.ShipmentStatusSummaries.Select(s => s.Count).ToArray();
+    var shipmentStatusNarration = string.Join(", ",
+        Model.ShipmentStatusSummaries.Select(s => string.Concat(Localizer[$"Shipments_Status_{s.Status}"], ": ", s.Count)));
+
+    var supplierNarration = string.Join(", ",
+        Model.SupplierCountryBreakdown.Select(p =>
+            string.Concat(
+                p.Label.Equals(IndexModel.SupplierUnspecifiedToken, StringComparison.OrdinalIgnoreCase)
+                    ? Localizer["Dashboard_Unspecified"].Value
+                    : p.Label,
+                ": ",
+                p.Value)));
+
+    var cashFlowPoints = Model.CashFlowTrend
+        .Select(p => new
+        {
+            Label = p.PeriodStart.ToString("MMM yyyy", CultureInfo.CurrentCulture),
+            Income = p.Value > 0 ? Math.Round((double)p.Value, 2) : 0d,
+            Expense = p.Value < 0 ? Math.Round(Math.Abs((double)p.Value), 2) : 0d
+        })
+        .ToArray();
+
+    var cashFlowLabels = cashFlowPoints.Select(p => p.Label).ToArray();
+    var cashFlowIncome = cashFlowPoints.Select(p => p.Income).ToArray();
+    var cashFlowExpense = cashFlowPoints.Select(p => p.Expense).ToArray();
+
+    var shipmentTrendLabels = Model.ShipmentMonthlyTrend
+        .Select(p => p.PeriodStart.ToString("MMM yyyy", CultureInfo.CurrentCulture))
+        .ToArray();
+    var shipmentTrendValues = Model.ShipmentMonthlyTrend
+        .Select(p => Math.Round((double)p.Value, 2))
+        .ToArray();
+
+    var statusItems = new[]
+    {
+        new { label = Localizer["Dashboard_Summary_ActiveShipments"].Value, value = FormatNumber(Model.Summary.ActiveShipments), state = "good" },
+        new { label = Localizer["Dashboard_Summary_CustomsShipments"].Value, value = FormatNumber(Model.Summary.ShipmentsInCustoms), state = customsRatio > 0.12 ? "warn" : "good" },
+        new { label = Localizer["Dashboard_Summary_Delivered30"].Value, value = FormatNumber(Model.Summary.DeliveredLast30Days), state = "good" }
+    };
+
+    var baseKpis = new
+    {
+        kpis = new
+        {
+            activeShipments = new { value = FormatNumber(Model.Summary.ActiveShipments), trendLabel = FormatPercent(activeRatio), tone = activeRatio >= 0.6 ? "positive" : "neutral", meta = "Son 30 gün" },
+            customsShipments = new { value = FormatNumber(Model.Summary.ShipmentsInCustoms), trendLabel = FormatPercent(customsRatio), tone = customsRatio > 0.15 ? "warning" : "neutral", meta = "Takip edilen dosya" },
+            cashNet = new { value = FormatCurrency(Model.Summary.CashNetLast30), trendLabel = "+0%", tone = "neutral", meta = "Net nakit" },
+            satisfaction = new { value = $"{FormatNumber(Model.Summary.CustomerInteractionsLast30)} temas", trendLabel = FormatPercent(deliveredRatio), tone = "neutral", meta = "Müşteri Etkileşimi" }
+        }
+    };
+
+    List<object> BuildActivities(string rangeKey)
+    {
+        if (!Model.ActivityFeed.TryGetValue(rangeKey, out var events) || events.Count == 0)
+        {
+            return new List<object>();
+        }
+
+        return events.Select(ev => new
+        {
+            time = ev.OccurredAt.ToLocalTime().ToString("HH:mm"),
+            title = string.Format(Localizer["Dashboard_Activity_ShipmentTitle"].Value, ev.ReferenceNumber),
+            detail = $"{Localizer[$"Shipments_Status_{ev.Status}"]} · {(string.IsNullOrWhiteSpace(ev.CustomerDisplay) ? Localizer["Dashboard_Unspecified"].Value : ev.CustomerDisplay)}",
+            type = "shipment",
+            typeLabel = Localizer["Dashboard_ActivityType_Shipment"].Value
+        }).Cast<object>().ToList();
+    }
+
+    object BuildRangePayload(string rangeKey) => new
+    {
+        baseKpis.kpis,
+        shipmentStatus = new { labels = shipmentStatusLabels, values = shipmentStatusData },
+        cashFlow = new { labels = cashFlowLabels, income = cashFlowIncome, expense = cashFlowExpense },
+        riskShipments = Array.Empty<object>(),
+        activities = BuildActivities(rangeKey)
+    };
+
+    var serializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+    var dashboardPayload = new
+    {
+        status = statusItems,
+        tasks = Array.Empty<object>(),
+        suppliers = new { labels = supplierLabels, values = supplierValues },
+        ranges = new Dictionary<string, object>
+        {
+            ["7d"] = BuildRangePayload("7d"),
+            ["30d"] = BuildRangePayload("30d"),
+            ["90d"] = BuildRangePayload("90d")
+        },
+        shipmentTrend = new { labels = shipmentTrendLabels, values = shipmentTrendValues }
+    };
 }
 
-<section class="row g-4 mb-1">
-    <div class="col-12">
-        <div class="dashboard-section">
-            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-                <div>
-                    <h1 class="h3 mb-1">@Localizer["Dashboard_Title"]</h1>
-                    <p class="text-secondary mb-0">@Localizer["Dashboard_Intro"]</p>
-                </div>
-               @*  <div class="d-flex flex-wrap gap-2">
-                    <a asp-page="/Shipments/Index" class="btn btn-outline-primary">@Localizer["Dashboard_Link_ViewShipments"]</a>
-                    <a asp-page="/Suppliers/Index" class="btn btn-outline-primary">@Localizer["Dashboard_Link_ViewSuppliers"]</a>
-                    <a asp-page="/Warehouses/Index" class="btn btn-outline-primary">@Localizer["Dashboard_Link_ViewWarehouses"]</a>
-                    <a asp-page="/Customers/Index" class="btn btn-outline-primary">@Localizer["Dashboard_Link_ViewCustomers"]</a>
-                    <a asp-page="/Finance/PaymentPlans/Index" class="btn btn-outline-primary">@Localizer["Dashboard_Link_ViewPayments"]</a>
-                    <a asp-page="/Finance/Cashbox/Index" class="btn btn-outline-primary">@Localizer["Dashboard_Link_ViewCashbox"]</a>
-                </div> *@
-            </div>
-        </div>
+<section class="page-header">
+    <div>
+        <h1>@Localizer["Dashboard_Title"]</h1>
+        <p class="subtitle">@Localizer["Dashboard_Intro"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="/Analytics/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
+        <a class="btn btn-primary" asp-page="/Shipments/Create">Yeni Sevkiyat</a>
     </div>
 </section>
-
-<section class="row g-3 mb-4">
-    <div class="col-xxl-2 col-md-4 col-sm-6">
-        <div class="dashboard-section h-100 position-relative">
-            <span class="text-uppercase text-secondary small">@Localizer["Dashboard_Summary_ActiveShipments"]</span>
-            <div class="display-6 fw-semibold mt-2">@Model.Summary.ActiveShipments</div>
-            <small class="text-secondary">@Localizer["Shipments_Status_Departed"]</small>
-            <a asp-page="/Shipments/Index" class="stretched-link" aria-label="@Localizer["Dashboard_Link_ViewShipments"]"></a>
+<section class="kpi-grid">
+    <article class="kpi-card" data-kpi="activeShipments">
+        <div class="kpi-top">
+            <span class="kpi-label">@Localizer["Dashboard_Summary_ActiveShipments"]</span>
+            <span class="trend-chip positive" data-kpi-trend>
+                <span data-kpi-trend-value>@FormatPercent(activeRatio)</span>
+            </span>
         </div>
-    </div>
-    <div class="col-xxl-2 col-md-4 col-sm-6">
-        <div class="dashboard-section h-100 position-relative">
-            <span class="text-uppercase text-secondary small">@Localizer["Dashboard_Summary_CustomsShipments"]</span>
-            <div class="display-6 fw-semibold mt-2">@Model.Summary.ShipmentsInCustoms</div>
-            <small class="text-secondary">@Localizer["Shipments_Status_InCustoms"]</small>
-            <a asp-page="/Shipments/Index" class="stretched-link" aria-label="@Localizer["Dashboard_Link_ViewShipments"]"></a>
+        <div class="kpi-value" data-kpi-value>@FormatNumber(Model.Summary.ActiveShipments)</div>
+        <span class="kpi-meta" data-kpi-meta>Son 30 gün</span>
+    </article>
+    <article class="kpi-card" data-kpi="customsShipments">
+        <div class="kpi-top">
+            <span class="kpi-label">@Localizer["Dashboard_Summary_CustomsShipments"]</span>
+            <span class="trend-chip warning" data-kpi-trend>
+                <span data-kpi-trend-value>@FormatPercent(customsRatio)</span>
+            </span>
         </div>
-    </div>
-    <div class="col-xxl-2 col-md-4 col-sm-6">
-        <div class="dashboard-section h-100 position-relative">
-            <span class="text-uppercase text-secondary small">@Localizer["Dashboard_Summary_Delivered30"]</span>
-            <div class="display-6 fw-semibold mt-2">@Model.Summary.DeliveredLast30Days</div>
-            <small class="text-secondary">@Localizer["Shipments_Status_DeliveredToDealer"]</small>
-            <a asp-page="/Shipments/Index" class="stretched-link" aria-label="@Localizer["Dashboard_Link_ViewShipments"]"></a>
+        <div class="kpi-value" data-kpi-value>@FormatNumber(Model.Summary.ShipmentsInCustoms)</div>
+        <span class="kpi-meta" data-kpi-meta>Takip edilen dosya</span>
+    </article>
+    <article class="kpi-card" data-kpi="cashNet">
+        <div class="kpi-top">
+            <span class="kpi-label">@Localizer["Dashboard_Summary_CashNet30"]</span>
+            <span class="trend-chip neutral" data-kpi-trend>
+                <span data-kpi-trend-value>+0%</span>
+            </span>
         </div>
-    </div>
-    <div class="col-xxl-2 col-md-4 col-sm-6">
-        <div class="dashboard-section h-100 position-relative">
-            <span class="text-uppercase text-secondary small">@Localizer["Dashboard_Summary_TotalSuppliers"]</span>
-            <div class="display-6 fw-semibold mt-2">@Model.Summary.TotalSuppliers</div>
-            <small class="text-secondary">@Localizer["Dashboard_Chart_SupplierCountries"]</small>
-            <a asp-page="/Suppliers/Index" class="stretched-link" aria-label="@Localizer["Dashboard_Link_ViewSuppliers"]"></a>
+        <div class="kpi-value" data-kpi-value>@FormatCurrency(Model.Summary.CashNetLast30)</div>
+        <span class="kpi-meta" data-kpi-meta>Net nakit</span>
+    </article>
+    <article class="kpi-card" data-kpi="satisfaction">
+        <div class="kpi-top">
+            <span class="kpi-label">@Localizer["Dashboard_Section_CRM"]</span>
+            <span class="trend-chip neutral" data-kpi-trend>
+                <span data-kpi-trend-value>@FormatPercent(deliveredRatio)</span>
+            </span>
         </div>
-    </div>
-    <div class="col-xxl-2 col-md-4 col-sm-6">
-        <div class="dashboard-section h-100 position-relative">
-            <span class="text-uppercase text-secondary small">@Localizer["Dashboard_Summary_TotalCustomers"]</span>
-            <div class="display-6 fw-semibold mt-2">@Model.Summary.TotalCustomers</div>
-            <small class="text-secondary">@Localizer["Dashboard_Section_CRM"]</small>
-            <a asp-page="/Customers/Index" class="stretched-link" aria-label="@Localizer["Dashboard_Link_ViewCustomers"]"></a>
-        </div>
-    </div>
-    <div class="col-xxl-2 col-md-4 col-sm-6">
-        <div class="dashboard-section h-100 position-relative">
-            <span class="text-uppercase text-secondary small">@Localizer["Dashboard_Summary_CashNet30"]</span>
-            <div class="display-6 fw-semibold mt-2">@FormatCurrency(Model.Summary.CashNetLast30)</div>
-            <small class="text-secondary">@Localizer["Dashboard_Section_Finance"]</small>
-            <a asp-page="/Finance/Cashbox/Index" class="stretched-link" aria-label="@Localizer["Dashboard_Link_ViewCashbox"]"></a>
-        </div>
-    </div>
+        <div class="kpi-value" data-kpi-value>@FormatNumber(Model.Summary.CustomerInteractionsLast30)</div>
+        <span class="kpi-meta" data-kpi-meta>Müşteri Etkileşimi</span>
+    </article>
 </section>
 
-<section class="row g-4 mb-4">
-    <div class="col-xl-5">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Dashboard_Section_Shipments"]</h5>
-                        <p class="card-subtitle small mb-0">@Localizer["Dashboard_Chart_ShipmentStatus"]</p>
-                    </div>
-                    <a asp-page="/Shipments/Index" class="btn btn-sm btn-outline-primary">@Localizer["Dashboard_Link_ViewShipments"]</a>
-                </div>
-                <div class="chart-wrapper" id="shipmentStatusChartContainer">
-                    <canvas id="shipmentStatusChart"></canvas>
-                </div>
+<section class="insight-grid">
+    <article class="card chart-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Dashboard_Section_Shipments"]</h2>
+                <p>@Localizer["Dashboard_Chart_ShipmentStatus"]</p>
             </div>
-        </div>
-    </div>
-    <div class="col-xl-7">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Dashboard_Section_Shipments"]</h5>
-                        <p class="card-subtitle small mb-0">@Localizer["Dashboard_Chart_ShipmentTrend"]</p>
-                    </div>
-                </div>
-                <div class="chart-wrapper" id="shipmentTrendChartContainer">
-                    <canvas id="shipmentTrendChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+            <select id="shipmentStatusRange" aria-label="Sevkiyat aralığı">
+                <option value="7d">Son 7 gün</option>
+                <option value="30d" selected>Son 30 gün</option>
+                <option value="90d">Son 90 gün</option>
+            </select>
+        </header>
+        <canvas id="shipmentStatusChart" role="img" aria-describedby="shipmentStatusDesc"></canvas>
+        <p id="shipmentStatusDesc" class="sr-only">@shipmentStatusNarration</p>
+    </article>
 
-<section class="row g-4 mb-4">
-    <div class="col-xl-5">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Dashboard_Section_Operations"]</h5>
-                        <p class="card-subtitle small mb-0">@Localizer["Dashboard_Chart_SupplierCountries"]</p>
-                    </div>
-                    <a asp-page="/Suppliers/Index" class="btn btn-sm btn-outline-primary">@Localizer["Dashboard_Link_ViewSuppliers"]</a>
-                </div>
-                <div class="chart-wrapper" id="supplierCountryChartContainer">
-                    <canvas id="supplierCountryChart"></canvas>
-                </div>
+    <article class="card chart-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Dashboard_Chart_SupplierCountries"]</h2>
+                <p>Aktif sipariş verilen ülkeler</p>
             </div>
-        </div>
-    </div>
-    <div class="col-xl-7">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Dashboard_Section_Operations"]</h5>
-                        <p class="card-subtitle small mb-0">@Localizer["Dashboard_Chart_WarehouseVolume"]</p>
-                    </div>
-                    <a asp-page="/Warehouses/Index" class="btn btn-sm btn-outline-primary">@Localizer["Dashboard_Link_ViewWarehouses"]</a>
-                </div>
-                <div class="chart-wrapper" id="warehouseVolumeChartContainer">
-                    <canvas id="warehouseVolumeChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+        </header>
+        <canvas id="supplierCountryChart" role="img" aria-describedby="supplierCountryDesc"></canvas>
+        <p id="supplierCountryDesc" class="sr-only">@supplierNarration</p>
+    </article>
 
-<section class="row g-4">
-    <div class="col-xl-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Dashboard_Section_Finance"]</h5>
-                        <p class="card-subtitle small mb-0">@Localizer["Dashboard_Chart_CashFlow"]</p>
-                    </div>
-                    <a asp-page="/Finance/Cashbox/Index" class="btn btn-sm btn-outline-primary">@Localizer["Dashboard_Link_ViewCashbox"]</a>
-                </div>
-                <div class="chart-wrapper" id="cashFlowChartContainer">
-                    <canvas id="cashFlowChart"></canvas>
-                </div>
+    <article class="card chart-card wide">
+        <header class="card-header">
+            <div>
+                <h2>Gelir / Gider Trendi</h2>
+                <p>Finansal akış (₺)</p>
             </div>
-        </div>
-    </div>
-    <div class="col-xl-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="card-title mb-1">@Localizer["Dashboard_Section_CRM"]</h5>
-                        <p class="card-subtitle small mb-0">@Localizer["Dashboard_Chart_CustomerInteractions"]</p>
-                    </div>
-                    <a asp-page="/Customers/Index" class="btn btn-sm btn-outline-primary">@Localizer["Dashboard_Link_ViewCustomers"]</a>
-                </div>
-                <div class="chart-wrapper" id="customerInteractionChartContainer">
-                    <canvas id="customerInteractionChart"></canvas>
-                </div>
+            <div class="legend">
+                <span class="legend-pill income">Gelir</span>
+                <span class="legend-pill expense">Gider</span>
             </div>
+        </header>
+        <canvas id="cashFlowChart" role="img" aria-describedby="cashFlowDesc"></canvas>
+        <p id="cashFlowDesc" class="sr-only">Gelir ve gider trendi</p>
+    </article>
+
+    <article class="card table-card">
+        <header class="card-header">
+            <div>
+                <h2>Riskli Sevkiyatlar</h2>
+                <p>Gecikme veya kritik durumdaki operasyonlar</p>
+            </div>
+            <a class="btn btn-ghost" asp-page="/Shipments/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
+        </header>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sevkiyat</th>
+                        <th>Müşteri</th>
+                        <th>Durum</th>
+                        <th>Tahmini Varış</th>
+                    </tr>
+                </thead>
+                <tbody id="riskShipmentTable">
+                    <tr>
+                        <td colspan="4" class="empty-state">Riskli sevkiyat verisi bulunamadı.</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-    </div>
+    </article>
+
+    <article class="card todo-card">
+        <header class="card-header">
+            <div>
+                <h2>Operasyon Görevleri</h2>
+                <p>Bugün tamamlanması gereken işler</p>
+            </div>
+            <a class="btn btn-ghost" asp-page="/Tasks/Index">Yeni Görev</a>
+        </header>
+        <ul id="taskList" class="task-list">
+            <li class="task-card empty-state">Görev verisi henüz bulunamadı.</li>
+        </ul>
+    </article>
+
+    <article class="card feed-card">
+        <header class="card-header">
+            <div>
+                <h2>Operasyon Akışı</h2>
+                <p>Son aksiyon ve kayıtlar</p>
+            </div>
+            <a class="btn btn-ghost" asp-page="/Analytics/Operations">Tümünü Gör</a>
+        </header>
+        <ul id="activityFeed" class="activity-feed">
+            <li class="activity-item empty"><span>Henüz aktivite kaydı yok.</span></li>
+        </ul>
+    </article>
 </section>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const locale = document.documentElement.lang || 'en';
-            const emptyStateHtml = '<div class="text-muted small">@Localizer["Dashboard_NoData"]</div>';
-            const unspecifiedToken = "@IndexModel.SupplierUnspecifiedToken";
-            const unspecifiedLabelLocalized = @Html.Raw(JsonSerializer.Serialize(Localizer["Dashboard_Unspecified"].Value));
-
-            const shipmentStatusLabels = @Html.Raw(JsonSerializer.Serialize(Model.ShipmentStatusSummaries.Select(s => Localizer[$"Shipments_Status_{s.Status}"].Value)));
-            const shipmentStatusData = @Html.Raw(JsonSerializer.Serialize(Model.ShipmentStatusSummaries.Select(s => s.Count)));
-
-            if (shipmentStatusData.length > 0 && typeof Chart !== 'undefined') {
-                const statusCtx = document.getElementById('shipmentStatusChart');
-                new Chart(statusCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: shipmentStatusLabels,
-                        datasets: [{
-                            data: shipmentStatusData,
-                            backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#64748b', '#0ea5e9'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('shipmentStatusChartContainer').innerHTML = emptyStateHtml;
-            }
-
-            const shipmentTrendLabelsRaw = @Html.Raw(JsonSerializer.Serialize(Model.ShipmentMonthlyTrend.Select(p => p.PeriodStart.ToString("yyyy-MM-01"))));
-            const shipmentTrendData = @Html.Raw(JsonSerializer.Serialize(Model.ShipmentMonthlyTrend.Select(p => Math.Round((double)p.Value, 2))));
-
-            if (shipmentTrendData.length > 0 && typeof Chart !== 'undefined') {
-                const formattedLabels = shipmentTrendLabelsRaw.map(x => new Date(x + 'T00:00:00Z').toLocaleDateString(locale, { month: 'short', year: 'numeric' }));
-                const trendCtx = document.getElementById('shipmentTrendChart');
-                new Chart(trendCtx, {
-                    type: 'line',
-                    data: {
-                        labels: formattedLabels,
-                        datasets: [{
-                            label: '@Localizer["Dashboard_Chart_ShipmentTrend"]',
-                            data: shipmentTrendData,
-                            borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37, 99, 235, 0.15)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#2563eb'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                }
-                            }
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('shipmentTrendChartContainer').innerHTML = emptyStateHtml;
-            }
-
-            const supplierCountryLabelsRaw = @Html.Raw(JsonSerializer.Serialize(Model.SupplierCountryBreakdown.Select(p => p.Label)));
-            const supplierCountryData = @Html.Raw(JsonSerializer.Serialize(Model.SupplierCountryBreakdown.Select(p => p.Value)));
-
-            if (supplierCountryData.length > 0 && typeof Chart !== 'undefined') {
-                const supplierCountryLabels = supplierCountryLabelsRaw.map(label => label === unspecifiedToken ? unspecifiedLabelLocalized : label);
-                const supplierCtx = document.getElementById('supplierCountryChart');
-                new Chart(supplierCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: supplierCountryLabels,
-                        datasets: [{
-                            label: '@Localizer["Dashboard_Chart_SupplierCountries"]',
-                            data: supplierCountryData,
-                            backgroundColor: '#10b981'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                }
-                            }
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('supplierCountryChartContainer').innerHTML = emptyStateHtml;
-            }
-
-            const warehouseVolumeLabelsRaw = @Html.Raw(JsonSerializer.Serialize(Model.WarehouseVolumeTrend.Select(p => p.PeriodStart.ToString("yyyy-MM-01"))));
-            const warehouseVolumeData = @Html.Raw(JsonSerializer.Serialize(Model.WarehouseVolumeTrend.Select(p => Math.Round((double)p.Value, 2))));
-
-            if (warehouseVolumeData.length > 0 && typeof Chart !== 'undefined') {
-                const warehouseLabels = warehouseVolumeLabelsRaw.map(x => new Date(x + 'T00:00:00Z').toLocaleDateString(locale, { month: 'short', year: 'numeric' }));
-                const warehouseCtx = document.getElementById('warehouseVolumeChart');
-                new Chart(warehouseCtx, {
-                    type: 'line',
-                    data: {
-                        labels: warehouseLabels,
-                        datasets: [{
-                            label: '@Localizer["Dashboard_Chart_WarehouseVolume"]',
-                            data: warehouseVolumeData,
-                            borderColor: '#0ea5e9',
-                            backgroundColor: 'rgba(14, 165, 233, 0.18)',
-                            fill: true,
-                            tension: 0.35,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#0ea5e9'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('warehouseVolumeChartContainer').innerHTML = emptyStateHtml;
-            }
-
-            const cashFlowLabelsRaw = @Html.Raw(JsonSerializer.Serialize(Model.CashFlowTrend.Select(p => p.PeriodStart.ToString("yyyy-MM-01"))));
-            const cashFlowData = @Html.Raw(JsonSerializer.Serialize(Model.CashFlowTrend.Select(p => Math.Round((double)p.Value, 2))));
-
-            if (cashFlowData.length > 0 && typeof Chart !== 'undefined') {
-                const cashLabels = cashFlowLabelsRaw.map(x => new Date(x + 'T00:00:00Z').toLocaleDateString(locale, { month: 'short', year: 'numeric' }));
-                const cashCtx = document.getElementById('cashFlowChart');
-                new Chart(cashCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: cashLabels,
-                        datasets: [{
-                            label: '@Localizer["Dashboard_Chart_CashFlow"]',
-                            data: cashFlowData,
-                            backgroundColor: cashFlowData.map(value => value >= 0 ? 'rgba(16, 185, 129, 0.75)' : 'rgba(239, 68, 68, 0.75)')
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('cashFlowChartContainer').innerHTML = emptyStateHtml;
-            }
-
-            const interactionLabelsRaw = @Html.Raw(JsonSerializer.Serialize(Model.CustomerInteractionTrend.Select(p => p.PeriodStart.ToString("yyyy-MM-01"))));
-            const interactionData = @Html.Raw(JsonSerializer.Serialize(Model.CustomerInteractionTrend.Select(p => Math.Round((double)p.Value, 2))));
-
-            if (interactionData.length > 0 && typeof Chart !== 'undefined') {
-                const interactionLabels = interactionLabelsRaw.map(x => new Date(x + 'T00:00:00Z').toLocaleDateString(locale, { month: 'short', year: 'numeric' }));
-                const interactionCtx = document.getElementById('customerInteractionChart');
-                new Chart(interactionCtx, {
-                    type: 'line',
-                    data: {
-                        labels: interactionLabels,
-                        datasets: [{
-                            label: '@Localizer["Dashboard_Chart_CustomerInteractions"]',
-                            data: interactionData,
-                            borderColor: '#f97316',
-                            backgroundColor: 'rgba(249, 115, 22, 0.18)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#f97316'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                }
-                            }
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('customerInteractionChartContainer').innerHTML = emptyStateHtml;
-            }
-        });
+        window.dashboardData = @Html.Raw(JsonSerializer.Serialize(dashboardPayload, serializerOptions));
+        window.dashboardDefaultRange = '30d';
     </script>
 }

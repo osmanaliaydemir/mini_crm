@@ -1,0 +1,241 @@
+.paymentplans-header {
+    margin-bottom: 24px;
+}
+
+.paymentplans-filter {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.filter-form {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    width: 100%;
+}
+
+.search-control {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(71, 85, 105, 0.32);
+    background: rgba(15, 23, 42, 0.75);
+    color: rgba(226, 232, 240, 0.86);
+}
+
+.search-control input[type='search'] {
+    border: none;
+    background: transparent;
+    color: rgba(226, 232, 240, 0.92);
+    font-size: 0.9rem;
+    flex: 1;
+    outline: none;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.paymentplans-table-section .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+.table-card {
+    border-radius: 24px;
+    border: 1px solid rgba(45, 64, 89, 0.28);
+    background: rgba(15, 23, 42, 0.82);
+    box-shadow: 0 24px 40px rgba(8, 16, 32, 0.28);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.table-wrapper {
+    overflow: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead th {
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    padding: 14px 16px;
+    color: rgba(148, 163, 184, 0.72);
+}
+
+.data-table tbody td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.22);
+    color: rgba(226, 232, 240, 0.9);
+}
+
+.cell-strong {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.95);
+}
+
+.cell-subtext {
+    font-size: 0.78rem;
+    color: rgba(148, 163, 184, 0.75);
+    margin-top: 4px;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(16, 24, 40, 0.55);
+    color: rgba(224, 231, 245, 0.95);
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.btn-icon:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(14, 165, 233, 0.18));
+    border-color: rgba(99, 102, 241, 0.45);
+    color: rgba(248, 250, 252, 0.95);
+}
+
+.btn-icon svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.btn-icon img {
+    display: block;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.empty-state {
+    padding: 28px;
+    text-align: center;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+#paymentPlansTable_wrapper .dt-layout-row:not(.dt-layout-table) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+#paymentPlansTable_wrapper .dt-info {
+    text-align: left;
+    font-size: 0.78rem;
+    color: rgba(148, 163, 184, 0.78);
+}
+
+#paymentPlansTable_wrapper .dt-paging {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+#paymentPlansTable_wrapper .dt-paging-button {
+    border-radius: 12px;
+    padding: 6px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(16, 24, 40, 0.65);
+    color: rgba(148, 163, 184, 0.82) !important;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+#paymentPlansTable_wrapper .dt-paging-button.current,
+#paymentPlansTable_wrapper .dt-paging-button:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(14, 165, 233, 0.18));
+    border-color: rgba(99, 102, 241, 0.45);
+    color: rgba(226, 232, 240, 0.95) !important;
+}
+
+#paymentPlansTable_wrapper .dt-paging-button.disabled,
+#paymentPlansTable_wrapper .dt-paging-button.disabled:hover {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(16, 24, 40, 0.4);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: rgba(148, 163, 184, 0.5) !important;
+}
+
+:root[data-theme='light'] .search-control {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(203, 213, 225, 0.6);
+    color: rgba(71, 85, 105, 0.85);
+}
+
+:root[data-theme='light'] .search-control input[type='search'] {
+    color: rgba(30, 41, 59, 0.92);
+}
+
+:root[data-theme='light'] .table-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(203, 213, 225, 0.52);
+    box-shadow: 0 20px 32px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .data-table tbody td {
+    border-color: rgba(226, 232, 240, 0.7);
+    color: rgba(30, 41, 59, 0.9);
+}
+
+:root[data-theme='light'] .btn-icon {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(203, 213, 225, 0.65);
+    color: rgba(37, 99, 235, 0.85);
+}
+
+:root[data-theme='light'] #paymentPlansTable_wrapper .dt-paging-button {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(203, 213, 225, 0.65);
+    color: rgba(71, 85, 105, 0.8) !important;
+}
+
+:root[data-theme='light'] #paymentPlansTable_wrapper .dt-paging-button.current,
+:root[data-theme='light'] #paymentPlansTable_wrapper .dt-paging-button:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(14, 165, 233, 0.12));
+    border-color: rgba(99, 102, 241, 0.45);
+    color: rgba(30, 41, 59, 0.95) !important;
+}
+
+:root[data-theme='light'] .empty-state {
+    color: rgba(100, 116, 139, 0.7);
+}
+
+@media (max-width: 768px) {
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+

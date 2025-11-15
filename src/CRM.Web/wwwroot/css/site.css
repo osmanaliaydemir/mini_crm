@@ -186,36 +186,51 @@ footer {
 }
 
 .stat-card {
-  border-radius: 18px;
-  background: linear-gradient(135deg, #1f7a8c 0%, #26586d 100%);
+  position: relative;
+  border-radius: 20px;
+  background: linear-gradient(130deg, rgba(31, 122, 140, 0.82) 0%, rgba(25, 76, 96, 0.68) 100%);
   color: #fff;
+  overflow: hidden;
+  box-shadow: 0 24px 36px rgba(15, 40, 58, 0.18);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.14), transparent 55%);
+  pointer-events: none;
 }
 
 .stat-card.alt {
-  background: linear-gradient(135deg, #545b62 0%, #2c3e50 100%);
+  background: linear-gradient(135deg, rgba(60, 70, 76, 0.88) 0%, rgba(37, 53, 68, 0.72) 100%);
+  box-shadow: 0 24px 36px rgba(26, 32, 44, 0.2);
 }
 
 .stat-card.accent {
-  background: linear-gradient(135deg, #f2994a 0%, #f37055 100%);
+  background: linear-gradient(135deg, rgba(242, 153, 74, 0.82) 0%, rgba(243, 112, 85, 0.74) 100%);
+  box-shadow: 0 24px 36px rgba(191, 68, 33, 0.18);
 }
 
 .stat-card .card-body {
-  padding: 1.5rem;
+  position: relative;
+  z-index: 1;
+  padding: 1.6rem 1.7rem;
 }
 
 .stat-label {
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .stat-card.alt .stat-label {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .stat-card.accent .stat-label {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .stat-value {
@@ -233,15 +248,15 @@ footer {
   display: block;
   margin-top: 0.75rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .stat-card.alt .stat-sub {
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .stat-card.accent .stat-sub {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .chart-card {

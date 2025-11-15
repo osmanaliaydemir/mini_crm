@@ -66,13 +66,13 @@ public class IndexModel : PageModel
     public string GetStatusBadgeClass(ShipmentStatus status) =>
         status switch
         {
-            ShipmentStatus.DeliveredToDealer => "bg-success-subtle text-success",
-            ShipmentStatus.Cancelled => "bg-danger-subtle text-danger",
-            ShipmentStatus.InCustoms => "bg-warning-subtle text-warning",
-            ShipmentStatus.OnVessel or ShipmentStatus.OnTrain or ShipmentStatus.OnTruck => "bg-primary-subtle text-primary",
-            ShipmentStatus.InWarehouse => "bg-info-subtle text-info",
-            ShipmentStatus.ProductionStarted or ShipmentStatus.Ordered => "bg-secondary-subtle text-secondary",
-            _ => "bg-light text-dark"
+            ShipmentStatus.DeliveredToDealer => "status-chip--positive",
+            ShipmentStatus.Cancelled => "status-chip--danger",
+            ShipmentStatus.InCustoms => "status-chip--warning",
+            ShipmentStatus.OnVessel or ShipmentStatus.OnTrain or ShipmentStatus.OnTruck => "status-chip--info",
+            ShipmentStatus.InWarehouse => "status-chip--neutral",
+            ShipmentStatus.ProductionStarted or ShipmentStatus.Ordered => "status-chip--secondary",
+            _ => "status-chip--muted"
         };
 
     public sealed record ShipmentListItem(

@@ -1,0 +1,164 @@
+.form-header {
+    margin-bottom: 24px;
+}
+
+.form-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.form-validation-summary {
+    border-radius: 16px;
+    padding: 14px 18px;
+    background: rgba(248, 113, 113, 0.14);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+.form-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.form-card {
+    background: rgba(15, 23, 42, 0.82);
+    border: 1px solid rgba(71, 85, 105, 0.28);
+    border-radius: 24px;
+    box-shadow: 0 24px 38px rgba(7, 16, 32, 0.28);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    position: relative;
+    overflow: hidden;
+}
+
+.form-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -22% -32% auto;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.2), transparent 70%);
+}
+
+.form-card header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-card header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.form-card header p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(148, 163, 184, 0.75);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px 20px;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-field.full {
+    grid-column: 1 / -1;
+}
+
+.input-field label {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(203, 213, 225, 0.82);
+}
+
+.input-control {
+    border: 1px solid rgba(100, 116, 139, 0.45);
+    background: rgba(15, 23, 42, 0.65);
+    border-radius: 14px;
+    padding: 12px 14px;
+    color: rgba(226, 232, 240, 0.95);
+    font-size: 0.92rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-control:focus {
+    border-color: rgba(59, 130, 246, 0.7);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    outline: none;
+}
+
+.input-control.textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.input-error {
+    font-size: 0.76rem;
+    color: rgba(248, 113, 113, 0.82);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 8px;
+}
+
+:root[data-theme='light'] .form-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(203, 213, 225, 0.6);
+    box-shadow: 0 20px 32px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .form-card::after {
+    background: radial-gradient(circle, rgba(148, 197, 255, 0.28), transparent 70%);
+}
+
+:root[data-theme='light'] .form-card header p {
+    color: rgba(100, 116, 139, 0.7);
+}
+
+:root[data-theme='light'] .input-field label {
+    color: rgba(71, 85, 105, 0.78);
+}
+
+:root[data-theme='light'] .input-control {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(203, 213, 225, 0.6);
+    color: rgba(30, 41, 59, 0.92);
+}
+
+:root[data-theme='light'] .input-control:focus {
+    border-color: rgba(37, 99, 235, 0.7);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+:root[data-theme='light'] .form-validation-summary {
+    background: rgba(248, 113, 113, 0.18);
+    color: rgba(185, 28, 28, 0.85);
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+

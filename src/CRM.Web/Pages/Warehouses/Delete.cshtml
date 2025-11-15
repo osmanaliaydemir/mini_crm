@@ -1,0 +1,43 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Warehouses.DeleteModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Warehouses_Delete_Title"];
+    var warehouseName = string.IsNullOrWhiteSpace(Model.WarehouseName)
+        ? Localizer["Warehouses_Field_Name"].Value
+        : Model.WarehouseName;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/warehouses/delete.css" asp-append-version="true" />
+}
+
+<section class="page-header delete-header">
+    <div>
+        <h1>@Localizer["Warehouses_Delete_Title"]</h1>
+        <p class="subtitle">@Localizer["Warehouses_Delete_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Warehouses_Action_Back"]</a>
+    </div>
+</section>
+
+<section class="delete-card">
+    <div class="delete-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v5" />
+            <path d="M12 16h.01" />
+        </svg>
+    </div>
+    <p class="delete-message">@string.Format(Localizer["Warehouses_Delete_Message"].Value, warehouseName)</p>
+    <form method="post" class="delete-actions">
+        <input type="hidden" asp-for="WarehouseId" />
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Warehouses_Form_Cancel"]</a>
+        <button type="submit" class="btn btn-danger">@Localizer["Warehouses_Action_Delete"]</button>
+    </form>
+</section>
+

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CRM Dashboard Template V2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-Bx9zuS8wPqSK/8cXamP13DAy1hjApL3j4GNzcRCjSc5MiNmiRC6L0H944kaW1YHlzTH0PzZMfjNV8dhdyX/0xA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css" integrity="sha384-Lxu8JfB5HqGFutP6agN6X/b4dEbkRTMgdSFwbQ54ig0Yfh3qeDym8oiDEr3Aw2vK" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="bg-slate-100 font-inter">
+    <div class="min-h-screen flex flex-col">
+        <header class="bg-white shadow-sm">
+            <div class="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-white text-lg font-semibold">
+                        CRM
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-semibold text-slate-900">Template V2</h1>
+                        <p class="text-sm text-slate-500">Modern CRM dashboard, yenilikçi UI bileşenleri</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="theme-toggle" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fa-solid fa-circle-half-stroke"></i>
+                        Tema
+                    </button>
+                    <div class="relative">
+                        <button class="flex items-center gap-3 rounded-full bg-slate-100 px-3 py-2">
+                            <span class="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white font-semibold grid place-items-center">BA</span>
+                            <div class="text-left">
+                                <p class="text-sm font-semibold text-slate-700">Berna Aksoy</p>
+                                <p class="text-xs text-slate-500">CRM Yöneticisi</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1">
+            <div class="mx-auto max-w-7xl px-6 py-8 space-y-8">
+                <section id="kpi-section" class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                    <!-- KPI kartları jQuery ile doldurulacak -->
+                </section>
+
+                <section class="grid gap-6 lg:grid-cols-[2fr_1fr]">
+                    <div class="rounded-3xl bg-white shadow-sm">
+                        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Aktif Sevkiyatlar</h2>
+                                <p class="text-sm text-slate-500">Gerçek zamanlı sevkiyat durumu ve gecikme uyarıları</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select id="shipment-filter" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-indigo-500 focus:outline-none">
+                                    <option value="all">Tümü</option>
+                                </select>
+                                <button class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500">
+                                    <i class="fa-solid fa-plus"></i>
+                                    Yeni Sevkiyat
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-100">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Sevkiyat</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Durum</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Müşteri</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Tahmini Varış</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Risk</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Aksiyon</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shipment-table" class="divide-y divide-slate-100 bg-white">
+                                    <!-- Satırlar jQuery ile üretilecek -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="rounded-3xl bg-white shadow-sm">
+                        <div class="border-b border-slate-100 px-6 py-4">
+                            <h2 class="text-lg font-semibold text-slate-900">Genel Sağlık Puanı</h2>
+                            <p class="text-sm text-slate-500">Finansal ve operasyonel göstergelerin bileşik metriği</p>
+                        </div>
+                        <div class="px-6 pb-6">
+                            <canvas id="healthGauge" class="w-full"></canvas>
+                            <ul id="health-metrics" class="space-y-3 pt-4">
+                                <!-- Metrikler dinamik -->
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid gap-6 lg:grid-cols-2">
+                    <div class="rounded-3xl bg-white shadow-sm">
+                        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Kârlılık Trendleri</h2>
+                                <p class="text-sm text-slate-500">Son 12 ay net kâr eğrisi</p>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-slate-500">
+                                <i class="fa-solid fa-chart-line"></i>
+                                Güncel veri
+                            </div>
+                        </div>
+                        <div class="px-6 pb-4">
+                            <canvas id="profitChart" class="w-full"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="rounded-3xl bg-white shadow-sm">
+                        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Takvim & Görevler</h2>
+                                <p class="text-sm text-slate-500">Önümüzdeki kritik aksiyonlar</p>
+                            </div>
+                            <button id="add-task" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-emerald-500">
+                                <i class="fa-solid fa-plus"></i>
+                                görev ekle
+                            </button>
+                        </div>
+                        <div class="p-6 space-y-4" id="task-list">
+                            <!-- Görev kartları dinamik -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="border-t border-slate-200 bg-white">
+            <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 text-sm text-slate-500">
+                <span>© 2025 Global CRM Suite</span>
+                <span>Tailwind • jQuery • Chart.js • Notyf</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-3gJwYp4U8F1NXdeR8yXcXkHzlT9I6NfXCb5Q1Y5uH2k=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-aBrZ0wOYAV/QXpVZl8vGeOsoAhmb6IMnVgVQ1T0txq8kNcYsYF8o2DlqzTeWY5Av" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
+
+

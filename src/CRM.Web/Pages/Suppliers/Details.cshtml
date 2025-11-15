@@ -1,29 +1,111 @@
 @page "{id:guid}"
 @model CRM.Web.Pages.Suppliers.DetailsModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 
 @{
-    ViewData["Title"] = "Tedarikçi Detay";
+    Layout = "_DashboardLayout";
+    if (Model.Supplier is null)
+    {
+        ViewData["Title"] = Localizer["Suppliers_Details_NotFound_Title"];
+    }
+    else
+    {
+        ViewData["Title"] = $"{Localizer["Suppliers_Details_Title"]} · {Model.Supplier.Name}";
+    }
 }
 
-<div class="dashboard-section border-0 shadow-sm col-lg-6">
-    <h2 class="mb-3">@Model.Supplier?.Name</h2>
-    <dl class="row">
-        <dt class="col-sm-4">Ülke</dt>
-        <dd class="col-sm-8">@Model.Supplier?.Country</dd>
-        <dt class="col-sm-4">Vergi No</dt>
-        <dd class="col-sm-8">@Model.Supplier?.TaxNumber</dd>
-        <dt class="col-sm-4">E-posta</dt>
-        <dd class="col-sm-8">@Model.Supplier?.ContactEmail</dd>
-        <dt class="col-sm-4">Telefon</dt>
-        <dd class="col-sm-8">@Model.Supplier?.ContactPhone</dd>
-        <dt class="col-sm-4">Adres</dt>
-        <dd class="col-sm-8">@Model.Supplier?.AddressLine</dd>
-        <dt class="col-sm-4">Notlar</dt>
-        <dd class="col-sm-8">@Model.Supplier?.Notes</dd>
-    </dl>
-    <div class="d-flex gap-2">
-        <a class="btn btn-outline-primary" asp-page="Edit" asp-route-id="@Model.Supplier?.Id">Düzenle</a>
-        <a class="btn btn-outline-secondary" asp-page="Index">Listeye Dön</a>
-    </div>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/suppliers/details.css" asp-append-version="true" />
+}
+
+@if (Model.Supplier is null)
+{
+    <section class="details-empty">
+        <article class="details-card">
+            <h1>@Localizer["Suppliers_Details_NotFound_Title"]</h1>
+            <p>@Localizer["Suppliers_Details_NotFound_Message"]</p>
+            <div class="details-actions">
+                <a class="btn btn-primary" asp-page="Index">@Localizer["Suppliers_Action_Back"]</a>
+            </div>
+        </article>
+    </section>
+}
+else
+{
+    var supplier = Model.Supplier;
+
+    <section class="page-header details-header">
+        <div>
+            <h1>@supplier.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(supplier.Country))
+            {
+                <p class="subtitle">@supplier.Country</p>
+            }
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["Suppliers_Action_Back"]</a>
+            <a class="btn btn-primary" asp-page="Edit" asp-route-id="@supplier.Id">@Localizer["Suppliers_Action_Edit"]</a>
+        </div>
+    </section>
+
+    <section class="details-grid">
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Suppliers_Details_Overview_Title"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Suppliers_Field_Name"]</dt>
+                    <dd>@supplier.Name</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Suppliers_Field_Country"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(supplier.Country) ? "-" : supplier.Country)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Suppliers_Field_TaxNumber"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(supplier.TaxNumber) ? "-" : supplier.TaxNumber)</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="details-card">
+            <header>
+                <h2>@Localizer["Suppliers_Details_Contact_Title"]</h2>
+            </header>
+            <dl class="details-definition">
+                <div>
+                    <dt>@Localizer["Suppliers_Field_Email"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(supplier.ContactEmail) ? "-" : supplier.ContactEmail)</dd>
+                </div>
+                <div>
+                    <dt>@Localizer["Suppliers_Field_Phone"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(supplier.ContactPhone) ? "-" : supplier.ContactPhone)</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="details-card details-card--wide">
+            <header>
+                <h2>@Localizer["Suppliers_Details_Address_Title"]</h2>
+            </header>
+            <p>@(string.IsNullOrWhiteSpace(supplier.AddressLine) ? "-" : supplier.AddressLine)</p>
+        </article>
+
+        <article class="details-card details-card--wide">
+            <header>
+                <h2>@Localizer["Suppliers_Details_Notes_Title"]</h2>
+            </header>
+            @if (string.IsNullOrWhiteSpace(supplier.Notes))
+            {
+                <p class="empty">@Localizer["Suppliers_Details_Notes_Empty"]</p>
+            }
+            else
+            {
+                <p>@supplier.Notes</p>
+            }
+        </article>
+    </section>
+}
 
