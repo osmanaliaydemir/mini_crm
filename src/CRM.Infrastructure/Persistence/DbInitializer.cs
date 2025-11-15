@@ -12,11 +12,7 @@ public class DbInitializer : IDbInitializer
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public DbInitializer(
-        CRMDbContext context,
-        ILogger<DbInitializer> logger,
-        RoleManager<ApplicationRole> roleManager,
-        UserManager<ApplicationUser> userManager)
+    public DbInitializer(CRMDbContext context, ILogger<DbInitializer> logger, RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
     {
         _context = context;
         _logger = logger;

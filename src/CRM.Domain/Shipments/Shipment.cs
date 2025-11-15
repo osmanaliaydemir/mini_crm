@@ -17,13 +17,7 @@ public class Shipment : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public Shipment(
-        Guid id,
-        Guid supplierId,
-        string referenceNumber,
-        DateTime shipmentDate,
-        ShipmentStatus status,
-        Guid? customerId = null)
+    public Shipment(Guid id, Guid supplierId, string referenceNumber, DateTime shipmentDate, ShipmentStatus status, Guid? customerId = null)
     {
         Id = id;
         SupplierId = supplierId;
@@ -57,14 +51,8 @@ public class Shipment : Entity<Guid>, IAuditableEntity
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
 
-    public void Update(
-        DateTime shipmentDate,
-        DateTime? estimatedArrival,
-        ShipmentStatus status,
-        string? loadingPort,
-        string? dischargePort,
-        string? notes,
-        Guid? customerId = null)
+    public void Update(DateTime shipmentDate, DateTime? estimatedArrival, ShipmentStatus status, string? loadingPort, string? dischargePort,
+        string? notes, Guid? customerId = null)
     {
         ShipmentDate = shipmentDate;
         EstimatedArrival = estimatedArrival;
@@ -95,11 +83,7 @@ public class Shipment : Entity<Guid>, IAuditableEntity
         CustomsProcess = customsProcess;
     }
 
-    public ShipmentStage SetOrUpdateStage(
-        ShipmentStatus status,
-        DateTime startedAt,
-        DateTime? completedAt,
-        string? notes)
+    public ShipmentStage SetOrUpdateStage(ShipmentStatus status, DateTime startedAt, DateTime? completedAt, string? notes)
     {
         var stage = _stages.FirstOrDefault(s => s.Status == status);
         if (stage is null)

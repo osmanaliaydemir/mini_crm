@@ -1,5 +1,6 @@
 using CRM.Domain.Customers;
 using CRM.Domain.Finance;
+using CRM.Domain.Notifications;
 using CRM.Domain.Shipments;
 using CRM.Domain.Suppliers;
 using CRM.Domain.Warehouses;
@@ -19,6 +20,7 @@ public interface IApplicationDbContext
     DbSet<Supplier> Suppliers { get; }
     DbSet<PaymentPlan> PaymentPlans { get; }
     DbSet<PaymentInstallment> PaymentInstallments { get; }
+    DbSet<NotificationPreferences> NotificationPreferences { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 

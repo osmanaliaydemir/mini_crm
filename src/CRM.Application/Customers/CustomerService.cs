@@ -20,10 +20,7 @@ public class CustomerService : ICustomerService
 
     public async Task<CustomerDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var customer = await _context.Customers
-            .AsNoTracking()
-            .Include(c => c.Contacts)
-            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        var customer = await _context.Customers.AsNoTracking().Include(c => c.Contacts).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (customer == null)
         {
@@ -32,24 +29,10 @@ public class CustomerService : ICustomerService
 
         var primaryContact = customer.Contacts.FirstOrDefault();
 
-        return new CustomerDto(
-            customer.Id,
-            customer.Name,
-            customer.LegalName,
-            customer.TaxNumber,
-            customer.Email,
-            customer.Phone,
-            customer.Address,
-            customer.Segment,
-            customer.Notes,
-            primaryContact?.FullName,
-            primaryContact?.Email,
-            primaryContact?.Phone,
-            primaryContact?.Position,
-            customer.CreatedAt,
-            customer.CreatedBy,
-            customer.LastModifiedAt,
-            customer.LastModifiedBy);
+        return new CustomerDto(customer.Id, customer.Name, customer.LegalName, customer.TaxNumber,
+            customer.Email, customer.Phone, customer.Address, customer.Segment, customer.Notes,
+            primaryContact?.FullName, primaryContact?.Email, primaryContact?.Phone, primaryContact?.Position,
+            customer.CreatedAt, customer.CreatedBy, customer.LastModifiedAt, customer.LastModifiedBy);
     }
 
     public async Task<IReadOnlyList<CustomerListItemDto>> GetAllAsync(string? search = null, CancellationToken cancellationToken = default)
@@ -58,9 +41,7 @@ public class CustomerService : ICustomerService
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query = query.Where(c =>
-                c.Name.Contains(search) ||
-                (c.LegalName != null && c.LegalName.Contains(search)) ||
+            query = query.Where(c => c.Name.Contains(search) || (c.LegalName != null && c.LegalName.Contains(search)) ||
                 (c.TaxNumber != null && c.TaxNumber.Contains(search)));
         }
 
@@ -68,36 +49,19 @@ public class CustomerService : ICustomerService
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
-        return customers.Select(c => new CustomerListItemDto(
-            c.Id,
-            c.Name,
-            c.LegalName,
-            c.Segment,
-            c.Email,
-            c.Phone,
-            c.Notes)).ToList();
+        return customers.Select(c => new CustomerListItemDto(c.Id, c.Name,
+            c.LegalName, c.Segment, c.Email, c.Phone, c.Notes)).ToList();
     }
 
     public async Task<Guid> CreateAsync(CreateCustomerRequest request, CancellationToken cancellationToken = default)
     {
-        var customer = new Customer(
-            Guid.NewGuid(),
-            request.Name,
-            request.LegalName,
-            request.TaxNumber,
-            request.Email,
-            request.Phone,
-            request.Address,
-            request.Segment,
-            request.Notes);
+        var customer = new Customer(Guid.NewGuid(), request.Name, request.LegalName,
+            request.TaxNumber, request.Email, request.Phone, request.Address, request.Segment, request.Notes);
 
         if (!string.IsNullOrWhiteSpace(request.PrimaryContactName))
         {
-            customer.AddContact(
-                request.PrimaryContactName,
-                request.PrimaryContactEmail,
-                request.PrimaryContactPhone,
-                request.PrimaryContactPosition);
+            customer.AddContact(request.PrimaryContactName, request.PrimaryContactEmail,
+                request.PrimaryContactPhone, request.PrimaryContactPosition);
         }
 
         await _repository.AddAsync(customer, cancellationToken);
@@ -108,33 +72,21 @@ public class CustomerService : ICustomerService
 
     public async Task UpdateAsync(UpdateCustomerRequest request, CancellationToken cancellationToken = default)
     {
-        var customer = await _context.Customers
-            .Include(c => c.Contacts)
-            .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+        var customer = await _context.Customers.Include(c => c.Contacts).FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
 
         if (customer == null)
         {
             throw new InvalidOperationException($"Customer with id {request.Id} not found.");
         }
 
-        customer.Update(
-            request.Name,
-            request.LegalName,
-            request.TaxNumber,
-            request.Email,
-            request.Phone,
-            request.Address,
-            request.Segment,
-            request.Notes);
+        customer.Update(request.Name, request.LegalName, request.TaxNumber, request.Email,
+            request.Phone, request.Address, request.Segment, request.Notes);
 
         customer.ClearContacts();
         if (!string.IsNullOrWhiteSpace(request.PrimaryContactName))
         {
-            customer.AddContact(
-                request.PrimaryContactName,
-                request.PrimaryContactEmail,
-                request.PrimaryContactPhone,
-                request.PrimaryContactPosition);
+            customer.AddContact(request.PrimaryContactName, request.PrimaryContactEmail,
+                request.PrimaryContactPhone, request.PrimaryContactPosition);
         }
 
         await _repository.UpdateAsync(customer, cancellationToken);
@@ -155,10 +107,7 @@ public class CustomerService : ICustomerService
 
     public async Task<CustomerDetailsDto?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var customer = await _context.Customers
-            .AsNoTracking()
-            .Include(c => c.Contacts)
-            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        var customer = await _context.Customers.AsNoTracking().Include(c => c.Contacts).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (customer == null)
         {
@@ -166,54 +115,22 @@ public class CustomerService : ICustomerService
         }
 
         var primaryContact = customer.Contacts.FirstOrDefault();
-        var customerDto = new CustomerDto(
-            customer.Id,
-            customer.Name,
-            customer.LegalName,
-            customer.TaxNumber,
-            customer.Email,
-            customer.Phone,
-            customer.Address,
-            customer.Segment,
-            customer.Notes,
-            primaryContact?.FullName,
-            primaryContact?.Email,
-            primaryContact?.Phone,
-            primaryContact?.Position,
-            customer.CreatedAt,
-            customer.CreatedBy,
-            customer.LastModifiedAt,
-            customer.LastModifiedBy);
+        var customerDto = new CustomerDto(customer.Id, customer.Name, customer.LegalName, customer.TaxNumber,
+            customer.Email, customer.Phone, customer.Address, customer.Segment, customer.Notes,
+            primaryContact?.FullName, primaryContact?.Email, primaryContact?.Phone, primaryContact?.Position,
+            customer.CreatedAt, customer.CreatedBy, customer.LastModifiedAt, customer.LastModifiedBy);
 
-        var contacts = await _context.CustomerContacts
-            .AsNoTracking()
-            .Where(contact => contact.CustomerId == id)
-            .OrderBy(contact => contact.FullName)
-            .ToListAsync(cancellationToken);
+        var contacts = await _context.CustomerContacts.AsNoTracking()
+            .Where(contact => contact.CustomerId == id).OrderBy(contact => contact.FullName).ToListAsync(cancellationToken);
 
-        var contactDtos = contacts.Select(c => new CustomerContactDto(
-            c.Id,
-            c.CustomerId,
-            c.FullName,
-            c.Email,
-            c.Phone,
-            c.Position)).ToList();
+        var contactDtos = contacts.Select(c => new CustomerContactDto(c.Id, c.CustomerId, c.FullName,
+            c.Email, c.Phone, c.Position)).ToList();
 
-        var interactions = await _context.CustomerInteractions
-            .AsNoTracking()
-            .Where(i => i.CustomerId == id)
-            .OrderByDescending(i => i.InteractionDate)
-            .ToListAsync(cancellationToken);
+        var interactions = await _context.CustomerInteractions.AsNoTracking()
+            .Where(i => i.CustomerId == id).OrderByDescending(i => i.InteractionDate).ToListAsync(cancellationToken);
 
-        var interactionDtos = interactions.Select(i => new CustomerInteractionDto(
-            i.Id,
-            i.CustomerId,
-            i.InteractionDate,
-            i.InteractionType,
-            i.Subject,
-            i.Notes,
-            i.RecordedBy,
-            i.CreatedAt)).ToList();
+        var interactionDtos = interactions.Select(i => new CustomerInteractionDto(i.Id, i.CustomerId, i.InteractionDate,
+            i.InteractionType, i.Subject, i.Notes, i.RecordedBy, i.CreatedAt)).ToList();
 
         return new CustomerDetailsDto(customerDto, contactDtos, interactionDtos);
     }
@@ -226,13 +143,8 @@ public class CustomerService : ICustomerService
             throw new InvalidOperationException($"Customer with id {customerId} not found.");
         }
 
-        var interaction = new CustomerInteraction(
-            customerId,
-            request.InteractionDate,
-            request.InteractionType,
-            request.Subject,
-            request.Notes,
-            request.RecordedBy);
+        var interaction = new CustomerInteraction(customerId, request.InteractionDate, request.InteractionType,
+            request.Subject, request.Notes, request.RecordedBy);
 
         _context.CustomerInteractions.Add(interaction);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -252,18 +164,11 @@ public class CustomerService : ICustomerService
                 (c.TaxNumber != null && c.TaxNumber.Contains(search)));
         }
 
-        var customers = await query
-            .OrderBy(c => c.Name)
-            .ToListAsync(cancellationToken);
+        var customers = await query.OrderBy(c => c.Name).ToListAsync(cancellationToken);
 
-        var customerListItems = customers.Select(c => new CustomerListItemDto(
-            c.Id,
-            c.Name,
-            c.LegalName,
-            c.Segment,
-            c.Email,
-            c.Phone,
-            c.Notes)).ToList();
+        var customerListItems = customers.Select(c => new CustomerListItemDto(c.Id, c.Name, c.LegalName,
+            c.Segment, c.Email, c.Phone, c.Notes)).ToList();
+
         var totalCustomers = customers.Count;
 
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
@@ -274,12 +179,10 @@ public class CustomerService : ICustomerService
 
         const string unspecifiedSegmentLabel = "__UNSPECIFIED__";
         var segmentComparer = StringComparer.OrdinalIgnoreCase;
-        var segmentStats = customers
-            .GroupBy(c => NormalizeSegment(c.Segment, unspecifiedSegmentLabel), segmentComparer)
-            .Select(group => new CustomerSegmentStat(group.Key, group.Count()))
-            .OrderByDescending(stat => stat.CustomerCount)
-            .ThenBy(stat => stat.Segment, segmentComparer)
-            .ToList();
+
+        var segmentStats = customers.GroupBy(c => NormalizeSegment(c.Segment, unspecifiedSegmentLabel), segmentComparer)
+            .Select(group => new CustomerSegmentStat(group.Key, group.Count())).OrderByDescending(stat => stat.CustomerCount)
+            .ThenBy(stat => stat.Segment, segmentComparer).ToList();
 
         var distinctSegmentCount = segmentStats.Count;
         var topSegment = segmentStats.FirstOrDefault();
@@ -288,18 +191,9 @@ public class CustomerService : ICustomerService
 
         if (totalCustomers == 0)
         {
-            return new CustomerDashboardData(
-                customerListItems,
-                totalCustomers,
-                newCustomersCount,
-                0,
-                distinctSegmentCount,
-                topSegmentName,
-                topSegmentCustomerCount,
-                segmentStats,
-                Array.Empty<TopCustomerStat>(),
-                Array.Empty<string>(),
-                Array.Empty<int>());
+            return new CustomerDashboardData(customerListItems, totalCustomers, newCustomersCount,
+                0, distinctSegmentCount, topSegmentName, topSegmentCustomerCount, segmentStats,
+                Array.Empty<TopCustomerStat>(), Array.Empty<string>(), Array.Empty<int>());
         }
 
         var customerIds = customers.Select(c => c.Id).ToHashSet();
@@ -307,24 +201,17 @@ public class CustomerService : ICustomerService
 
         // Tüm interaction'ları çekip sonra memory'de filtrele
         // Bu, SQL Server'ın parametre limiti sorununu önler
-        var allInteractions = await _context.CustomerInteractions
-            .AsNoTracking()
-            .Where(i => i.InteractionDate >= sixMonthsStart)
-            .ToListAsync(cancellationToken);
+        var allInteractions = await _context.CustomerInteractions.AsNoTracking()
+            .Where(i => i.InteractionDate >= sixMonthsStart).ToListAsync(cancellationToken);
 
-        var interactions = allInteractions
-            .Where(i => customerIds.Contains(i.CustomerId))
-            .ToList();
+        var interactions = allInteractions.Where(i => customerIds.Contains(i.CustomerId)).ToList();
 
         var recentInteractionsCount = interactions.Count(i => i.InteractionDate >= thirtyDaysAgo);
 
-        var monthlyInteractionsRaw = interactions
-            .GroupBy(i => new { i.InteractionDate.Year, i.InteractionDate.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
-            .ToList();
+        var monthlyInteractionsRaw = interactions.GroupBy(i => new { i.InteractionDate.Year, i.InteractionDate.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() }).ToList();
 
-        var monthlyLookup = monthlyInteractionsRaw.ToDictionary(
-            keySelector: item => (item.Year, item.Month),
+        var monthlyLookup = monthlyInteractionsRaw.ToDictionary(keySelector: item => (item.Year, item.Month),
             elementSelector: item => item.Count);
 
         var culture = System.Globalization.CultureInfo.CurrentUICulture;
@@ -341,9 +228,7 @@ public class CustomerService : ICustomerService
             cursor = cursor.AddMonths(1);
         }
 
-        var topCustomersRaw = interactions
-            .Where(i => i.InteractionDate >= ninetyDaysAgo)
-            .GroupBy(i => i.CustomerId)
+        var topCustomersRaw = interactions.Where(i => i.InteractionDate >= ninetyDaysAgo).GroupBy(i => i.CustomerId)
             .Select(g =>
             {
                 customerIdLookup.TryGetValue(g.Key, out var customer);
@@ -356,11 +241,7 @@ public class CustomerService : ICustomerService
                     InteractionCount = g.Count(),
                     LastInteractionAt = lastInteraction
                 };
-            })
-            .OrderByDescending(x => x.InteractionCount)
-            .ThenByDescending(x => x.LastInteractionAt)
-            .Take(5)
-            .ToList();
+            }).OrderByDescending(x => x.InteractionCount).ThenByDescending(x => x.LastInteractionAt).Take(5).ToList();
 
         var topCustomerStats = topCustomersRaw
             .Select(x => new TopCustomerStat(
@@ -368,21 +249,11 @@ public class CustomerService : ICustomerService
                 x.Name ?? "Customer",
                 NormalizeSegment(x.Segment, unspecifiedSegmentLabel),
                 x.InteractionCount,
-                x.LastInteractionAt))
-            .ToList();
+                x.LastInteractionAt)).ToList();
 
-        return new CustomerDashboardData(
-            customerListItems,
-            totalCustomers,
-            newCustomersCount,
-            recentInteractionsCount,
-            distinctSegmentCount,
-            topSegmentName,
-            topSegmentCustomerCount,
-            segmentStats,
-            topCustomerStats,
-            labels,
-            values);
+        return new CustomerDashboardData(customerListItems, totalCustomers, newCustomersCount,
+            recentInteractionsCount, distinctSegmentCount, topSegmentName, topSegmentCustomerCount,
+            segmentStats, topCustomerStats, labels, values);
     }
 
     private static string NormalizeSegment(string? segment, string unspecifiedLabel) =>

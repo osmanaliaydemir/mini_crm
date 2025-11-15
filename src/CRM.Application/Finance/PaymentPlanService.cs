@@ -11,10 +11,7 @@ public class PaymentPlanService : IPaymentPlanService
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
 
-    public PaymentPlanService(
-        IRepository<PaymentPlan> repository,
-        IApplicationDbContext context,
-        IUnitOfWork unitOfWork)
+    public PaymentPlanService(IRepository<PaymentPlan> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
     {
         _repository = repository;
         _context = context;
@@ -23,45 +20,24 @@ public class PaymentPlanService : IPaymentPlanService
 
     public async Task<PaymentPlanDetailsDto?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var plan = await _context.PaymentPlans
-            .AsNoTracking()
-            .Include(p => p.Installments)
-            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        var plan = await _context.PaymentPlans.AsNoTracking().Include(p => p.Installments).FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
         if (plan == null)
         {
             return null;
         }
 
-        var customerName = await _context.Customers
-            .AsNoTracking()
-            .Where(c => c.Id == plan.CustomerId)
-            .Select(c => c.Name)
-            .FirstOrDefaultAsync(cancellationToken) ?? "-";
+        var customerName = await _context.Customers.AsNoTracking().Where(c => c.Id == plan.CustomerId)
+            .Select(c => c.Name).FirstOrDefaultAsync(cancellationToken) ?? "-";
 
-        var shipmentReference = await _context.Shipments
-            .AsNoTracking()
-            .Where(s => s.Id == plan.ShipmentId)
-            .Select(s => s.ReferenceNumber)
-            .FirstOrDefaultAsync(cancellationToken) ?? "-";
+        var shipmentReference = await _context.Shipments.AsNoTracking().Where(s => s.Id == plan.ShipmentId)
+            .Select(s => s.ReferenceNumber).FirstOrDefaultAsync(cancellationToken) ?? "-";
 
-        var planDto = new PaymentPlanDto(
-            plan.Id,
-            plan.CustomerId,
-            plan.ShipmentId,
-            plan.PlanType,
-            plan.TotalAmount,
-            plan.Currency,
-            plan.StartDate,
-            plan.PeriodicityWeeks,
-            plan.Notes,
-            customerName,
-            shipmentReference,
-            plan.CreatedAt);
+        var planDto = new PaymentPlanDto(plan.Id, plan.CustomerId, plan.ShipmentId,
+            plan.PlanType, plan.TotalAmount, plan.Currency, plan.StartDate,
+            plan.PeriodicityWeeks, plan.Notes, customerName, shipmentReference, plan.CreatedAt);
 
-        var installments = plan.Installments
-            .OrderBy(i => i.InstallmentNumber)
-            .Select(i => new PaymentInstallmentDto(
+        var installments = plan.Installments.OrderBy(i => i.InstallmentNumber).Select(i => new PaymentInstallmentDto(
                 i.Id,
                 i.PaymentPlanId,
                 i.InstallmentNumber,
@@ -83,18 +59,14 @@ public class PaymentPlanService : IPaymentPlanService
         HashSet<Guid>? filteredCustomerIds = null;
         if (!string.IsNullOrWhiteSpace(customerSearch))
         {
-            var filteredCustomers = await _context.Customers
-                .AsNoTracking()
+            var filteredCustomers = await _context.Customers.AsNoTracking()
                 .Where(c => c.Name.Contains(customerSearch) || (c.LegalName != null && c.LegalName.Contains(customerSearch)))
-                .Select(c => c.Id)
-                .ToListAsync(cancellationToken);
+                .Select(c => c.Id).ToListAsync(cancellationToken);
 
             filteredCustomerIds = filteredCustomers.ToHashSet();
         }
 
-        var plans = await query
-            .OrderByDescending(plan => plan.StartDate)
-            .ToListAsync(cancellationToken);
+        var plans = await query.OrderByDescending(plan => plan.StartDate).ToListAsync(cancellationToken);
 
         // Filter plans in memory if customer search was provided
         if (filteredCustomerIds != null && filteredCustomerIds.Count > 0)
@@ -110,14 +82,9 @@ public class PaymentPlanService : IPaymentPlanService
         Dictionary<Guid, string> customers;
         if (customerIds.Count > 0)
         {
-            var allCustomers = await _context.Customers
-                .AsNoTracking()
-                .Select(c => new { c.Id, c.Name })
-                .ToListAsync(cancellationToken);
+            var allCustomers = await _context.Customers.AsNoTracking().Select(c => new { c.Id, c.Name }).ToListAsync(cancellationToken);
 
-            customers = allCustomers
-                .Where(c => customerIds.Contains(c.Id))
-                .ToDictionary(c => c.Id, c => c.Name);
+            customers = allCustomers.Where(c => customerIds.Contains(c.Id)).ToDictionary(c => c.Id, c => c.Name);
         }
         else
         {
@@ -127,44 +94,25 @@ public class PaymentPlanService : IPaymentPlanService
         Dictionary<Guid, string> shipments;
         if (shipmentIds.Count > 0)
         {
-            var allShipments = await _context.Shipments
-                .AsNoTracking()
-                .Select(s => new { s.Id, s.ReferenceNumber })
-                .ToListAsync(cancellationToken);
+            var allShipments = await _context.Shipments.AsNoTracking().Select(s => new { s.Id, s.ReferenceNumber }).ToListAsync(cancellationToken);
 
-            shipments = allShipments
-                .Where(s => shipmentIds.Contains(s.Id))
-                .ToDictionary(s => s.Id, s => s.ReferenceNumber);
+            shipments = allShipments.Where(s => shipmentIds.Contains(s.Id)).ToDictionary(s => s.Id, s => s.ReferenceNumber);
         }
         else
         {
             shipments = new Dictionary<Guid, string>();
         }
 
-        return plans.Select(plan => new PaymentPlanListItemDto(
-            plan.Id,
-            plan.CustomerId,
-            plan.ShipmentId,
-            plan.PlanType,
-            plan.TotalAmount,
-            plan.Currency,
-            plan.StartDate,
+        return plans.Select(plan => new PaymentPlanListItemDto(plan.Id, plan.CustomerId, plan.ShipmentId,
+            plan.PlanType, plan.TotalAmount, plan.Currency, plan.StartDate,
             customers.TryGetValue(plan.CustomerId, out var customerName) ? customerName : "-",
-            shipments.TryGetValue(plan.ShipmentId, out var shipmentRef) ? shipmentRef : "-"))
-            .ToList();
+            shipments.TryGetValue(plan.ShipmentId, out var shipmentRef) ? shipmentRef : "-")).ToList();
     }
 
     public async Task<Guid> CreateAsync(CreatePaymentPlanRequest request, CancellationToken cancellationToken = default)
     {
-        var plan = new PaymentPlan(
-            Guid.NewGuid(),
-            request.CustomerId,
-            request.ShipmentId,
-            request.PlanType,
-            request.TotalAmount,
-            request.Currency ?? "TRY",
-            request.StartDate,
-            request.PeriodicityWeeks);
+        var plan = new PaymentPlan(Guid.NewGuid(), request.CustomerId, request.ShipmentId, request.PlanType,
+            request.TotalAmount, request.Currency ?? "TRY", request.StartDate, request.PeriodicityWeeks);
 
         plan.Update(request.PlanType, request.TotalAmount, request.Currency ?? "TRY", request.StartDate, request.PeriodicityWeeks, request.Notes);
 

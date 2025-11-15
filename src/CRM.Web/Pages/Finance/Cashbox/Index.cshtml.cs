@@ -31,6 +31,7 @@ public class IndexModel : PageModel
     public string MonthlyExpenseDataJson { get; private set; } = "[]";
     public string MonthlyNetDataJson { get; private set; } = "[]";
     public IReadOnlyList<CategorySummary> CategorySummaries { get; private set; } = Array.Empty<CategorySummary>();
+    public IReadOnlyList<CashTransactionDto> RecentTransactions { get; private set; } = Array.Empty<CashTransactionDto>();
 
     public async Task OnGetAsync(DateTime? from, DateTime? to, string? type, CancellationToken cancellationToken)
     {
@@ -54,6 +55,7 @@ public class IndexModel : PageModel
             Transactions = dashboardData.Transactions;
             Summary = dashboardData.Summary;
             CategorySummaries = dashboardData.CategorySummaries;
+            RecentTransactions = dashboardData.RecentTransactions;
 
             var jsonOptions = new JsonSerializerOptions
             {

@@ -10,16 +10,8 @@ public class Customer : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public Customer(
-        Guid id,
-        string name,
-        string? legalName,
-        string? taxNumber,
-        string? email,
-        string? phone,
-        string? address,
-        string? segment,
-        string? notes)
+    public Customer(Guid id, string name, string? legalName, string? taxNumber, string? email,
+        string? phone, string? address, string? segment, string? notes)
     {
         Id = id;
         Name = name;
@@ -49,15 +41,8 @@ public class Customer : Entity<Guid>, IAuditableEntity
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
 
-    public void Update(
-        string name,
-        string? legalName,
-        string? taxNumber,
-        string? email,
-        string? phone,
-        string? address,
-        string? segment,
-        string? notes)
+    public void Update(string name, string? legalName, string? taxNumber, string? email,
+        string? phone, string? address, string? segment, string? notes)
     {
         Name = name;
         LegalName = legalName;

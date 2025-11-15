@@ -93,33 +93,28 @@
             <h2>@Localizer["Finance_Cashbox_Category_Title"]</h2>
         </header>
         <ul class="category-list">
-            @if (Model.CategorySummaries.Any())
+            @if (Model.RecentTransactions.Any())
             {
-                var rank = 1;
-                foreach (var stat in Model.CategorySummaries)
+                foreach (var tx in Model.RecentTransactions)
                 {
                     <li>
                         <div class="category-meta">
-                            <span class="rank">@rank</span>
                             <div class="category-info">
-                                <span class="name">@((stat.CategoryName) ?? Localizer["Finance_Cashbox_Category_Unspecified"].Value)</span>
-                                <span class="balance @(stat.NetAmount >= 0 ? "positive" : "negative")">
-                                    @stat.NetAmount.ToString("C2")
+                                <span class="name">@tx.Description</span>
+                                <span class="balance @(tx.TransactionType == CRM.Domain.Finance.CashTransactionType.Income ? "positive" : "negative")">
+                                    @(tx.TransactionType == CRM.Domain.Finance.CashTransactionType.Income ? "+" : "-")@tx.Amount.ToString("C2")
                                 </span>
                             </div>
                         </div>
                         <div class="category-stats">
-                            <span class="income">
-                                @Localizer["Finance_Cashbox_Category_Income"]:
-                                <strong>@stat.IncomeAmount.ToString("C2")</strong>
+                            <span class="date">
+                                @tx.TransactionDate.ToString("g")
                             </span>
-                            <span class="expense">
-                                @Localizer["Finance_Cashbox_Category_Expense"]:
-                                <strong>-@stat.ExpenseAmount.ToString("C2")</strong>
+                            <span class="category">
+                                @(string.IsNullOrWhiteSpace(tx.Category) ? Localizer["Finance_Cashbox_Category_Unspecified"].Value : tx.Category)
                             </span>
                         </div>
                     </li>
-                    rank++;
                 }
             }
             else

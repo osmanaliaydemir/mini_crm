@@ -8,12 +8,7 @@ public class PaymentInstallment : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public PaymentInstallment(
-        Guid paymentPlanId,
-        int installmentNumber,
-        DateTime dueDate,
-        decimal amount,
-        string currency)
+    public PaymentInstallment(Guid paymentPlanId, int installmentNumber, DateTime dueDate, decimal amount, string currency)
     {
         Id = Guid.NewGuid();
         PaymentPlanId = paymentPlanId;

@@ -8,14 +8,7 @@ public class Supplier : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public Supplier(
-        Guid id,
-        string name,
-        string? country,
-        string? taxNumber,
-        string? contactEmail,
-        string? contactPhone,
-        string? addressLine)
+    public Supplier(Guid id, string name, string? country, string? taxNumber, string? contactEmail, string? contactPhone, string? addressLine)
     {
         Id = id;
         Name = name;
@@ -40,14 +33,7 @@ public class Supplier : Entity<Guid>, IAuditableEntity
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
 
-    public void Update(
-        string name,
-        string? country,
-        string? taxNumber,
-        string? contactEmail,
-        string? contactPhone,
-        string? addressLine,
-        string? notes)
+    public void Update(string name, string? country, string? taxNumber, string? contactEmail, string? contactPhone, string? addressLine, string? notes)
     {
         Name = name;
         Country = country;

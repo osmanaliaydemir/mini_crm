@@ -1,0 +1,130 @@
+@page
+@model CRM.Web.Pages.Profile.IndexModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Profile_Page_Title"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/profile/index.css" asp-append-version="true" />
+}
+
+@if (TempData["StatusMessage"] != null)
+{
+    <div class="alert alert-@(TempData["StatusMessageType"] ?? "success") alert-dismissible fade show" role="alert">
+        @TempData["StatusMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<section class="page-header profile-header">
+    <div>
+        <h1>@Localizer["Profile_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Profile_Page_Subtitle"]</p>
+    </div>
+</section>
+
+<div class="profile-container">
+    <form method="post" asp-page-handler="UpdateProfile" class="profile-form" novalidate>
+        <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Profile_Section_Personal_Title"]</h2>
+                <p>@Localizer["Profile_Section_Personal_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Profile.FirstName">@Localizer["Profile_Field_FirstName"]</label>
+                    <input asp-for="Profile.FirstName" class="input-control" />
+                    <span asp-validation-for="Profile.FirstName" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Profile.LastName">@Localizer["Profile_Field_LastName"]</label>
+                    <input asp-for="Profile.LastName" class="input-control" />
+                    <span asp-validation-for="Profile.LastName" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Profile.PhoneNumber">@Localizer["Profile_Field_Phone"]</label>
+                    <input asp-for="Profile.PhoneNumber" class="input-control" />
+                    <span asp-validation-for="Profile.PhoneNumber" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Profile.Locale">@Localizer["Profile_Field_Locale"]</label>
+                    <select asp-for="Profile.Locale" class="input-control">
+                        <option value="tr-TR">Türkçe</option>
+                        <option value="en-US">English</option>
+                        <option value="ar-SA">العربية</option>
+                    </select>
+                    <span asp-validation-for="Profile.Locale" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Profile_Section_Account_Title"]</h2>
+                <p>@Localizer["Profile_Section_Account_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label>@Localizer["Profile_Field_UserName"]</label>
+                    <input type="text" value="@Model.UserName" class="input-control" disabled />
+                    <small class="input-hint">Username cannot be changed</small>
+                </div>
+                <div class="input-field">
+                    <label>@Localizer["Profile_Field_Email"]</label>
+                    <input type="email" value="@Model.Email" class="input-control" disabled />
+                    <small class="input-hint">Email cannot be changed</small>
+                </div>
+                <div class="input-field">
+                    <label>@Localizer["Profile_Field_Roles"]</label>
+                    <input type="text" value="@string.Join(", ", Model.Roles)" class="input-control" disabled />
+                    <small class="input-hint">Roles are managed by administrators</small>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">@Localizer["Profile_Action_Save"]</button>
+        </div>
+    </form>
+
+    <form method="post" asp-page-handler="ChangePassword" class="profile-form" novalidate>
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Profile_Section_Security_Title"]</h2>
+                <p>@Localizer["Profile_Section_Security_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="ChangePassword.CurrentPassword">@Localizer["Profile_Field_CurrentPassword"]</label>
+                    <input asp-for="ChangePassword.CurrentPassword" type="password" class="input-control" />
+                    <span asp-validation-for="ChangePassword.CurrentPassword" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="ChangePassword.NewPassword">@Localizer["Profile_Field_NewPassword"]</label>
+                    <input asp-for="ChangePassword.NewPassword" type="password" class="input-control" />
+                    <span asp-validation-for="ChangePassword.NewPassword" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="ChangePassword.ConfirmPassword">@Localizer["Profile_Field_ConfirmPassword"]</label>
+                    <input asp-for="ChangePassword.ConfirmPassword" type="password" class="input-control" />
+                    <span asp-validation-for="ChangePassword.ConfirmPassword" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">@Localizer["Profile_Action_ChangePassword"]</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

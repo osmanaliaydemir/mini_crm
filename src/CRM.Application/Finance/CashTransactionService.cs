@@ -12,10 +12,7 @@ public class CashTransactionService : ICashTransactionService
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
 
-    public CashTransactionService(
-        IRepository<CashTransaction> repository,
-        IApplicationDbContext context,
-        IUnitOfWork unitOfWork)
+    public CashTransactionService(IRepository<CashTransaction> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
     {
         _repository = repository;
         _context = context;
@@ -24,16 +21,8 @@ public class CashTransactionService : ICashTransactionService
 
     public async Task<Guid> CreateAsync(CreateCashTransactionRequest request, CancellationToken cancellationToken = default)
     {
-        var transaction = new CashTransaction(
-            Guid.NewGuid(),
-            request.TransactionDate,
-            request.TransactionType,
-            request.Amount,
-            request.Currency,
-            request.Description,
-            request.Category,
-            request.RelatedCustomerId,
-            request.RelatedShipmentId);
+        var transaction = new CashTransaction(Guid.NewGuid(), request.TransactionDate, request.TransactionType, request.Amount,
+            request.Currency, request.Description, request.Category, request.RelatedCustomerId, request.RelatedShipmentId);
 
         await _repository.AddAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -41,15 +30,9 @@ public class CashTransactionService : ICashTransactionService
         return transaction.Id;
     }
 
-    public async Task<IReadOnlyList<CashTransactionDto>> GetAllAsync(
-        DateTime? from = null,
-        DateTime? to = null,
-        CashTransactionType? type = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CashTransactionDto>> GetAllAsync(DateTime? from = null, DateTime? to = null, CashTransactionType? type = null, CancellationToken cancellationToken = default)
     {
-        var query = _context.CashTransactions
-            .AsNoTracking()
-            .AsQueryable();
+        var query = _context.CashTransactions.AsNoTracking().AsQueryable();
 
         if (from.HasValue)
         {
@@ -66,36 +49,21 @@ public class CashTransactionService : ICashTransactionService
             query = query.Where(t => t.TransactionType == type.Value);
         }
 
-        var transactions = await query
-            .OrderByDescending(t => t.TransactionDate)
-            .ToListAsync(cancellationToken);
+        var transactions = await query.OrderByDescending(t => t.TransactionDate).ToListAsync(cancellationToken);
 
         // Get related customer and shipment names
-        var customerIds = transactions
-            .Where(t => t.RelatedCustomerId.HasValue)
-            .Select(t => t.RelatedCustomerId!.Value)
-            .Distinct()
-            .ToHashSet();
+        var customerIds = transactions.Where(t => t.RelatedCustomerId.HasValue).Select(t => t.RelatedCustomerId!.Value).Distinct().ToHashSet();
 
-        var shipmentIds = transactions
-            .Where(t => t.RelatedShipmentId.HasValue)
-            .Select(t => t.RelatedShipmentId!.Value)
-            .Distinct()
-            .ToHashSet();
+        var shipmentIds = transactions.Where(t => t.RelatedShipmentId.HasValue).Select(t => t.RelatedShipmentId!.Value).Distinct().ToHashSet();
 
         // Fetch all relevant customers and shipments to avoid SQL parameter limits
         // Filter in memory instead of using Contains() in SQL query
         Dictionary<Guid, string> customers;
         if (customerIds.Count > 0)
         {
-            var allCustomers = await _context.Customers
-                .AsNoTracking()
-                .Select(c => new { c.Id, c.Name })
-                .ToListAsync(cancellationToken);
+            var allCustomers = await _context.Customers.AsNoTracking().Select(c => new { c.Id, c.Name }).ToListAsync(cancellationToken);
 
-            customers = allCustomers
-                .Where(c => customerIds.Contains(c.Id))
-                .ToDictionary(c => c.Id, c => c.Name);
+            customers = allCustomers.Where(c => customerIds.Contains(c.Id)).ToDictionary(c => c.Id, c => c.Name);
         }
         else
         {
@@ -105,40 +73,24 @@ public class CashTransactionService : ICashTransactionService
         Dictionary<Guid, string> shipments;
         if (shipmentIds.Count > 0)
         {
-            var allShipments = await _context.Shipments
-                .AsNoTracking()
-                .Select(s => new { s.Id, s.ReferenceNumber })
-                .ToListAsync(cancellationToken);
+            var allShipments = await _context.Shipments.AsNoTracking().Select(s => new { s.Id, s.ReferenceNumber }).ToListAsync(cancellationToken);
 
-            shipments = allShipments
-                .Where(s => shipmentIds.Contains(s.Id))
-                .ToDictionary(s => s.Id, s => s.ReferenceNumber);
+            shipments = allShipments.Where(s => shipmentIds.Contains(s.Id)).ToDictionary(s => s.Id, s => s.ReferenceNumber);
         }
         else
         {
             shipments = new Dictionary<Guid, string>();
         }
 
-        return transactions.Select(t => new CashTransactionDto(
-            t.Id,
-            t.TransactionDate,
-            t.TransactionType,
-            t.Amount,
-            t.Currency,
-            t.Description,
-            t.Category,
-            t.RelatedCustomerId,
+        return transactions.Select(t => new CashTransactionDto(t.Id, t.TransactionDate, t.TransactionType,
+            t.Amount, t.Currency, t.Description, t.Category, t.RelatedCustomerId,
             t.RelatedCustomerId.HasValue && customers.TryGetValue(t.RelatedCustomerId.Value, out var customerName) ? customerName : null,
             t.RelatedShipmentId,
             t.RelatedShipmentId.HasValue && shipments.TryGetValue(t.RelatedShipmentId.Value, out var shipmentRef) ? shipmentRef : null,
             t.CreatedAt)).ToList();
     }
 
-    public async Task<CashTransactionDashboardData> GetDashboardDataAsync(
-        DateTime? from = null,
-        DateTime? to = null,
-        CashTransactionType? type = null,
-        CancellationToken cancellationToken = default)
+    public async Task<CashTransactionDashboardData> GetDashboardDataAsync(DateTime? from = null, DateTime? to = null, CashTransactionType? type = null, CancellationToken cancellationToken = default)
     {
         var transactions = await GetAllAsync(from, to, type, cancellationToken);
 
@@ -164,24 +116,15 @@ public class CashTransactionService : ICashTransactionService
 
         var culture = System.Globalization.CultureInfo.CurrentUICulture;
 
-        var monthlyLabels = monthlyStatsToShow
-            .Select(stat => stat.Month.ToString("MMM yyyy", culture))
-            .ToList();
+        var monthlyLabels = monthlyStatsToShow.Select(stat => stat.Month.ToString("MMM yyyy", culture)).ToList();
 
-        var monthlyIncomeData = monthlyStatsToShow
-            .Select(stat => stat.IncomeAmount)
-            .ToList();
+        var monthlyIncomeData = monthlyStatsToShow.Select(stat => stat.IncomeAmount).ToList();
 
-        var monthlyExpenseData = monthlyStatsToShow
-            .Select(stat => stat.ExpenseAmount)
-            .ToList();
+        var monthlyExpenseData = monthlyStatsToShow.Select(stat => stat.ExpenseAmount).ToList();
 
-        var monthlyNetData = monthlyStatsToShow
-            .Select(stat => stat.IncomeAmount - stat.ExpenseAmount)
-            .ToList();
+        var monthlyNetData = monthlyStatsToShow.Select(stat => stat.IncomeAmount - stat.ExpenseAmount).ToList();
 
-        var categorySummaries = transactions
-            .GroupBy(t => string.IsNullOrWhiteSpace(t.Category) ? null : t.Category.Trim())
+        var categorySummaries = transactions.GroupBy(t => string.IsNullOrWhiteSpace(t.Category) ? null : t.Category.Trim())
             .Select(group => new CategorySummary(
                 group.Key,
                 group.Where(t => t.TransactionType == CashTransactionType.Income).Sum(t => t.Amount),
@@ -191,14 +134,15 @@ public class CashTransactionService : ICashTransactionService
             .Take(5)
             .ToList();
 
-        return new CashTransactionDashboardData(
-            transactions,
-            summary,
-            categorySummaries,
-            monthlyLabels,
-            monthlyIncomeData,
-            monthlyExpenseData,
-            monthlyNetData);
+        // En son 3 hareketi al (tarihe göre sıralı)
+        var recentTransactions = transactions
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.CreatedAt)
+            .Take(3)
+            .ToList();
+
+        return new CashTransactionDashboardData(transactions, summary, categorySummaries, recentTransactions,
+            monthlyLabels, monthlyIncomeData, monthlyExpenseData, monthlyNetData);
     }
 }
 

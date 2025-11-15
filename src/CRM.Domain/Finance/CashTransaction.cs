@@ -8,16 +8,9 @@ public class CashTransaction : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public CashTransaction(
-        Guid id,
-        DateTime transactionDate,
-        CashTransactionType transactionType,
-        decimal amount,
-        string currency,
-        string? description,
-        string? category,
-        Guid? relatedCustomerId,
-        Guid? relatedShipmentId)
+    public CashTransaction(Guid id, DateTime transactionDate, CashTransactionType transactionType,
+        decimal amount, string currency, string? description, string? category,
+        Guid? relatedCustomerId, Guid? relatedShipmentId)
     {
         Id = id;
         TransactionDate = transactionDate;
@@ -45,15 +38,8 @@ public class CashTransaction : Entity<Guid>, IAuditableEntity
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
 
-    public void Update(
-        DateTime transactionDate,
-        CashTransactionType transactionType,
-        decimal amount,
-        string currency,
-        string? description,
-        string? category,
-        Guid? relatedCustomerId,
-        Guid? relatedShipmentId)
+    public void Update(DateTime transactionDate, CashTransactionType transactionType, decimal amount,
+        string currency, string? description, string? category, Guid? relatedCustomerId, Guid? relatedShipmentId)
     {
         TransactionDate = transactionDate;
         TransactionType = transactionType;

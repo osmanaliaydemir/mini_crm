@@ -35,20 +35,15 @@ public sealed class JwtTokenService : ITokenService
 
         await StoreRefreshTokenAsync(user, refreshToken, cancellationToken);
 
-        return new AuthTokens(
-            accessToken.Token,
-            accessToken.ExpiresAt,
-            refreshToken,
-            DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpirationDays));
+        return new AuthTokens(accessToken.Token, accessToken.ExpiresAt,
+            refreshToken, DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpirationDays));
     }
 
     public async Task<AuthTokens> RefreshTokensAsync(ApplicationUser user, string refreshToken, CancellationToken cancellationToken = default)
     {
         var storedToken = await _userManager.GetAuthenticationTokenAsync(user, RefreshTokenProvider, RefreshTokenName);
 
-        if (storedToken is null || !CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(storedToken),
-                Encoding.UTF8.GetBytes(refreshToken)))
+        if (storedToken is null || !CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(storedToken), Encoding.UTF8.GetBytes(refreshToken)))
         {
             throw new SecurityTokenException("Geçersiz yenileme jetonu.");
         }
@@ -67,11 +62,8 @@ public sealed class JwtTokenService : ITokenService
     {
         await _userManager.RemoveAuthenticationTokenAsync(user, RefreshTokenProvider, RefreshTokenName);
 
-        var setResult = await _userManager.SetAuthenticationTokenAsync(
-            user,
-            RefreshTokenProvider,
-            RefreshTokenName,
-            refreshToken);
+        var setResult = await _userManager.SetAuthenticationTokenAsync(user, RefreshTokenProvider,
+            RefreshTokenName, refreshToken);
 
         if (!setResult.Succeeded)
         {
@@ -104,12 +96,8 @@ public sealed class JwtTokenService : ITokenService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var token = new JwtSecurityToken(
-            issuer: _jwtOptions.Issuer,
-            audience: _jwtOptions.Audience,
-            claims: claims,
-            expires: expiration,
-            signingCredentials: creds);
+        var token = new JwtSecurityToken(issuer: _jwtOptions.Issuer, audience: _jwtOptions.Audience,
+            claims: claims, expires: expiration, signingCredentials: creds);
 
         return (new JwtSecurityTokenHandler().WriteToken(token), expiration);
     }

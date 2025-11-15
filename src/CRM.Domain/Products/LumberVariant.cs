@@ -9,13 +9,7 @@ public class LumberVariant : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public LumberVariant(
-        Guid id,
-        string name,
-        string? species,
-        string? grade,
-        Measurement? standardVolume,
-        string unitOfMeasure)
+    public LumberVariant(Guid id, string name, string? species, string? grade, Measurement? standardVolume, string unitOfMeasure)
     {
         Id = id;
         Name = name;
@@ -38,13 +32,7 @@ public class LumberVariant : Entity<Guid>, IAuditableEntity
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
 
-    public void Update(
-        string name,
-        string? species,
-        string? grade,
-        Measurement? standardVolume,
-        string unitOfMeasure,
-        string? notes)
+    public void Update(string name, string? species, string? grade, Measurement? standardVolume, string unitOfMeasure, string? notes)
     {
         Name = name;
         Species = species;

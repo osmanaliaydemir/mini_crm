@@ -129,8 +129,6 @@
                     <span class="moon">🌙</span>
                 </button>
                 <div class="quick-actions">
-                    <a class="btn btn-ghost" asp-page="/Notifications/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
-                    <a class="btn btn-ghost" asp-page="/Analytics/Index">Analizler</a>
                     <div class="language-dropdown" data-lang-dropdown>
                         <button class="lang-trigger" type="button" aria-haspopup="true" aria-expanded="false" data-selected-lang>@CultureShortName(currentCulture.Name)</button>
                         <div class="lang-panel" role="menu">
@@ -186,8 +184,8 @@
                             </svg>
                         </button>
                         <div class="dropdown-panel" role="menu">
-                            <a asp-page="/Profile/Index" role="menuitem">Profil & Ayarlar</a>
-                            <a asp-page="/Notifications/Preferences" role="menuitem">Bildirim Tercihleri</a>
+                            <a asp-page="/Profile/Index" role="menuitem">@Localizer["Profile_Menu_Link"]</a>
+                            <a asp-page="/Notifications/Preferences" role="menuitem">@Localizer["Notifications_Menu_Link"]</a>
                             <div class="dropdown-divider"></div>
                             <form method="post" asp-page="/Auth/Logout" asp-route-returnUrl="@returnUrl">
                                 <button type="submit" class="danger" role="menuitem">@Localizer["Logout_Button"]</button>

@@ -32,19 +32,9 @@ public class CreateModel : PageModel
 
         try
         {
-            var request = new CreateCustomerRequest(
-                Customer.Name,
-                Customer.LegalName,
-                Customer.TaxNumber,
-                Customer.Email,
-                Customer.Phone,
-                Customer.Address,
-                Customer.Segment,
-                Customer.Notes,
-                Customer.PrimaryContactName,
-                Customer.PrimaryContactEmail,
-                Customer.PrimaryContactPhone,
-                Customer.PrimaryContactPosition);
+            var request = new CreateCustomerRequest(Customer.Name, Customer.LegalName, Customer.TaxNumber, Customer.Email,
+                Customer.Phone, Customer.Address, Customer.Segment, Customer.Notes,
+                Customer.PrimaryContactName, Customer.PrimaryContactEmail, Customer.PrimaryContactPhone, Customer.PrimaryContactPosition);
 
             await _customerService.CreateAsync(request, cancellationToken);
 

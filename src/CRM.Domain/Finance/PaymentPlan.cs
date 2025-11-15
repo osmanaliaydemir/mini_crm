@@ -10,15 +10,8 @@ public class PaymentPlan : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public PaymentPlan(
-        Guid id,
-        Guid customerId,
-        Guid shipmentId,
-        PaymentPlanType planType,
-        decimal totalAmount,
-        string currency,
-        DateTime startDate,
-        int periodicityWeeks)
+    public PaymentPlan(Guid id, Guid customerId, Guid shipmentId, PaymentPlanType planType,
+        decimal totalAmount, string currency, DateTime startDate, int periodicityWeeks)
     {
         Id = id;
         CustomerId = customerId;
@@ -47,13 +40,8 @@ public class PaymentPlan : Entity<Guid>, IAuditableEntity
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
 
-    public void Update(
-        PaymentPlanType planType,
-        decimal totalAmount,
-        string currency,
-        DateTime startDate,
-        int periodicityWeeks,
-        string? notes)
+    public void Update(PaymentPlanType planType, decimal totalAmount, string currency,
+        DateTime startDate, int periodicityWeeks, string? notes)
     {
         PlanType = planType;
         TotalAmount = totalAmount;

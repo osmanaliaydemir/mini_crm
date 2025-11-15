@@ -9,12 +9,7 @@ public class WarehouseUnloading : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public WarehouseUnloading(
-        Guid warehouseId,
-        Guid shipmentId,
-        string truckPlate,
-        DateTime unloadedAt,
-        decimal unloadedVolume)
+    public WarehouseUnloading(Guid warehouseId, Guid shipmentId, string truckPlate, DateTime unloadedAt, decimal unloadedVolume)
     {
         Id = Guid.NewGuid();
         WarehouseId = warehouseId;

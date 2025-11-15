@@ -6,6 +6,7 @@ using CRM.Domain.Shipments;
 using CRM.Domain.Warehouses;
 using CRM.Domain.Customers;
 using CRM.Domain.Finance;
+using CRM.Domain.Notifications;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,7 @@ public class CRMDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<PaymentPlan> PaymentPlans => Set<PaymentPlan>();
     public DbSet<PaymentInstallment> PaymentInstallments => Set<PaymentInstallment>();
     public DbSet<CashTransaction> CashTransactions => Set<CashTransaction>();
+    public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

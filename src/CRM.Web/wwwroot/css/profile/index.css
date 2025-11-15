@@ -1,0 +1,201 @@
+.profile-header {
+    margin-bottom: 24px;
+}
+
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.profile-form .form-card {
+    background: rgba(15, 23, 42, 0.82);
+    border: 1px solid rgba(71, 85, 105, 0.28);
+    border-radius: 24px;
+    box-shadow: 0 24px 38px rgba(7, 16, 32, 0.28);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-form .form-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -22% -32% auto;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.2), transparent 70%);
+}
+
+.profile-form .form-card header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 0;
+}
+
+.profile-form .form-card header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.95);
+}
+
+.profile-form .form-card header p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(148, 163, 184, 0.75);
+}
+
+.profile-form .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 18px 20px;
+}
+
+.profile-form .input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profile-form .input-field label {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(203, 213, 225, 0.82);
+    font-weight: 500;
+}
+
+.profile-form .input-control {
+    border: 1px solid rgba(100, 116, 139, 0.45);
+    background: rgba(15, 23, 42, 0.65);
+    border-radius: 14px;
+    padding: 12px 14px;
+    color: rgba(226, 232, 240, 0.95);
+    font-size: 0.92rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-form .input-control:focus {
+    border-color: rgba(59, 130, 246, 0.7);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    outline: none;
+}
+
+.profile-form .input-control:disabled {
+    background: rgba(30, 41, 59, 0.4);
+    color: rgba(148, 163, 184, 0.6);
+    cursor: not-allowed;
+    border-color: rgba(71, 85, 105, 0.3);
+}
+
+.profile-form .input-hint {
+    font-size: 0.76rem;
+    color: rgba(148, 163, 184, 0.65);
+    margin-top: 4px;
+}
+
+.profile-form .input-error {
+    font-size: 0.76rem;
+    color: rgba(248, 113, 113, 0.82);
+    margin-top: 4px;
+}
+
+.profile-form .form-validation-summary {
+    border-radius: 16px;
+    padding: 14px 18px;
+    background: rgba(248, 113, 113, 0.14);
+    color: rgba(248, 250, 252, 0.92);
+    margin-bottom: 20px;
+    font-size: 0.875rem;
+}
+
+.profile-form .form-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-top: 8px;
+    margin-top: 0;
+}
+
+/* Light Theme Styles */
+:root[data-theme='light'] .profile-form .form-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(203, 213, 225, 0.6);
+    box-shadow: 0 20px 32px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .profile-form .form-card::after {
+    background: radial-gradient(circle, rgba(148, 197, 255, 0.28), transparent 70%);
+}
+
+:root[data-theme='light'] .profile-form .form-card header h2 {
+    color: rgba(30, 41, 59, 0.92);
+}
+
+:root[data-theme='light'] .profile-form .form-card header p {
+    color: rgba(100, 116, 139, 0.7);
+}
+
+:root[data-theme='light'] .profile-form .input-field label {
+    color: rgba(71, 85, 105, 0.78);
+}
+
+:root[data-theme='light'] .profile-form .input-control {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(203, 213, 225, 0.6);
+    color: rgba(30, 41, 59, 0.92);
+}
+
+:root[data-theme='light'] .profile-form .input-control:focus {
+    border-color: rgba(37, 99, 235, 0.7);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+:root[data-theme='light'] .profile-form .input-control:disabled {
+    background: rgba(241, 245, 249, 0.8);
+    color: rgba(148, 163, 184, 0.7);
+    border-color: rgba(203, 213, 225, 0.5);
+}
+
+:root[data-theme='light'] .profile-form .input-hint {
+    color: rgba(100, 116, 139, 0.65);
+}
+
+:root[data-theme='light'] .profile-form .input-error {
+    color: rgba(220, 38, 38, 0.85);
+}
+
+:root[data-theme='light'] .profile-form .form-validation-summary {
+    background: rgba(248, 113, 113, 0.18);
+    color: rgba(185, 28, 28, 0.85);
+}
+
+:root[data-theme='light'] .profile-form .input-control select {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(203, 213, 225, 0.6);
+    color: rgba(30, 41, 59, 0.92);
+}
+
+@media (max-width: 768px) {
+    .profile-form .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .profile-form .form-actions .btn {
+        width: 100%;
+    }
+}
+

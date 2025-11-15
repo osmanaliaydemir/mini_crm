@@ -8,13 +8,8 @@ public class CustomerInteraction : Entity<Guid>, IAuditableEntity
     {
     }
 
-    public CustomerInteraction(
-        Guid customerId,
-        DateTime interactionDate,
-        string interactionType,
-        string? subject,
-        string? notes,
-        string? recordedBy)
+    public CustomerInteraction(Guid customerId, DateTime interactionDate, string interactionType,
+        string? subject, string? notes, string? recordedBy)
     {
         Id = Guid.NewGuid();
         CustomerId = customerId;

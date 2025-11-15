@@ -1,4 +1,6 @@
 using CRM.Application.Authentication;
+using CRM.Application.Common;
+using CRM.Infrastructure.Email;
 using CRM.Infrastructure.Identity;
 using CRM.Infrastructure.Persistence;
 using CRM.Infrastructure.Persistence.Repositories;
@@ -55,11 +57,12 @@ public static class DependencyInjection
 
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IDbInitializer, DbInitializer>();
-        services.AddScoped<CRM.Application.Common.IUnitOfWork>(sp => sp.GetRequiredService<CRMDbContext>());
-        services.AddScoped<CRM.Application.Common.IApplicationDbContext>(sp => sp.GetRequiredService<CRMDbContext>());
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<CRMDbContext>());
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<CRMDbContext>());
+        services.AddScoped<IEmailSender, EmailSender>();
 
         // Register repositories
-        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped(typeof(Persistence.Repositories.IRepository<>), typeof(Repository<>));
         services.AddScoped(typeof(CRM.Application.Common.IRepository<>), typeof(Repository<>));
 
         return services;

@@ -1,0 +1,174 @@
+@page
+@model CRM.Web.Pages.Notifications.PreferencesModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Notifications_Page_Title"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications/preferences.css" asp-append-version="true" />
+}
+
+@if (TempData["StatusMessage"] != null)
+{
+    <div class="alert alert-@(TempData["StatusMessageType"] ?? "success") alert-dismissible fade show" role="alert">
+        @TempData["StatusMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<section class="page-header notifications-header">
+    <div>
+        <h1>@Localizer["Notifications_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Notifications_Page_Subtitle"]</p>
+    </div>
+</section>
+
+<form method="post" class="notifications-form" novalidate>
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+    <section class="form-card">
+        <header>
+            <h2>@Localizer["Notifications_Section_Email_Title"]</h2>
+            <p>@Localizer["Notifications_Section_Email_Subtitle"]</p>
+        </header>
+        <div class="notifications-grid">
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.EmailShipmentUpdates" class="notification-label">
+                        @Localizer["Notifications_Option_ShipmentUpdates"]
+                    </label>
+                    <p class="notification-description">Receive email notifications when shipments are updated.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.EmailShipmentUpdates" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.EmailPaymentReminders" class="notification-label">
+                        @Localizer["Notifications_Option_PaymentReminders"]
+                    </label>
+                    <p class="notification-description">Get reminders about upcoming payment due dates.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.EmailPaymentReminders" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.EmailWarehouseAlerts" class="notification-label">
+                        @Localizer["Notifications_Option_WarehouseAlerts"]
+                    </label>
+                    <p class="notification-description">Be notified about warehouse operations and alerts.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.EmailWarehouseAlerts" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.EmailCustomerInteractions" class="notification-label">
+                        @Localizer["Notifications_Option_CustomerInteractions"]
+                    </label>
+                    <p class="notification-description">Receive updates about customer interactions and activities.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.EmailCustomerInteractions" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.EmailSystemAnnouncements" class="notification-label">
+                        @Localizer["Notifications_Option_SystemAnnouncements"]
+                    </label>
+                    <p class="notification-description">Stay informed about system updates and announcements.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.EmailSystemAnnouncements" class="form-check-input" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="form-card">
+        <header>
+            <h2>@Localizer["Notifications_Section_InApp_Title"]</h2>
+            <p>@Localizer["Notifications_Section_InApp_Subtitle"]</p>
+        </header>
+        <div class="notifications-grid">
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.InAppShipmentUpdates" class="notification-label">
+                        @Localizer["Notifications_Option_ShipmentUpdates"]
+                    </label>
+                    <p class="notification-description">Show in-app notifications when shipments are updated.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.InAppShipmentUpdates" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.InAppPaymentReminders" class="notification-label">
+                        @Localizer["Notifications_Option_PaymentReminders"]
+                    </label>
+                    <p class="notification-description">Display reminders about upcoming payment due dates.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.InAppPaymentReminders" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.InAppWarehouseAlerts" class="notification-label">
+                        @Localizer["Notifications_Option_WarehouseAlerts"]
+                    </label>
+                    <p class="notification-description">Show alerts about warehouse operations.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.InAppWarehouseAlerts" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.InAppCustomerInteractions" class="notification-label">
+                        @Localizer["Notifications_Option_CustomerInteractions"]
+                    </label>
+                    <p class="notification-description">Display updates about customer interactions.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.InAppCustomerInteractions" class="form-check-input" />
+                </div>
+            </div>
+
+            <div class="notification-item">
+                <div class="notification-content">
+                    <label asp-for="Preferences.InAppSystemAnnouncements" class="notification-label">
+                        @Localizer["Notifications_Option_SystemAnnouncements"]
+                    </label>
+                    <p class="notification-description">Show system updates and announcements.</p>
+                </div>
+                <div class="notification-toggle">
+                    <input type="checkbox" asp-for="Preferences.InAppSystemAnnouncements" class="form-check-input" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">@Localizer["Notifications_Action_Save"]</button>
+        <a asp-page="/Index" class="btn btn-ghost">@Localizer["Notifications_Action_Cancel"]</a>
+    </div>
+</form>
+
