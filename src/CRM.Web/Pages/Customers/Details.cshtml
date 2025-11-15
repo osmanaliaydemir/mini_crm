@@ -6,13 +6,13 @@
 
 @{
     Layout = "_DashboardLayout";
-    if (Model.Customer is null)
+    if (Model.Details is null)
     {
         ViewData["Title"] = Localizer["Customers_Details_NotFound_Title"];
     }
     else
     {
-        ViewData["Title"] = $"{Localizer["Customers_Details_Title"]} · {Model.Customer.Name}";
+        ViewData["Title"] = $"{Localizer["Customers_Details_Title"]} · {Model.Details.Customer.Name}";
     }
 }
 
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="~/css/customers/details.css" asp-append-version="true" />
 }
 
-@if (Model.Customer is null)
+@if (Model.Details is null)
 {
     <section class="details-empty">
         <article class="details-card">
@@ -34,7 +34,9 @@
 }
 else
 {
-    var customer = Model.Customer;
+    var customer = Model.Details.Customer;
+    var contacts = Model.Details.Contacts;
+    var interactions = Model.Details.Interactions;
 
     <section class="page-header details-header">
         <div>
@@ -79,7 +81,7 @@ else
             <header>
                 <h2>@Localizer["Customers_Details_Contact_Title"]</h2>
             </header>
-            @{ var primaryContact = Model.Contacts.FirstOrDefault(); }
+            @{ var primaryContact = contacts.FirstOrDefault(); }
             <dl class="details-definition">
                 <div>
                     <dt>@Localizer["Customers_Field_Email"]</dt>
@@ -132,7 +134,7 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach (var contact in Model.Contacts)
+                    @foreach (var contact in contacts)
                     {
                         <tr>
                             <td>@contact.FullName</td>
@@ -140,7 +142,7 @@ else
                             <td>@(string.IsNullOrWhiteSpace(contact.Email) ? "-" : contact.Email)</td>
                         </tr>
                     }
-                    @if (!Model.Contacts.Any())
+                    @if (!contacts.Any())
                     {
                         <tr>
                             <td colspan="3" class="empty">@Localizer["Customers_Contacts_Empty"]</td>
@@ -205,7 +207,7 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach (var interaction in Model.Interactions)
+                    @foreach (var interaction in interactions)
                     {
                         <tr>
                             <td>@interaction.InteractionDate.ToLocalTime().ToString("g")</td>
@@ -215,7 +217,7 @@ else
                             <td>@interaction.RecordedBy</td>
                         </tr>
                     }
-                    @if (!Model.Interactions.Any())
+                    @if (!interactions.Any())
                     {
                         <tr>
                             <td colspan="5" class="empty">@Localizer["Customers_Interactions_Empty"]</td>

@@ -111,49 +111,59 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach (var supplier in Model.Suppliers)
+                @if (Model.Suppliers.Any())
                 {
-                    <tr>
-                        <td>
-                            <div class="cell-strong">@supplier.Name</div>
-                            @if (!string.IsNullOrWhiteSpace(supplier.AddressLine))
-                            {
-                                <div class="cell-subtext">@supplier.AddressLine</div>
-                            }
-                        </td>
-                        <td>@supplier.Country</td>
-                        <td>@supplier.TaxNumber</td>
-                        <td>
-                            @if (!string.IsNullOrWhiteSpace(supplier.ContactEmail))
-                            {
-                                <div class="cell-strong">@supplier.ContactEmail</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(supplier.ContactPhone))
-                            {
-                                <div class="cell-subtext">@supplier.ContactPhone</div>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <a class="btn btn-icon" asp-page="Details" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Details"]">
-                                <img src="~/images/detail.png" alt="@Localizer["Suppliers_Action_Details"]" width="18" height="18" loading="lazy" />
-                            </a>
-                            <a class="btn btn-icon" asp-page="Edit" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Edit"]">
-                                <img src="~/images/edit.png" alt="@Localizer["Suppliers_Action_Edit"]" width="18" height="18" loading="lazy" />
-                            </a>
-                            <a class="btn btn-icon" asp-page="Delete" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Delete"]">
-                                <img src="~/images/delete.png" alt="@Localizer["Suppliers_Action_Delete"]" width="18" height="18" loading="lazy" />
-                            </a>
-                        </td>
-                    </tr>
-                }
-                @if (!Model.Suppliers.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="empty-state">@Localizer["Suppliers_Table_Empty"]</td>
-                    </tr>
+                    @foreach (var supplier in Model.Suppliers)
+                    {
+                        <tr>
+                            <td>
+                                <div class="cell-strong">@supplier.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(supplier.AddressLine))
+                                {
+                                    <div class="cell-subtext">@supplier.AddressLine</div>
+                                }
+                            </td>
+                            <td>@supplier.Country</td>
+                            <td>@supplier.TaxNumber</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(supplier.ContactEmail) || !string.IsNullOrWhiteSpace(supplier.ContactPhone))
+                                {
+                                    @if (!string.IsNullOrWhiteSpace(supplier.ContactEmail))
+                                    {
+                                        <div class="cell-strong">@supplier.ContactEmail</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(supplier.ContactPhone))
+                                    {
+                                        <div class="cell-subtext">@supplier.ContactPhone</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-icon" asp-page="Details" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Details"]">
+                                    <img src="~/images/detail.png" alt="@Localizer["Suppliers_Action_Details"]" width="18" height="18" loading="lazy" />
+                                </a>
+                                <a class="btn btn-icon" asp-page="Edit" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Edit"]">
+                                    <img src="~/images/edit.png" alt="@Localizer["Suppliers_Action_Edit"]" width="18" height="18" loading="lazy" />
+                                </a>
+                                <a class="btn btn-icon" asp-page="Delete" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Delete"]">
+                                    <img src="~/images/delete.png" alt="@Localizer["Suppliers_Action_Delete"]" width="18" height="18" loading="lazy" />
+                                </a>
+                            </td>
+                        </tr>
+                    }
                 }
                 </tbody>
             </table>
+            @if (!Model.Suppliers.Any())
+            {
+                <div class="table-empty-message" style="display: none; padding: 2rem; text-align: center; color: #64748b;">
+                    @Localizer["Suppliers_Table_Empty"]
+                </div>
+            }
         </div>
     </article>
 </section>

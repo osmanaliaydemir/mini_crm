@@ -1,22 +1,32 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using CRM.Application.Shipments;
+using CRM.Application.Suppliers;
+using CRM.Application.Customers;
 using CRM.Domain.Enums;
-using CRM.Domain.Shipments;
-using CRM.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Shipments;
 
 public class CreateModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly IShipmentService _shipmentService;
+    private readonly ISupplierService _supplierService;
+    private readonly ICustomerService _customerService;
+    private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(CRMDbContext dbContext)
+    public CreateModel(
+        IShipmentService shipmentService,
+        ISupplierService supplierService,
+        ICustomerService customerService,
+        ILogger<CreateModel> logger)
     {
-        _dbContext = dbContext;
+        _shipmentService = shipmentService;
+        _supplierService = supplierService;
+        _customerService = customerService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -42,53 +52,44 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var shipmentDate = DateTime.SpecifyKind(Input.ShipmentDate, DateTimeKind.Utc);
-        DateTime? estimatedArrival = Input.EstimatedArrival.HasValue
-            ? DateTime.SpecifyKind(Input.EstimatedArrival.Value, DateTimeKind.Utc)
-            : null;
-        var stageStartedAt = DateTime.SpecifyKind(Input.StageStartedAt, DateTimeKind.Utc);
-        DateTime? stageCompletedAt = Input.StageCompletedAt.HasValue
-            ? DateTime.SpecifyKind(Input.StageCompletedAt.Value, DateTimeKind.Utc)
-            : null;
+        try
+        {
+            var request = new CreateShipmentRequest(
+                Input.SupplierId,
+                Input.CustomerId,
+                Input.ReferenceNumber.Trim(),
+                Input.ShipmentDate,
+                Input.EstimatedArrival,
+                Input.Status,
+                Input.LoadingPort,
+                Input.DischargePort,
+                Input.Notes,
+                Input.StageStartedAt,
+                Input.StageCompletedAt,
+                Input.StageNotes);
 
-        var shipment = new Shipment(
-            Guid.NewGuid(),
-            Input.SupplierId,
-            Input.ReferenceNumber.Trim(),
-            shipmentDate,
-            Input.Status,
-            Input.CustomerId);
+            var shipmentId = await _shipmentService.CreateAsync(request, cancellationToken);
 
-        shipment.Update(
-            shipmentDate,
-            estimatedArrival,
-            Input.Status,
-            Input.LoadingPort,
-            Input.DischargePort,
-            Input.Notes,
-            Input.CustomerId);
+            TempData["StatusMessage"] = "Sevkiyat başarıyla oluşturuldu.";
+            TempData["StatusMessageType"] = "success";
 
-        shipment.SetOrUpdateStage(Input.Status, stageStartedAt, stageCompletedAt, Input.StageNotes);
-
-        _dbContext.Shipments.Add(shipment);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage("Details", new { id = shipment.Id });
+            return RedirectToPage("Details", new { id = shipmentId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating shipment");
+            ModelState.AddModelError(string.Empty, "Sevkiyat oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     private async Task LoadLookupsAsync(CancellationToken cancellationToken)
     {
-        SupplierOptions = await _dbContext.Suppliers
-            .AsNoTracking()
-            .OrderBy(s => s.Name)
-            .Select(s => new SelectListItem(s.Name, s.Id.ToString()))
-            .ToListAsync(cancellationToken);
+        var suppliers = await _supplierService.GetAllAsync(cancellationToken: cancellationToken);
+        SupplierOptions = suppliers.Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToList();
 
-        CustomerOptions = await _dbContext.Customers
-            .AsNoTracking()
-            .OrderBy(c => c.Name)
-            .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
-            .ToListAsync(cancellationToken);
+        var customers = await _customerService.GetAllAsync(cancellationToken: cancellationToken);
+        CustomerOptions = customers.Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToList();
 
         StatusOptions = Enum.GetValues(typeof(ShipmentStatus))
             .Cast<ShipmentStatus>()

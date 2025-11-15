@@ -162,7 +162,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach (var tx in Model.Transactions)
+                @if (Model.Transactions.Any())
+                {
+                    @foreach (var tx in Model.Transactions)
                 {
                     <tr>
                         <td>@tx.TransactionDate.ToString("g")</td>
@@ -179,18 +181,19 @@
                             <div class="cell-strong">@tx.Amount.ToString("C2")</div>
                             <div class="cell-subtext">@tx.Currency</div>
                         </td>
-                        <td>@(tx.CustomerName ?? Localizer["Finance_Cashbox_Value_None"].Value)</td>
-                        <td>@(tx.ShipmentReference ?? Localizer["Finance_Cashbox_Value_None"].Value)</td>
+                        <td>@(tx.RelatedCustomerName ?? Localizer["Finance_Cashbox_Value_None"].Value)</td>
+                        <td>@(tx.RelatedShipmentReference ?? Localizer["Finance_Cashbox_Value_None"].Value)</td>
                     </tr>
-                }
-                @if (!Model.Transactions.Any())
-                {
-                    <tr>
-                        <td colspan="7" class="empty-state">@Localizer["Finance_Cashbox_Table_NoRecords"]</td>
-                    </tr>
+                    }
                 }
                 </tbody>
             </table>
+            @if (!Model.Transactions.Any())
+            {
+                <div class="table-empty-message" style="display: none; padding: 2rem; text-align: center; color: #64748b;">
+                    @Localizer["Finance_Cashbox_Table_NoRecords"]
+                </div>
+            }
         </div>
     </article>
 </section>

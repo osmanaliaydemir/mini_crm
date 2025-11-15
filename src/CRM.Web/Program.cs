@@ -159,3 +159,6 @@ app.MapPost("/culture/set", async (HttpContext context) =>
 app.MapRazorPages();
 
 app.Run();
+
+// Integration testler için Program class'ını public yapıyoruz
+public partial class Program { }

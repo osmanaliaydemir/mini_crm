@@ -150,7 +150,7 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach (var unloading in Model.Unloadings)
+                    @foreach (var unloading in unloadings)
                     {
                         <tr>
                             <td>@unloading.ShipmentId</td>
@@ -160,7 +160,7 @@ else
                             <td>@(!string.IsNullOrWhiteSpace(unloading.Notes) ? unloading.Notes : "-")</td>
                         </tr>
                     }
-                    @if (!Model.Unloadings.Any())
+                    @if (!unloadings.Any())
                     {
                         <tr>
                             <td colspan="5" class="empty-state">@Localizer["Warehouses_TopWarehouses_NoData"]</td>

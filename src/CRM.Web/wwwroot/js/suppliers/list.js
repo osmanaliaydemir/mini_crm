@@ -22,6 +22,21 @@
             return $table.DataTable();
         }
 
+        // Tablodaki kolon sayısını kontrol et
+        const headerCells = tableEl.querySelectorAll('thead th');
+        const firstDataRow = tableEl.querySelector('tbody tr');
+        
+        if (firstDataRow) {
+            const firstRowCells = firstDataRow.querySelectorAll('td');
+            if (headerCells.length !== firstRowCells.length) {
+                console.error('DataTables: Column mismatch detected!', {
+                    headers: headerCells.length,
+                    cells: firstRowCells.length
+                });
+                return null;
+            }
+        }
+
         const htmlElement = document.documentElement;
         const culture = (htmlElement && htmlElement.lang ? htmlElement.lang.toLowerCase() : 'en');
         const languageUrl = languageMap[culture] ?? languageMap.en;
@@ -52,7 +67,27 @@
             }
         }
 
-        return $table.DataTable(options);
+        try {
+            const dataTable = $table.DataTable(options);
+            
+            // Eğer tablo boşsa, boş durum mesajını göster
+            if (dataTable.rows().count() === 0) {
+                const emptyMessage = tableEl.closest('.table-wrapper')?.querySelector('.table-empty-message');
+                if (emptyMessage) {
+                    emptyMessage.style.display = 'block';
+                }
+            }
+            
+            return dataTable;
+        } catch (e) {
+            console.error('DataTables initialization error:', e);
+            // Hata durumunda boş durum mesajını göster
+            const emptyMessage = tableEl.closest('.table-wrapper')?.querySelector('.table-empty-message');
+            if (emptyMessage) {
+                emptyMessage.style.display = 'block';
+            }
+            return null;
+        }
     };
 
     const bindSearchControls = (table) => {

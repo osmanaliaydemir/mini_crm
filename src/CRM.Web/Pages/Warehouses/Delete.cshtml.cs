@@ -1,21 +1,18 @@
-using CRM.Infrastructure.Persistence;
-using CRM.Web;
+using CRM.Application.Warehouses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Localization;
 
 namespace CRM.Web.Pages.Warehouses;
 
 public class DeleteModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
-    private readonly IStringLocalizer<SharedResource> _localizer;
+    private readonly IWarehouseService _warehouseService;
+    private readonly ILogger<DeleteModel> _logger;
 
-    public DeleteModel(CRMDbContext dbContext, IStringLocalizer<SharedResource> localizer)
+    public DeleteModel(IWarehouseService warehouseService, ILogger<DeleteModel> logger)
     {
-        _dbContext = dbContext;
-        _localizer = localizer;
+        _warehouseService = warehouseService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -25,7 +22,7 @@ public class DeleteModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var warehouse = await _dbContext.Warehouses.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+        var warehouse = await _warehouseService.GetByIdAsync(id, cancellationToken);
         if (warehouse is null)
         {
             return NotFound();
@@ -38,19 +35,33 @@ public class DeleteModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        var warehouse = await _dbContext.Warehouses.FirstOrDefaultAsync(w => w.Id == WarehouseId, cancellationToken);
-        if (warehouse is null)
+        try
         {
+            await _warehouseService.DeleteAsync(WarehouseId, cancellationToken);
+
+            TempData["StatusMessage"] = "Depo başarıyla silindi.";
+            TempData["StatusMessageType"] = "success";
+
+            return RedirectToPage("Index");
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Warehouse not found: {WarehouseId}", WarehouseId);
             return NotFound();
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting warehouse: {WarehouseId}", WarehouseId);
+            ModelState.AddModelError(string.Empty, "Depo silinirken bir hata oluştu. Lütfen tekrar deneyin.");
 
-        _dbContext.Warehouses.Remove(warehouse);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            var warehouse = await _warehouseService.GetByIdAsync(WarehouseId, cancellationToken);
+            if (warehouse != null)
+            {
+                WarehouseName = warehouse.Name;
+            }
 
-        TempData["StatusMessage"] = _localizer["Warehouses_Delete_Success", warehouse.Name].Value;
-        TempData["StatusMessageType"] = "success";
-
-        return RedirectToPage("Index");
+            return Page();
+        }
     }
 }
 

@@ -1,17 +1,18 @@
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Customers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Customers;
 
 public class DeleteModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly ICustomerService _customerService;
+    private readonly ILogger<DeleteModel> _logger;
 
-    public DeleteModel(CRMDbContext dbContext)
+    public DeleteModel(ICustomerService customerService, ILogger<DeleteModel> logger)
     {
-        _dbContext = dbContext;
+        _customerService = customerService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -21,7 +22,7 @@ public class DeleteModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var customer = await _dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        var customer = await _customerService.GetByIdAsync(id, cancellationToken);
         if (customer is null)
         {
             return NotFound();
@@ -34,16 +35,34 @@ public class DeleteModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == CustomerId, cancellationToken);
-        if (customer is null)
+        try
         {
+            await _customerService.DeleteAsync(CustomerId, cancellationToken);
+            
+            TempData["StatusMessage"] = "Müşteri başarıyla silindi.";
+            TempData["StatusMessageType"] = "success";
+            
+            return RedirectToPage("Index");
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Customer not found: {CustomerId}", CustomerId);
             return NotFound();
         }
-
-        _dbContext.Customers.Remove(customer);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage("Index");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting customer: {CustomerId}", CustomerId);
+            ModelState.AddModelError(string.Empty, "Müşteri silinirken bir hata oluştu. Lütfen tekrar deneyin.");
+            
+            // Customer bilgisini tekrar yükle
+            var customer = await _customerService.GetByIdAsync(CustomerId, cancellationToken);
+            if (customer != null)
+            {
+                CustomerName = customer.Name;
+            }
+            
+            return Page();
+        }
     }
 }
 

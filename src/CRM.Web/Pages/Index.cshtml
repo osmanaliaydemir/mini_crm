@@ -49,8 +49,8 @@
         .Select(p => new
         {
             Label = p.PeriodStart.ToString("MMM yyyy", CultureInfo.CurrentCulture),
-            Income = p.Value > 0 ? Math.Round((double)p.Value, 2) : 0d,
-            Expense = p.Value < 0 ? Math.Round(Math.Abs((double)p.Value), 2) : 0d
+            Income = Math.Round((double)p.Income, 2),
+            Expense = Math.Round((double)p.Expense, 2)
         })
         .ToArray();
 

@@ -1,34 +1,38 @@
 using System.ComponentModel.DataAnnotations;
-using CRM.Domain.Customers;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Customers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Customers;
 
 public class DetailsModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly ICustomerService _customerService;
+    private readonly ILogger<DetailsModel> _logger;
 
-    public DetailsModel(CRMDbContext dbContext)
+    public DetailsModel(ICustomerService customerService, ILogger<DetailsModel> logger)
     {
-        _dbContext = dbContext;
+        _customerService = customerService;
+        _logger = logger;
     }
 
-    public Customer? Customer { get; private set; }
-    public IList<CustomerContact> Contacts { get; private set; } = new List<CustomerContact>();
-    public IList<CustomerInteraction> Interactions { get; private set; } = new List<CustomerInteraction>();
+    public CustomerDetailsDto? Details { get; private set; }
 
     [BindProperty]
     public InteractionInput InteractionForm { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
-        await LoadDataAsync(id, cancellationToken);
-        if (Customer is null)
+        Details = await _customerService.GetDetailsByIdAsync(id, cancellationToken);
+        if (Details is null)
         {
             return NotFound();
+        }
+
+        InteractionForm.CustomerId = id;
+        if (InteractionForm.InteractionDate == default)
+        {
+            InteractionForm.InteractionDate = DateTime.UtcNow;
         }
 
         return Page();
@@ -36,8 +40,8 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        await LoadDataAsync(InteractionForm.CustomerId, cancellationToken);
-        if (Customer is null)
+        Details = await _customerService.GetDetailsByIdAsync(InteractionForm.CustomerId, cancellationToken);
+        if (Details is null)
         {
             return NotFound();
         }
@@ -47,37 +51,32 @@ public class DetailsModel : PageModel
             return Page();
         }
 
-        var interaction = new CustomerInteraction(
-            InteractionForm.CustomerId,
-            InteractionForm.InteractionDate,
-            InteractionForm.InteractionType,
-            InteractionForm.Subject,
-            InteractionForm.Notes,
-            InteractionForm.RecordedBy);
-
-        _dbContext.CustomerInteractions.Add(interaction);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage(new { id = InteractionForm.CustomerId });
-    }
-
-    private async Task LoadDataAsync(Guid customerId, CancellationToken cancellationToken)
-    {
-        Customer = await _dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId, cancellationToken);
-        Contacts = await _dbContext.CustomerContacts.AsNoTracking()
-            .Where(contact => contact.CustomerId == customerId)
-            .OrderBy(contact => contact.FullName)
-            .ToListAsync(cancellationToken);
-
-        Interactions = await _dbContext.CustomerInteractions.AsNoTracking()
-            .Where(i => i.CustomerId == customerId)
-            .OrderByDescending(i => i.InteractionDate)
-            .ToListAsync(cancellationToken);
-
-        InteractionForm.CustomerId = customerId;
-        if (InteractionForm.InteractionDate == default)
+        try
         {
-            InteractionForm.InteractionDate = DateTime.UtcNow;
+            var request = new AddInteractionRequest(
+                InteractionForm.InteractionDate,
+                InteractionForm.InteractionType,
+                InteractionForm.Subject,
+                InteractionForm.Notes,
+                InteractionForm.RecordedBy);
+
+            await _customerService.AddInteractionAsync(InteractionForm.CustomerId, request, cancellationToken);
+
+            TempData["StatusMessage"] = "Etkileşim başarıyla eklendi.";
+            TempData["StatusMessageType"] = "success";
+
+            return RedirectToPage(new { id = InteractionForm.CustomerId });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Customer not found: {CustomerId}", InteractionForm.CustomerId);
+            return NotFound();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding interaction for customer: {CustomerId}", InteractionForm.CustomerId);
+            ModelState.AddModelError(string.Empty, "Etkileşim eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
         }
     }
 

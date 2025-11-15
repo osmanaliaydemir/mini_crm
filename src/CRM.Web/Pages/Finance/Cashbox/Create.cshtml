@@ -44,17 +44,17 @@
                 </div>
                 <div class="input-field">
                     <label asp-for="Input.Amount"></label>
-                    <input asp-for="Input.Amount" class="input-control" />
+                    <input asp-for="Input.Amount" class="input-control" type="number" step="0.01" min="0.01" />
                     <span asp-validation-for="Input.Amount" class="input-error"></span>
                 </div>
                 <div class="input-field">
                     <label asp-for="Input.Currency"></label>
-                    <input asp-for="Input.Currency" class="input-control" />
+                    <select asp-for="Input.Currency" class="input-control" asp-items="Model.CurrencyOptions"></select>
                     <span asp-validation-for="Input.Currency" class="input-error"></span>
                 </div>
                 <div class="input-field">
                     <label asp-for="Input.Category"></label>
-                    <input asp-for="Input.Category" class="input-control" />
+                    <select asp-for="Input.Category" class="input-control" asp-items="Model.CategoryOptions"></select>
                     <span asp-validation-for="Input.Category" class="input-error"></span>
                 </div>
                 <div class="input-field full">

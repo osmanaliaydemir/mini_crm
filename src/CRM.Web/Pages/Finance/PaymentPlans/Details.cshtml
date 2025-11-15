@@ -6,17 +6,17 @@
 
 @{
     Layout = "_DashboardLayout";
-    var plan = Model.Plan;
-    ViewData["Title"] = plan is null
+    var details = Model.Details;
+    ViewData["Title"] = details is null
         ? Localizer["Finance_PaymentPlans_Details_Title"]
-        : $"{Localizer["Finance_PaymentPlans_Details_Title"]} · {plan.CustomerName}";
+        : $"{Localizer["Finance_PaymentPlans_Details_Title"]} · {details.Plan.CustomerName}";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/finance/payment-plans/details.css" asp-append-version="true" />
 }
 
-@if (plan is null)
+@if (details is null)
 {
     <section class="details-header">
         <div class="details-card details-card--wide">
@@ -28,6 +28,7 @@
 }
 else
 {
+    var plan = details.Plan;
     <section class="page-header details-header">
         <div>
             <h1>@Localizer["Finance_PaymentPlans_Details_Title"]</h1>
@@ -58,7 +59,7 @@ else
                 </div>
                 <div>
                     <dt>@Localizer["Finance_PaymentPlans_Field_Type"]</dt>
-                    <dd>@plan.PlanType</dd>
+                    <dd>@plan.PlanType.ToString()</dd>
                 </div>
             </dl>
         </article>
@@ -114,7 +115,7 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach (var installment in plan.Installments ?? Enumerable.Empty<CRM.Web.Pages.Finance.PaymentPlans.DetailsModel.PaymentInstallmentView>())
+                    @foreach (var installment in details.Installments)
                     {
                         <tr>
                             <td>@installment.InstallmentNumber</td>
@@ -136,7 +137,7 @@ else
                             <td>@(string.IsNullOrWhiteSpace(installment.Notes) ? "-" : installment.Notes)</td>
                         </tr>
                     }
-                    @if (!(plan.Installments?.Any() ?? false))
+                    @if (!details.Installments.Any())
                     {
                         <tr>
                             <td colspan="6" class="empty">@Localizer["Finance_PaymentPlans_Installments_Empty"]</td>

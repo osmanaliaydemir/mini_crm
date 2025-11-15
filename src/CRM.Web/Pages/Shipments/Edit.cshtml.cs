@@ -1,7 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using CRM.Application.Shipments;
+using CRM.Application.Suppliers;
+using CRM.Application.Customers;
+using CRM.Application.Common;
 using CRM.Domain.Enums;
-using CRM.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,11 +14,24 @@ namespace CRM.Web.Pages.Shipments;
 
 public class EditModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly IShipmentService _shipmentService;
+    private readonly ISupplierService _supplierService;
+    private readonly ICustomerService _customerService;
+    private readonly IApplicationDbContext _context;
+    private readonly ILogger<EditModel> _logger;
 
-    public EditModel(CRMDbContext dbContext)
+    public EditModel(
+        IShipmentService shipmentService,
+        ISupplierService supplierService,
+        ICustomerService customerService,
+        IApplicationDbContext context,
+        ILogger<EditModel> logger)
     {
-        _dbContext = dbContext;
+        _shipmentService = shipmentService;
+        _supplierService = supplierService;
+        _customerService = customerService;
+        _context = context;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -29,17 +45,19 @@ public class EditModel : PageModel
     {
         await LoadLookupsAsync(cancellationToken);
 
-        var shipment = await _dbContext.Shipments
-            .AsNoTracking()
-            .Include(s => s.Stages)
-            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
-
+        var shipment = await _shipmentService.GetByIdAsync(id, cancellationToken);
         if (shipment is null)
         {
             return NotFound();
         }
 
-        var latestStage = shipment.Stages
+        // Stage bilgilerini almak için context kullanıyoruz
+        var shipmentWithStages = await _context.Shipments
+            .AsNoTracking()
+            .Include(s => s.Stages)
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+        var latestStage = shipmentWithStages?.Stages
             .OrderByDescending(stage => stage.StartedAt)
             .FirstOrDefault();
 
@@ -72,51 +90,50 @@ public class EditModel : PageModel
             return Page();
         }
 
-        var shipment = await _dbContext.Shipments
-            .Include(s => s.Stages)
-            .FirstOrDefaultAsync(s => s.Id == Input.Id, cancellationToken);
-
-        if (shipment is null)
+        try
         {
+            var request = new UpdateShipmentRequest(
+                Input.Id,
+                Input.SupplierId,
+                Input.CustomerId,
+                Input.ReferenceNumber,
+                Input.ShipmentDate,
+                Input.EstimatedArrival,
+                Input.Status,
+                Input.LoadingPort,
+                Input.DischargePort,
+                Input.Notes,
+                Input.StageStartedAt,
+                Input.StageCompletedAt,
+                Input.StageNotes);
+
+            await _shipmentService.UpdateAsync(request, cancellationToken);
+
+            TempData["StatusMessage"] = "Sevkiyat başarıyla güncellendi.";
+            TempData["StatusMessageType"] = "success";
+
+            return RedirectToPage("Details", new { id = Input.Id });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Shipment not found: {ShipmentId}", Input.Id);
             return NotFound();
         }
-
-        shipment.ReassignSupplier(Input.SupplierId);
-        shipment.Update(
-            DateTime.SpecifyKind(Input.ShipmentDate, DateTimeKind.Utc),
-            Input.EstimatedArrival.HasValue ? DateTime.SpecifyKind(Input.EstimatedArrival.Value, DateTimeKind.Utc) : null,
-            Input.Status,
-            Input.LoadingPort,
-            Input.DischargePort,
-            Input.Notes,
-            Input.CustomerId);
-        shipment.ReassignCustomer(Input.CustomerId);
-
-        var stageStartedAt = DateTime.SpecifyKind(Input.StageStartedAt, DateTimeKind.Utc);
-        DateTime? stageCompletedAt = Input.StageCompletedAt.HasValue
-            ? DateTime.SpecifyKind(Input.StageCompletedAt.Value, DateTimeKind.Utc)
-            : null;
-
-        shipment.SetOrUpdateStage(Input.Status, stageStartedAt, stageCompletedAt, Input.StageNotes);
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage("Details", new { id = shipment.Id });
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating shipment: {ShipmentId}", Input.Id);
+            ModelState.AddModelError(string.Empty, "Sevkiyat güncellenirken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     private async Task LoadLookupsAsync(CancellationToken cancellationToken)
     {
-        SupplierOptions = await _dbContext.Suppliers
-            .AsNoTracking()
-            .OrderBy(s => s.Name)
-            .Select(s => new SelectListItem(s.Name, s.Id.ToString()))
-            .ToListAsync(cancellationToken);
+        var suppliers = await _supplierService.GetAllAsync(cancellationToken: cancellationToken);
+        SupplierOptions = suppliers.Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToList();
 
-        CustomerOptions = await _dbContext.Customers
-            .AsNoTracking()
-            .OrderBy(c => c.Name)
-            .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
-            .ToListAsync(cancellationToken);
+        var customers = await _customerService.GetAllAsync(cancellationToken: cancellationToken);
+        CustomerOptions = customers.Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToList();
 
         StatusOptions = Enum.GetValues(typeof(ShipmentStatus))
             .Cast<ShipmentStatus>()

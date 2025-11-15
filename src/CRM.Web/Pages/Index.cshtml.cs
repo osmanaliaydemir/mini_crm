@@ -19,7 +19,7 @@ public class IndexModel : PageModel
     public IReadOnlyList<TimeSeriesPoint> ShipmentMonthlyTrend { get; private set; } = Array.Empty<TimeSeriesPoint>();
     public IReadOnlyList<CategoryPoint> SupplierCountryBreakdown { get; private set; } = Array.Empty<CategoryPoint>();
     public IReadOnlyList<TimeSeriesPoint> WarehouseVolumeTrend { get; private set; } = Array.Empty<TimeSeriesPoint>();
-    public IReadOnlyList<TimeSeriesPoint> CashFlowTrend { get; private set; } = Array.Empty<TimeSeriesPoint>();
+    public IReadOnlyList<CashFlowPoint> CashFlowTrend { get; private set; } = Array.Empty<CashFlowPoint>();
     public IReadOnlyList<TimeSeriesPoint> CustomerInteractionTrend { get; private set; } = Array.Empty<TimeSeriesPoint>();
     public Dictionary<string, IReadOnlyList<ActivityEvent>> ActivityFeed { get; private set; } = new();
 
@@ -117,10 +117,16 @@ public class IndexModel : PageModel
             .GroupBy(t => new DateTime(t.TransactionDate.Year, t.TransactionDate.Month, 1, 0, 0, 0, DateTimeKind.Utc))
             .ToDictionary(
                 g => g.Key,
-                g => g.Sum(t => t.TransactionType == CashTransactionType.Income ? t.Amount : -t.Amount));
+                g => new
+                {
+                    Income = g.Where(t => t.TransactionType == CashTransactionType.Income).Sum(t => t.Amount),
+                    Expense = g.Where(t => t.TransactionType == CashTransactionType.Expense).Sum(t => t.Amount)
+                });
 
         CashFlowTrend = monthBuckets
-            .Select(month => new TimeSeriesPoint(month, cashFlowDict.TryGetValue(month, out var net) ? net : 0))
+            .Select(month => cashFlowDict.TryGetValue(month, out var values)
+                ? new CashFlowPoint(month, values.Income, values.Expense)
+                : new CashFlowPoint(month, 0, 0))
             .ToList();
 
         var interactionDict = interactions
@@ -177,6 +183,8 @@ public class IndexModel : PageModel
     public sealed record StatusSummary(ShipmentStatus Status, int Count);
 
     public sealed record TimeSeriesPoint(DateTime PeriodStart, decimal Value);
+
+    public sealed record CashFlowPoint(DateTime PeriodStart, decimal Income, decimal Expense);
 
     public sealed record CategoryPoint(string Label, int Value);
 

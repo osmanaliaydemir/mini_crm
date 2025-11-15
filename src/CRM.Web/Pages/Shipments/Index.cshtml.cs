@@ -1,21 +1,21 @@
-using System.Linq;
+using CRM.Application.Shipments;
 using CRM.Domain.Enums;
-using CRM.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Shipments;
 
 public class IndexModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly IShipmentService _shipmentService;
+    private readonly ILogger<IndexModel> _logger;
 
-    public IndexModel(CRMDbContext dbContext)
+    public IndexModel(IShipmentService shipmentService, ILogger<IndexModel> logger)
     {
-        _dbContext = dbContext;
+        _shipmentService = shipmentService;
+        _logger = logger;
     }
 
-    public IList<ShipmentListItem> Shipments { get; private set; } = new List<ShipmentListItem>();
+    public IReadOnlyList<ShipmentListItemDto> Shipments { get; private set; } = Array.Empty<ShipmentListItemDto>();
     public int TotalShipments { get; private set; }
     public int ActiveShipments { get; private set; }
     public int DeliveredShipments { get; private set; }
@@ -24,43 +24,22 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
-        var shipments = await _dbContext.Shipments
-            .AsNoTracking()
-            .Include(s => s.Supplier)
-            .Include(s => s.Customer)
-            .Include(s => s.Stages)
-            .OrderByDescending(s => s.ShipmentDate)
-            .ToListAsync(cancellationToken);
-
-        Shipments = shipments.Select(s =>
+        try
         {
-            var latestStage = s.Stages
-                .OrderByDescending(stage => stage.StartedAt)
-                .FirstOrDefault();
+            var dashboardData = await _shipmentService.GetDashboardDataAsync(cancellationToken);
 
-            return new ShipmentListItem(
-                s.Id,
-                s.ReferenceNumber,
-                s.Supplier?.Name ?? "-",
-                s.Customer?.Name ?? "-",
-                s.Status,
-                s.ShipmentDate,
-                s.EstimatedArrival,
-                latestStage?.StartedAt,
-                latestStage?.Notes);
-        }).ToList();
-
-        TotalShipments = Shipments.Count;
-        DeliveredShipments = Shipments.Count(s => s.Status == ShipmentStatus.DeliveredToDealer);
-        ActiveShipments = Shipments.Count(s => s.Status != ShipmentStatus.DeliveredToDealer && s.Status != ShipmentStatus.Cancelled);
-        CustomsShipments = Shipments.Count(s => s.Status == ShipmentStatus.InCustoms);
-
-        StatusSummaries = Shipments
-            .GroupBy(s => s.Status)
-            .Select(group => new StatusSummary(group.Key, group.Count()))
-            .OrderByDescending(summary => summary.Count)
-            .ThenBy(summary => summary.Status)
-            .ToList();
+            Shipments = dashboardData.Shipments;
+            TotalShipments = dashboardData.TotalShipments;
+            ActiveShipments = dashboardData.ActiveShipments;
+            DeliveredShipments = dashboardData.DeliveredShipments;
+            CustomsShipments = dashboardData.CustomsShipments;
+            StatusSummaries = dashboardData.StatusSummaries;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading shipment dashboard data");
+            Shipments = Array.Empty<ShipmentListItemDto>();
+        }
     }
 
     public string GetStatusBadgeClass(ShipmentStatus status) =>
@@ -74,19 +53,6 @@ public class IndexModel : PageModel
             ShipmentStatus.ProductionStarted or ShipmentStatus.Ordered => "status-chip--secondary",
             _ => "status-chip--muted"
         };
-
-    public sealed record ShipmentListItem(
-        Guid Id,
-        string ReferenceNumber,
-        string SupplierName,
-        string CustomerName,
-        ShipmentStatus Status,
-        DateTime ShipmentDate,
-        DateTime? EstimatedArrival,
-        DateTime? LastStageUpdate,
-        string? LastStageNotes);
-
-    public sealed record StatusSummary(ShipmentStatus Status, int Count);
 }
 
 

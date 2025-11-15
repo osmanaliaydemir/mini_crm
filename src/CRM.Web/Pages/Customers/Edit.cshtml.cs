@@ -1,18 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Customers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Customers;
 
 public class EditModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly ICustomerService _customerService;
+    private readonly ILogger<EditModel> _logger;
 
-    public EditModel(CRMDbContext dbContext)
+    public EditModel(ICustomerService customerService, ILogger<EditModel> logger)
     {
-        _dbContext = dbContext;
+        _customerService = customerService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -20,33 +21,29 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var entity = await _dbContext.Customers
-            .AsNoTracking()
-            .Include(c => c.Contacts)
-            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        var customer = await _customerService.GetByIdAsync(id, cancellationToken);
 
-        if (entity is null)
+        if (customer is null)
         {
             return NotFound();
         }
 
-        var primaryContact = entity.Contacts.FirstOrDefault();
-
+        // Map DTO to Input
         Customer = new CustomerInput
         {
-            Id = entity.Id,
-            Name = entity.Name,
-            LegalName = entity.LegalName,
-            TaxNumber = entity.TaxNumber,
-            Email = entity.Email,
-            Phone = entity.Phone,
-            Address = entity.Address,
-            Segment = entity.Segment,
-            Notes = entity.Notes,
-            PrimaryContactName = primaryContact?.FullName,
-            PrimaryContactEmail = primaryContact?.Email,
-            PrimaryContactPhone = primaryContact?.Phone,
-            PrimaryContactPosition = primaryContact?.Position
+            Id = customer.Id,
+            Name = customer.Name,
+            LegalName = customer.LegalName,
+            TaxNumber = customer.TaxNumber,
+            Email = customer.Email,
+            Phone = customer.Phone,
+            Address = customer.Address,
+            Segment = customer.Segment,
+            Notes = customer.Notes,
+            PrimaryContactName = customer.PrimaryContactName,
+            PrimaryContactEmail = customer.PrimaryContactEmail,
+            PrimaryContactPhone = customer.PrimaryContactPhone,
+            PrimaryContactPosition = customer.PrimaryContactPosition
         };
 
         return Page();
@@ -59,38 +56,41 @@ public class EditModel : PageModel
             return Page();
         }
 
-        var entity = await _dbContext.Customers
-            .Include(c => c.Contacts)
-            .FirstOrDefaultAsync(c => c.Id == Customer.Id, cancellationToken);
-
-        if (entity is null)
+        try
         {
-            return NotFound();
-        }
-
-        entity.Update(
-            Customer.Name,
-            Customer.LegalName,
-            Customer.TaxNumber,
-            Customer.Email,
-            Customer.Phone,
-            Customer.Address,
-            Customer.Segment,
-            Customer.Notes);
-
-        entity.ClearContacts();
-        if (!string.IsNullOrWhiteSpace(Customer.PrimaryContactName))
-        {
-            entity.AddContact(
+            var request = new UpdateCustomerRequest(
+                Customer.Id,
+                Customer.Name,
+                Customer.LegalName,
+                Customer.TaxNumber,
+                Customer.Email,
+                Customer.Phone,
+                Customer.Address,
+                Customer.Segment,
+                Customer.Notes,
                 Customer.PrimaryContactName,
                 Customer.PrimaryContactEmail,
                 Customer.PrimaryContactPhone,
                 Customer.PrimaryContactPosition);
+
+            await _customerService.UpdateAsync(request, cancellationToken);
+
+            TempData["StatusMessage"] = "Müşteri başarıyla güncellendi.";
+            TempData["StatusMessageType"] = "success";
+
+            return RedirectToPage("Index");
         }
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage("Index");
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Customer not found: {CustomerId}", Customer.Id);
+            return NotFound();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating customer: {CustomerId}", Customer.Id);
+            ModelState.AddModelError(string.Empty, "Müşteri güncellenirken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     public sealed class CustomerInput

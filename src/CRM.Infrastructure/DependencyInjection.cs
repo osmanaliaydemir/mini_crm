@@ -1,6 +1,7 @@
 using CRM.Application.Authentication;
 using CRM.Infrastructure.Identity;
 using CRM.Infrastructure.Persistence;
+using CRM.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -54,6 +55,12 @@ public static class DependencyInjection
 
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IDbInitializer, DbInitializer>();
+        services.AddScoped<CRM.Application.Common.IUnitOfWork>(sp => sp.GetRequiredService<CRMDbContext>());
+        services.AddScoped<CRM.Application.Common.IApplicationDbContext>(sp => sp.GetRequiredService<CRMDbContext>());
+
+        // Register repositories
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped(typeof(CRM.Application.Common.IRepository<>), typeof(Repository<>));
 
         return services;
     }

@@ -1,25 +1,25 @@
-using CRM.Domain.Suppliers;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Suppliers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Suppliers;
 
 public class DetailsModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly ISupplierService _supplierService;
+    private readonly ILogger<DetailsModel> _logger;
 
-    public DetailsModel(CRMDbContext dbContext)
+    public DetailsModel(ISupplierService supplierService, ILogger<DetailsModel> logger)
     {
-        _dbContext = dbContext;
+        _supplierService = supplierService;
+        _logger = logger;
     }
 
-    public Supplier? Supplier { get; private set; }
+    public SupplierDto? Supplier { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
-        Supplier = await _dbContext.Suppliers.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+        Supplier = await _supplierService.GetByIdAsync(id, cancellationToken);
         if (Supplier is null)
         {
             return NotFound();

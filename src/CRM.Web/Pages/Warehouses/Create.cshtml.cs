@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using CRM.Domain.Warehouses;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Warehouses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -8,11 +7,13 @@ namespace CRM.Web.Pages.Warehouses;
 
 public class CreateModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly IWarehouseService _warehouseService;
+    private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(CRMDbContext dbContext)
+    public CreateModel(IWarehouseService warehouseService, ILogger<CreateModel> logger)
     {
-        _dbContext = dbContext;
+        _warehouseService = warehouseService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -29,24 +30,28 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var warehouse = new Warehouse(
-            Guid.NewGuid(),
-            Warehouse.Name,
-            Warehouse.Location,
-            Warehouse.ContactPerson,
-            Warehouse.ContactPhone);
+        try
+        {
+            var request = new CreateWarehouseRequest(
+                Warehouse.Name,
+                Warehouse.Location,
+                Warehouse.ContactPerson,
+                Warehouse.ContactPhone,
+                Warehouse.Notes);
 
-        warehouse.Update(
-            Warehouse.Name,
-            Warehouse.Location,
-            Warehouse.ContactPerson,
-            Warehouse.ContactPhone,
-            Warehouse.Notes);
+            await _warehouseService.CreateAsync(request, cancellationToken);
 
-        _dbContext.Warehouses.Add(warehouse);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            TempData["StatusMessage"] = "Depo başarıyla oluşturuldu.";
+            TempData["StatusMessageType"] = "success";
 
-        return RedirectToPage("Index");
+            return RedirectToPage("Index");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating warehouse");
+            ModelState.AddModelError(string.Empty, "Depo oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     public sealed class WarehouseInput

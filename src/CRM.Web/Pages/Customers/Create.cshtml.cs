@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using CRM.Domain.Customers;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Customers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -8,11 +7,13 @@ namespace CRM.Web.Pages.Customers;
 
 public class CreateModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly ICustomerService _customerService;
+    private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(CRMDbContext dbContext)
+    public CreateModel(ICustomerService customerService, ILogger<CreateModel> logger)
     {
-        _dbContext = dbContext;
+        _customerService = customerService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -29,41 +30,35 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var entity = new Customer(
-            Guid.NewGuid(),
-            Customer.Name,
-            Customer.LegalName,
-            Customer.TaxNumber,
-            Customer.Email,
-            Customer.Phone,
-            Customer.Address,
-            Customer.Segment,
-            Customer.Notes);
-
-        entity.Update(
-            Customer.Name,
-            Customer.LegalName,
-            Customer.TaxNumber,
-            Customer.Email,
-            Customer.Phone,
-            Customer.Address,
-            Customer.Segment,
-            Customer.Notes);
-
-        entity.ClearContacts();
-        if (!string.IsNullOrWhiteSpace(Customer.PrimaryContactName))
+        try
         {
-            entity.AddContact(
+            var request = new CreateCustomerRequest(
+                Customer.Name,
+                Customer.LegalName,
+                Customer.TaxNumber,
+                Customer.Email,
+                Customer.Phone,
+                Customer.Address,
+                Customer.Segment,
+                Customer.Notes,
                 Customer.PrimaryContactName,
                 Customer.PrimaryContactEmail,
                 Customer.PrimaryContactPhone,
                 Customer.PrimaryContactPosition);
+
+            await _customerService.CreateAsync(request, cancellationToken);
+
+            TempData["StatusMessage"] = "Müşteri başarıyla oluşturuldu.";
+            TempData["StatusMessageType"] = "success";
+
+            return RedirectToPage("Index");
         }
-
-        _dbContext.Customers.Add(entity);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage("Index");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating customer");
+            ModelState.AddModelError(string.Empty, "Müşteri oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     public sealed class CustomerInput

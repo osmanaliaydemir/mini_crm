@@ -135,7 +135,7 @@
                                 <div class="cell-subtext">@warehouse.Notes</div>
                             }
                         </td>
-                        <td>@FormatLocation(warehouse.Location ?? CRM.Web.Pages.Warehouses.IndexModel.UnspecifiedLocationLabel)</td>
+                        <td>@(warehouse.Location ?? "-")</td>
                         <td>
                             @if (!string.IsNullOrWhiteSpace(warehouse.ContactPerson))
                             {
@@ -159,14 +159,14 @@
                         </td>
                     </tr>
                 }
-                @if (!Model.Warehouses.Any())
-                {
-                    <tr>
-                        <td colspan="4" class="empty-state">@Localizer["Warehouses_Table_NoRecords"]</td>
-                    </tr>
-                }
                 </tbody>
             </table>
+            @if (!Model.Warehouses.Any())
+            {
+                <div class="table-empty-message" style="display: none; padding: 2rem; text-align: center; color: #64748b;">
+                    @Localizer["Warehouses_Table_NoRecords"]
+                </div>
+            }
         </div>
     </article>
 </section>

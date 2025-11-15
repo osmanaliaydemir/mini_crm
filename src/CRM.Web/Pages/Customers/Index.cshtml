@@ -148,49 +148,59 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach (var customer in Model.Customers)
+                @if (Model.Customers.Any())
                 {
-                    <tr>
-                        <td>
-                            <div class="cell-strong">@customer.Name</div>
-                            @if (!string.IsNullOrWhiteSpace(customer.LegalName))
-                            {
-                                <div class="cell-subtext">@customer.LegalName</div>
-                            }
-                        </td>
-                        <td>@FormatSegment(customer.Segment)</td>
-                        <td>
-                            @if (!string.IsNullOrWhiteSpace(customer.Email))
-                            {
-                                <div class="cell-strong">@customer.Email</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(customer.Phone))
-                            {
-                                <div class="cell-subtext">@customer.Phone</div>
-                            }
-                        </td>
-                        <td class="cell-subtext">@(!string.IsNullOrWhiteSpace(customer.Notes) ? customer.Notes : Localizer["Customers_Details_Notes_Empty"].Value)</td>
-                        <td class="text-end">
-                            <a class="btn btn-icon" asp-page="Details" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Details"]">
-                                <img src="~/images/detail.png" alt="@Localizer["Customers_Action_Details"]" width="18" height="18" loading="lazy" />
-                            </a>
-                            <a class="btn btn-icon" asp-page="Edit" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Edit"]">
-                                <img src="~/images/edit.png" alt="@Localizer["Customers_Action_Edit"]" width="18" height="18" loading="lazy" />
-                            </a>
-                            <a class="btn btn-icon" asp-page="Delete" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Delete"]">
-                                <img src="~/images/delete.png" alt="@Localizer["Customers_Action_Delete"]" width="18" height="18" loading="lazy" />
-                            </a>
-                        </td>
-                    </tr>
-                }
-                @if (!Model.Customers.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="empty-state">@Localizer["Customers_Table_NoRecords"]</td>
-                    </tr>
+                    @foreach (var customer in Model.Customers)
+                    {
+                        <tr>
+                            <td>
+                                <div class="cell-strong">@customer.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(customer.LegalName))
+                                {
+                                    <div class="cell-subtext">@customer.LegalName</div>
+                                }
+                            </td>
+                            <td>@FormatSegment(customer.Segment)</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(customer.Email) || !string.IsNullOrWhiteSpace(customer.Phone))
+                                {
+                                    @if (!string.IsNullOrWhiteSpace(customer.Email))
+                                    {
+                                        <div class="cell-strong">@customer.Email</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(customer.Phone))
+                                    {
+                                        <div class="cell-subtext">@customer.Phone</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td class="cell-subtext">@(!string.IsNullOrWhiteSpace(customer.Notes) ? customer.Notes : Localizer["Customers_Details_Notes_Empty"].Value)</td>
+                            <td class="text-end">
+                                <a class="btn btn-icon" asp-page="Details" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Details"]">
+                                    <img src="~/images/detail.png" alt="@Localizer["Customers_Action_Details"]" width="18" height="18" loading="lazy" />
+                                </a>
+                                <a class="btn btn-icon" asp-page="Edit" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Edit"]">
+                                    <img src="~/images/edit.png" alt="@Localizer["Customers_Action_Edit"]" width="18" height="18" loading="lazy" />
+                                </a>
+                                <a class="btn btn-icon" asp-page="Delete" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Delete"]">
+                                    <img src="~/images/delete.png" alt="@Localizer["Customers_Action_Delete"]" width="18" height="18" loading="lazy" />
+                                </a>
+                            </td>
+                        </tr>
+                    }
                 }
                 </tbody>
             </table>
+            @if (!Model.Customers.Any())
+            {
+                <div class="table-empty-message" style="display: none; padding: 2rem; text-align: center; color: #64748b;">
+                    @Localizer["Customers_Table_NoRecords"]
+                </div>
+            }
         </div>
     </article>
 </section>

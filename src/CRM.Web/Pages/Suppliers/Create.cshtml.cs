@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using CRM.Domain.Suppliers;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Suppliers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -8,11 +7,13 @@ namespace CRM.Web.Pages.Suppliers;
 
 public class CreateModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly ISupplierService _supplierService;
+    private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(CRMDbContext dbContext)
+    public CreateModel(ISupplierService supplierService, ILogger<CreateModel> logger)
     {
-        _dbContext = dbContext;
+        _supplierService = supplierService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -29,28 +30,30 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var entity = new Supplier(
-            Guid.NewGuid(),
-            Supplier.Name,
-            Supplier.Country,
-            Supplier.TaxNumber,
-            Supplier.ContactEmail,
-            Supplier.ContactPhone,
-            Supplier.AddressLine);
+        try
+        {
+            var request = new CreateSupplierRequest(
+                Supplier.Name,
+                Supplier.Country,
+                Supplier.TaxNumber,
+                Supplier.ContactEmail,
+                Supplier.ContactPhone,
+                Supplier.AddressLine,
+                Supplier.Notes);
 
-        entity.Update(
-            Supplier.Name,
-            Supplier.Country,
-            Supplier.TaxNumber,
-            Supplier.ContactEmail,
-            Supplier.ContactPhone,
-            Supplier.AddressLine,
-            Supplier.Notes);
+            await _supplierService.CreateAsync(request, cancellationToken);
 
-        _dbContext.Suppliers.Add(entity);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            TempData["StatusMessage"] = "Tedarikçi başarıyla oluşturuldu.";
+            TempData["StatusMessageType"] = "success";
 
-        return RedirectToPage("Index");
+            return RedirectToPage("Index");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating supplier");
+            ModelState.AddModelError(string.Empty, "Tedarikçi oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     public sealed class SupplierInput

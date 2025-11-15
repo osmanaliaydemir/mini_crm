@@ -29,6 +29,23 @@
         const orderColumnAttr = $table.data('order-column');
         const orderDirectionAttr = ($table.data('order-direction') || 'asc').toString().toLowerCase();
 
+        // Tablodaki kolon sayısını kontrol et
+        const headerCells = tableEl.querySelectorAll('thead th');
+        const firstDataRow = tableEl.querySelector('tbody tr');
+        
+        if (firstDataRow) {
+            const firstRowCells = firstDataRow.querySelectorAll('td');
+            if (headerCells.length !== firstRowCells.length) {
+                console.error('DataTables: Column mismatch detected!', {
+                    headers: headerCells.length,
+                    cells: firstRowCells.length,
+                    headerTexts: Array.from(headerCells).map(th => th.textContent.trim()),
+                    cellTexts: Array.from(firstRowCells).map(td => td.textContent.trim().substring(0, 50))
+                });
+                return null; // Hatalı tablo yapısı varsa DataTables'i initialize etme
+            }
+        }
+
         const options = {
             paging: true,
             searching: true,
@@ -41,6 +58,17 @@
             order: [],
             language: {
                 url: languageUrl
+            },
+            columnDefs: [
+                {
+                    targets: 4, // Actions column (index 4)
+                    orderable: false,
+                    searchable: false
+                }
+            ],
+            // Hata ayıklama için
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error, thrown);
             }
         };
 
@@ -52,7 +80,27 @@
             }
         }
 
-        return $table.DataTable(options);
+        try {
+            const dataTable = $table.DataTable(options);
+            
+            // Eğer tablo boşsa, boş durum mesajını göster
+            if (dataTable.rows().count() === 0) {
+                const emptyMessage = tableEl.closest('.table-wrapper')?.querySelector('.table-empty-message');
+                if (emptyMessage) {
+                    emptyMessage.style.display = 'block';
+                }
+            }
+            
+            return dataTable;
+        } catch (e) {
+            console.error('DataTables initialization error:', e);
+            // Hata durumunda boş durum mesajını göster
+            const emptyMessage = tableEl.closest('.table-wrapper')?.querySelector('.table-empty-message');
+            if (emptyMessage) {
+                emptyMessage.style.display = 'block';
+            }
+            return null;
+        }
     };
 
     const bindSearchControls = (table) => {

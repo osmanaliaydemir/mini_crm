@@ -1,18 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Suppliers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Suppliers;
 
 public class EditModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly ISupplierService _supplierService;
+    private readonly ILogger<EditModel> _logger;
 
-    public EditModel(CRMDbContext dbContext)
+    public EditModel(ISupplierService supplierService, ILogger<EditModel> logger)
     {
-        _dbContext = dbContext;
+        _supplierService = supplierService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -20,7 +21,7 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var supplier = await _dbContext.Suppliers.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+        var supplier = await _supplierService.GetByIdAsync(id, cancellationToken);
         if (supplier is null)
         {
             return NotFound();
@@ -48,24 +49,36 @@ public class EditModel : PageModel
             return Page();
         }
 
-        var supplier = await _dbContext.Suppliers.FirstOrDefaultAsync(s => s.Id == Supplier.Id, cancellationToken);
-        if (supplier is null)
+        try
         {
+            var request = new UpdateSupplierRequest(
+                Supplier.Id,
+                Supplier.Name,
+                Supplier.Country,
+                Supplier.TaxNumber,
+                Supplier.ContactEmail,
+                Supplier.ContactPhone,
+                Supplier.AddressLine,
+                Supplier.Notes);
+
+            await _supplierService.UpdateAsync(request, cancellationToken);
+
+            TempData["StatusMessage"] = "Tedarikçi başarıyla güncellendi.";
+            TempData["StatusMessageType"] = "success";
+
+            return RedirectToPage("Index");
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Supplier not found: {SupplierId}", Supplier.Id);
             return NotFound();
         }
-
-        supplier.Update(
-            Supplier.Name,
-            Supplier.Country,
-            Supplier.TaxNumber,
-            Supplier.ContactEmail,
-            Supplier.ContactPhone,
-            Supplier.AddressLine,
-            Supplier.Notes);
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage("Index");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating supplier: {SupplierId}", Supplier.Id);
+            ModelState.AddModelError(string.Empty, "Tedarikçi güncellenirken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     public sealed class SupplierInput

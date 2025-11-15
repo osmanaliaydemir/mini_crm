@@ -26,7 +26,7 @@ Modern Razor Pages tabanlı kereste operasyon yönetim portalıdır. Kullanıcı
 dotnet restore
 
 # EF Core migration çalıştır
-dotnet ef database update --project src/CRM.Infrastructure --startup-project src/CRM.Api
+dotnet ef database update --project src/CRM.Infrastructure --startup-project src/CRM.Web
 
 # dummy verileri yüklemek istersen
 sqlcmd -S .\SQLEXPRESS -d CRMDb -i document/shipments_fullflow_seed.sql
@@ -34,8 +34,7 @@ sqlcmd -S .\SQLEXPRESS -d CRMDb -i document/shipments_fullflow_seed.sql
 # test et
 dotnet test
 
-# uygulamayı başlat (API + Razor)
-dotnet run --project src/CRM.Api    # API
+# uygulamayı başlat
 dotnet run --project src/CRM.Web    # Razor Portal
 ```
 
@@ -43,7 +42,6 @@ dotnet run --project src/CRM.Web    # Razor Portal
 
 ```
 src/
-├── CRM.Api               # API & Auth giriş noktası
 ├── CRM.Application       # CQRS ve servisler
 ├── CRM.Domain            # Entities, value objects
 ├── CRM.Infrastructure    # DbContext, migrations, repos
@@ -62,7 +60,7 @@ document/
 
 - `dotnet build` : Derleme
 - `dotnet test` : Unit ve Integration testleri
-- `dotnet ef database update --project src/CRM.Infrastructure --startup-project src/CRM.Api` : Migration uygula
+- `dotnet ef database update --project src/CRM.Infrastructure --startup-project src/CRM.Web` : Migration uygula
 
 ## Katkı & Notlar
 

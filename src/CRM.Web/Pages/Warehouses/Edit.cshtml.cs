@@ -1,18 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using CRM.Infrastructure.Persistence;
+using CRM.Application.Warehouses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Web.Pages.Warehouses;
 
 public class EditModel : PageModel
 {
-    private readonly CRMDbContext _dbContext;
+    private readonly IWarehouseService _warehouseService;
+    private readonly ILogger<EditModel> _logger;
 
-    public EditModel(CRMDbContext dbContext)
+    public EditModel(IWarehouseService warehouseService, ILogger<EditModel> logger)
     {
-        _dbContext = dbContext;
+        _warehouseService = warehouseService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -20,7 +21,7 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var warehouse = await _dbContext.Warehouses.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+        var warehouse = await _warehouseService.GetByIdAsync(id, cancellationToken);
         if (warehouse is null)
         {
             return NotFound();
@@ -46,16 +47,34 @@ public class EditModel : PageModel
             return Page();
         }
 
-        var warehouse = await _dbContext.Warehouses.FirstOrDefaultAsync(w => w.Id == Warehouse.Id, cancellationToken);
-        if (warehouse is null)
+        try
         {
+            var request = new UpdateWarehouseRequest(
+                Warehouse.Id,
+                Warehouse.Name,
+                Warehouse.Location,
+                Warehouse.ContactPerson,
+                Warehouse.ContactPhone,
+                Warehouse.Notes);
+
+            await _warehouseService.UpdateAsync(request, cancellationToken);
+
+            TempData["StatusMessage"] = "Depo başarıyla güncellendi.";
+            TempData["StatusMessageType"] = "success";
+
+            return RedirectToPage("Index");
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Warehouse not found: {WarehouseId}", Warehouse.Id);
             return NotFound();
         }
-
-        warehouse.Update(Warehouse.Name, Warehouse.Location, Warehouse.ContactPerson, Warehouse.ContactPhone, Warehouse.Notes);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return RedirectToPage("Index");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating warehouse: {WarehouseId}", Warehouse.Id);
+            ModelState.AddModelError(string.Empty, "Depo güncellenirken bir hata oluştu. Lütfen tekrar deneyin.");
+            return Page();
+        }
     }
 
     public sealed class WarehouseInput
