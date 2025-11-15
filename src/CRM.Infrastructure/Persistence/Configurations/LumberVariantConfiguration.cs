@@ -38,6 +38,9 @@ public class LumberVariantConfiguration : IEntityTypeConfiguration<LumberVariant
                 .HasColumnName("StandardVolumeUnit")
                 .HasMaxLength(20);
         });
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 

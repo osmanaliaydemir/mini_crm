@@ -8,12 +8,27 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Options;
 using CRM.Web;
+using CRM.Web.Middleware;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Localization;
 using CRM.Web.Localization;
+using Serilog;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog yapılandırması - appsettings.json'dan oku
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+try
+{
+    Log.Information("Starting CRM Web Application");
+
+    // Serilog'u ASP.NET Core logging provider olarak ekle
+    builder.Host.UseSerilog();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -75,6 +90,10 @@ builder.Services.AddRazorPages(options =>
             factory.Create(typeof(SharedResource));
     });
 
+// FluentValidation - Lokalize validation desteği
+builder.Services.AddFluentValidationAutoValidation()
+    .AddFluentValidationClientsideAdapters();
+
 var supportedCultures = new[]
 {
     new CultureInfo("tr-TR"),
@@ -133,9 +152,11 @@ await using (var scope = app.Services.CreateAsyncScope())
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(localizationOptions);
 
+// Global Exception Handler Middleware - Tüm exception'ları yakalar
+app.UseGlobalExceptionHandler();
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
@@ -159,6 +180,15 @@ app.MapPost("/culture/set", async (HttpContext context) =>
 app.MapRazorPages();
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 // Integration testler için Program class'ını public yapıyoruz
 public partial class Program { }

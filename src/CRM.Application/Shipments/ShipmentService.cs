@@ -1,4 +1,5 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Exceptions;
 using CRM.Domain.Shipments;
 using CRM.Domain.Enums;
 using Mapster;
@@ -33,7 +34,7 @@ public class ShipmentService : IShipmentService
         return new ShipmentDto(shipment.Id, shipment.SupplierId, shipment.Supplier?.Name ?? "-",
             shipment.CustomerId, shipment.Customer?.Name, shipment.ReferenceNumber, shipment.ShipmentDate,
             shipment.EstimatedArrival, shipment.Status, shipment.LoadingPort, shipment.DischargePort,
-            shipment.Notes, shipment.CreatedAt);
+            shipment.Notes, shipment.CreatedAt, shipment.RowVersion);
     }
 
     public async Task<IReadOnlyList<ShipmentListItemDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -82,8 +83,11 @@ public class ShipmentService : IShipmentService
 
         if (shipment == null)
         {
-            throw new InvalidOperationException($"Shipment with id {request.Id} not found.");
+            throw new NotFoundException(nameof(Shipment), request.Id);
         }
+
+        // Set RowVersion for optimistic concurrency control
+        shipment.RowVersion = request.RowVersion;
 
         shipment.ReassignSupplier(request.SupplierId);
         shipment.ReassignCustomer(request.CustomerId);

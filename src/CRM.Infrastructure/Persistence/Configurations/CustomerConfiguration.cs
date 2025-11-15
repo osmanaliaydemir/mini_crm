@@ -45,6 +45,9 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .WithOne(x => x.Customer)
             .HasForeignKey(x => x.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 
@@ -90,6 +93,9 @@ public class CustomerInteractionConfiguration : IEntityTypeConfiguration<Custome
 
         builder.Property(x => x.RecordedBy)
             .HasMaxLength(100);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 
@@ -101,6 +107,9 @@ public class PaymentPlanConfiguration : IEntityTypeConfiguration<PaymentPlan>
 
         builder.Property(x => x.TotalAmount)
             .HasPrecision(18, 2);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
 
         builder.Property(x => x.Currency)
             .HasMaxLength(10)
@@ -134,6 +143,9 @@ public class PaymentInstallmentConfiguration : IEntityTypeConfiguration<PaymentI
 
         builder.Property(x => x.Notes)
             .HasMaxLength(500);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 
@@ -158,6 +170,9 @@ public class CashTransactionConfiguration : IEntityTypeConfiguration<CashTransac
 
         builder.Property(x => x.Category)
             .HasMaxLength(150);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 

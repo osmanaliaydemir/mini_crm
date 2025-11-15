@@ -31,6 +31,7 @@ public class CustomsProcess : Entity<Guid>, IAuditableEntity
     public string? CreatedBy { get; set; }
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     public void Update(CustomsStatus status, DateTime? completedAt, string? documentNumber, string? notes)
     {

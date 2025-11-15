@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using CRM.Application.Customers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace CRM.Web.Pages.Customers;
 
@@ -9,11 +11,13 @@ public class EditModel : PageModel
 {
     private readonly ICustomerService _customerService;
     private readonly ILogger<EditModel> _logger;
+    private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public EditModel(ICustomerService customerService, ILogger<EditModel> logger)
+    public EditModel(ICustomerService customerService, ILogger<EditModel> logger, IStringLocalizer<SharedResource> localizer)
     {
         _customerService = customerService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     [BindProperty]
@@ -43,7 +47,8 @@ public class EditModel : PageModel
             PrimaryContactName = customer.PrimaryContactName,
             PrimaryContactEmail = customer.PrimaryContactEmail,
             PrimaryContactPhone = customer.PrimaryContactPhone,
-            PrimaryContactPosition = customer.PrimaryContactPosition
+            PrimaryContactPosition = customer.PrimaryContactPosition,
+            RowVersion = customer.RowVersion
         };
 
         return Page();
@@ -71,7 +76,8 @@ public class EditModel : PageModel
                 Customer.PrimaryContactName,
                 Customer.PrimaryContactEmail,
                 Customer.PrimaryContactPhone,
-                Customer.PrimaryContactPosition);
+                Customer.PrimaryContactPosition,
+                Customer.RowVersion);
 
             await _customerService.UpdateAsync(request, cancellationToken);
 
@@ -79,6 +85,18 @@ public class EditModel : PageModel
             TempData["StatusMessageType"] = "success";
 
             return RedirectToPage("Index");
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Concurrency conflict when updating customer: {CustomerId}", Customer.Id);
+            ModelState.AddModelError(string.Empty, _localizer["Error_ConcurrencyConflict"]);
+            // Reload the customer to get the latest data
+            var customer = await _customerService.GetByIdAsync(Customer.Id, cancellationToken);
+            if (customer != null)
+            {
+                Customer.RowVersion = customer.RowVersion;
+            }
+            return Page();
         }
         catch (InvalidOperationException ex)
         {
@@ -148,6 +166,9 @@ public class EditModel : PageModel
         [Display(Name = "İrtibat Telefon")]
         [MaxLength(50)]
         public string? PrimaryContactPhone { get; set; }
+
+        [HiddenInput]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }
 

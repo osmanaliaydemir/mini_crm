@@ -11,6 +11,8 @@ obj/
 
 # Logs / coverage
 *.log
+logs/
+**/logs/
 *.trx
 TestResults/
 coverage/

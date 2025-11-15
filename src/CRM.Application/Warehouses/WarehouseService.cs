@@ -1,4 +1,5 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Exceptions;
 using CRM.Domain.Warehouses;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -21,13 +22,17 @@ public class WarehouseService : IWarehouseService
     public async Task<WarehouseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var warehouse = await _context.Warehouses.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
-        return warehouse?.Adapt<WarehouseDto>();
+        if (warehouse == null) return null;
+        return new WarehouseDto(warehouse.Id, warehouse.Name, warehouse.Location,
+            warehouse.ContactPerson, warehouse.ContactPhone, warehouse.Notes,
+            warehouse.CreatedAt, warehouse.RowVersion);
     }
 
     public async Task<IReadOnlyList<WarehouseDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var warehouses = await _context.Warehouses.AsNoTracking().OrderBy(w => w.Name).ToListAsync(cancellationToken);
-        return warehouses.Adapt<List<WarehouseDto>>();
+        return warehouses.Select(w => new WarehouseDto(w.Id, w.Name, w.Location,
+            w.ContactPerson, w.ContactPhone, w.Notes, w.CreatedAt, w.RowVersion)).ToList();
     }
 
     public async Task<Guid> CreateAsync(CreateWarehouseRequest request, CancellationToken cancellationToken = default)
@@ -44,8 +49,12 @@ public class WarehouseService : IWarehouseService
         var warehouse = await _repository.GetByIdAsync(request.Id, cancellationToken);
         if (warehouse == null)
         {
-            throw new InvalidOperationException($"Warehouse with id {request.Id} not found.");
+            throw new NotFoundException(nameof(Warehouse), request.Id);
         }
+
+        // Set RowVersion for optimistic concurrency control
+        warehouse.RowVersion = request.RowVersion;
+
         warehouse.Update(request.Name, request.Location, request.ContactPerson, request.ContactPhone, request.Notes);
         await _repository.UpdateAsync(warehouse, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -56,7 +65,7 @@ public class WarehouseService : IWarehouseService
         var warehouse = await _repository.GetByIdAsync(id, cancellationToken);
         if (warehouse == null)
         {
-            throw new InvalidOperationException($"Warehouse with id {id} not found.");
+            throw new NotFoundException(nameof(Warehouse), id);
         }
 
         await _repository.DeleteAsync(warehouse, cancellationToken);
@@ -160,7 +169,9 @@ public class WarehouseService : IWarehouseService
             return null;
         }
 
-        var warehouseDto = warehouse.Adapt<WarehouseDto>();
+        var warehouseDto = new WarehouseDto(warehouse.Id, warehouse.Name, warehouse.Location,
+            warehouse.ContactPerson, warehouse.ContactPhone, warehouse.Notes,
+            warehouse.CreatedAt, warehouse.RowVersion);
 
         var unloadings = await _context.WarehouseUnloadings.AsNoTracking().Where(u => u.WarehouseId == id)
             .OrderByDescending(u => u.UnloadedAt).ToListAsync(cancellationToken);
@@ -181,7 +192,7 @@ public class WarehouseService : IWarehouseService
         var warehouse = await _repository.GetByIdAsync(request.WarehouseId, cancellationToken);
         if (warehouse == null)
         {
-            throw new InvalidOperationException($"Warehouse with id {request.WarehouseId} not found.");
+            throw new NotFoundException(nameof(Warehouse), request.WarehouseId);
         }
 
         var unloading = new WarehouseUnloading(request.WarehouseId, request.ShipmentId,

@@ -45,6 +45,9 @@ public class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
             .WithOne(x => x.Shipment)
             .HasForeignKey(x => x.ShipmentId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 
@@ -90,6 +93,9 @@ public class ShipmentStageConfiguration : IEntityTypeConfiguration<ShipmentStage
 
         builder.Property(x => x.Notes)
             .HasMaxLength(500);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 
@@ -104,6 +110,9 @@ public class CustomsProcessConfiguration : IEntityTypeConfiguration<CustomsProce
 
         builder.Property(x => x.DocumentNumber)
             .HasMaxLength(100);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace CRM.Web.Pages.Shipments;
 
@@ -19,19 +20,22 @@ public class EditModel : PageModel
     private readonly ICustomerService _customerService;
     private readonly IApplicationDbContext _context;
     private readonly ILogger<EditModel> _logger;
+    private readonly IStringLocalizer<SharedResource> _localizer;
 
     public EditModel(
         IShipmentService shipmentService,
         ISupplierService supplierService,
         ICustomerService customerService,
         IApplicationDbContext context,
-        ILogger<EditModel> logger)
+        ILogger<EditModel> logger,
+        IStringLocalizer<SharedResource> localizer)
     {
         _shipmentService = shipmentService;
         _supplierService = supplierService;
         _customerService = customerService;
         _context = context;
         _logger = logger;
+        _localizer = localizer;
     }
 
     [BindProperty]
@@ -75,7 +79,8 @@ public class EditModel : PageModel
             Notes = shipment.Notes,
             StageStartedAt = latestStage is null ? DateTime.UtcNow : ToLocal(latestStage.StartedAt),
             StageCompletedAt = latestStage?.CompletedAt.HasValue == true ? ToLocal(latestStage!.CompletedAt!.Value) : null,
-            StageNotes = latestStage?.Notes
+            StageNotes = latestStage?.Notes,
+            RowVersion = shipment.RowVersion
         };
 
         return Page();
@@ -105,7 +110,8 @@ public class EditModel : PageModel
                 Input.Notes,
                 Input.StageStartedAt,
                 Input.StageCompletedAt,
-                Input.StageNotes);
+                Input.StageNotes,
+                Input.RowVersion);
 
             await _shipmentService.UpdateAsync(request, cancellationToken);
 
@@ -113,6 +119,18 @@ public class EditModel : PageModel
             TempData["StatusMessageType"] = "success";
 
             return RedirectToPage("Details", new { id = Input.Id });
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Concurrency conflict when updating shipment: {ShipmentId}", Input.Id);
+            ModelState.AddModelError(string.Empty, _localizer["Error_ConcurrencyConflict"]);
+            // Reload the shipment to get the latest data
+            var shipment = await _shipmentService.GetByIdAsync(Input.Id, cancellationToken);
+            if (shipment != null)
+            {
+                Input.RowVersion = shipment.RowVersion;
+            }
+            return Page();
         }
         catch (InvalidOperationException ex)
         {
@@ -192,6 +210,9 @@ public class EditModel : PageModel
 
         [MaxLength(500)]
         public string? StageNotes { get; set; }
+
+        [HiddenInput]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }
 

@@ -3,7 +3,7 @@ using CRM.Domain.Finance;
 namespace CRM.Application.Finance;
 
 public record PaymentPlanDto(Guid Id, Guid CustomerId, Guid ShipmentId, PaymentPlanType PlanType, decimal TotalAmount,
-    string Currency, DateTime StartDate, int PeriodicityWeeks, string? Notes, string CustomerName, string ShipmentReference, DateTime CreatedAt);
+    string Currency, DateTime StartDate, int PeriodicityWeeks, string? Notes, string CustomerName, string ShipmentReference, DateTime CreatedAt, byte[] RowVersion);
 
 public record PaymentPlanListItemDto(Guid Id, Guid CustomerId, Guid ShipmentId, PaymentPlanType PlanType, decimal TotalAmount,
     string Currency, DateTime StartDate, string CustomerName, string ShipmentReference);

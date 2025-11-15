@@ -24,6 +24,7 @@
 
 <form method="post" class="form-shell" novalidate>
     <input type="hidden" asp-for="Customer.Id" />
+    <input type="hidden" asp-for="Customer.RowVersion" />
     <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
 
     <div class="form-sections">

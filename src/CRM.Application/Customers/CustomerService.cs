@@ -1,4 +1,5 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Exceptions;
 using CRM.Domain.Customers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,7 @@ public class CustomerService : ICustomerService
         return new CustomerDto(customer.Id, customer.Name, customer.LegalName, customer.TaxNumber,
             customer.Email, customer.Phone, customer.Address, customer.Segment, customer.Notes,
             primaryContact?.FullName, primaryContact?.Email, primaryContact?.Phone, primaryContact?.Position,
-            customer.CreatedAt, customer.CreatedBy, customer.LastModifiedAt, customer.LastModifiedBy);
+            customer.CreatedAt, customer.CreatedBy, customer.LastModifiedAt, customer.LastModifiedBy, customer.RowVersion);
     }
 
     public async Task<IReadOnlyList<CustomerListItemDto>> GetAllAsync(string? search = null, CancellationToken cancellationToken = default)
@@ -76,8 +77,11 @@ public class CustomerService : ICustomerService
 
         if (customer == null)
         {
-            throw new InvalidOperationException($"Customer with id {request.Id} not found.");
+            throw new NotFoundException(nameof(Customer), request.Id);
         }
+
+        // Set RowVersion for optimistic concurrency control
+        customer.RowVersion = request.RowVersion;
 
         customer.Update(request.Name, request.LegalName, request.TaxNumber, request.Email,
             request.Phone, request.Address, request.Segment, request.Notes);
@@ -98,7 +102,7 @@ public class CustomerService : ICustomerService
         var customer = await _repository.GetByIdAsync(id, cancellationToken);
         if (customer == null)
         {
-            throw new InvalidOperationException($"Customer with id {id} not found.");
+            throw new NotFoundException(nameof(Customer), id);
         }
 
         await _repository.DeleteAsync(customer, cancellationToken);
@@ -118,7 +122,7 @@ public class CustomerService : ICustomerService
         var customerDto = new CustomerDto(customer.Id, customer.Name, customer.LegalName, customer.TaxNumber,
             customer.Email, customer.Phone, customer.Address, customer.Segment, customer.Notes,
             primaryContact?.FullName, primaryContact?.Email, primaryContact?.Phone, primaryContact?.Position,
-            customer.CreatedAt, customer.CreatedBy, customer.LastModifiedAt, customer.LastModifiedBy);
+            customer.CreatedAt, customer.CreatedBy, customer.LastModifiedAt, customer.LastModifiedBy, customer.RowVersion);
 
         var contacts = await _context.CustomerContacts.AsNoTracking()
             .Where(contact => contact.CustomerId == id).OrderBy(contact => contact.FullName).ToListAsync(cancellationToken);
@@ -140,7 +144,7 @@ public class CustomerService : ICustomerService
         var customer = await _repository.GetByIdAsync(customerId, cancellationToken);
         if (customer == null)
         {
-            throw new InvalidOperationException($"Customer with id {customerId} not found.");
+            throw new NotFoundException(nameof(Customer), customerId);
         }
 
         var interaction = new CustomerInteraction(customerId, request.InteractionDate, request.InteractionType,

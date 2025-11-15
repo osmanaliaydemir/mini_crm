@@ -40,6 +40,7 @@ public class Customer : Entity<Guid>, IAuditableEntity
     public string? CreatedBy { get; set; }
     public DateTime? LastModifiedAt { get; set; }
     public string? LastModifiedBy { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     public void Update(string name, string? legalName, string? taxNumber, string? email,
         string? phone, string? address, string? segment, string? notes)

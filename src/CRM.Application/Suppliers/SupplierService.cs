@@ -1,4 +1,5 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Exceptions;
 using CRM.Domain.Suppliers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -21,13 +22,17 @@ public class SupplierService : ISupplierService
     public async Task<SupplierDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var supplier = await _context.Suppliers.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
-        return supplier?.Adapt<SupplierDto>();
+        if (supplier == null) return null;
+        return new SupplierDto(supplier.Id, supplier.Name, supplier.Country, supplier.TaxNumber,
+            supplier.ContactEmail, supplier.ContactPhone, supplier.AddressLine, supplier.Notes,
+            supplier.CreatedAt, supplier.RowVersion);
     }
 
     public async Task<IReadOnlyList<SupplierDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var suppliers = await _context.Suppliers.AsNoTracking().OrderBy(s => s.Name).ToListAsync(cancellationToken);
-        return suppliers.Adapt<List<SupplierDto>>();
+        return suppliers.Select(s => new SupplierDto(s.Id, s.Name, s.Country, s.TaxNumber,
+            s.ContactEmail, s.ContactPhone, s.AddressLine, s.Notes, s.CreatedAt, s.RowVersion)).ToList();
     }
 
     public async Task<Guid> CreateAsync(CreateSupplierRequest request, CancellationToken cancellationToken = default)
@@ -49,8 +54,11 @@ public class SupplierService : ISupplierService
         var supplier = await _repository.GetByIdAsync(request.Id, cancellationToken);
         if (supplier == null)
         {
-            throw new InvalidOperationException($"Supplier with id {request.Id} not found.");
+            throw new NotFoundException(nameof(Supplier), request.Id);
         }
+
+        // Set RowVersion for optimistic concurrency control
+        supplier.RowVersion = request.RowVersion;
 
         supplier.Update(request.Name, request.Country, request.TaxNumber,
             request.ContactEmail, request.ContactPhone, request.AddressLine, request.Notes);
@@ -64,7 +72,7 @@ public class SupplierService : ISupplierService
         var supplier = await _repository.GetByIdAsync(id, cancellationToken);
         if (supplier == null)
         {
-            throw new InvalidOperationException($"Supplier with id {id} not found.");
+            throw new NotFoundException(nameof(Supplier), id);
         }
 
         await _repository.DeleteAsync(supplier, cancellationToken);
@@ -75,7 +83,8 @@ public class SupplierService : ISupplierService
     {
         var suppliers = await _context.Suppliers.AsNoTracking().OrderBy(s => s.Name).ToListAsync(cancellationToken);
 
-        var supplierDtos = suppliers.Adapt<List<SupplierDto>>();
+        var supplierDtos = suppliers.Select(s => new SupplierDto(s.Id, s.Name, s.Country, s.TaxNumber,
+            s.ContactEmail, s.ContactPhone, s.AddressLine, s.Notes, s.CreatedAt, s.RowVersion)).ToList();
         var totalSuppliers = suppliers.Count;
 
         var countryComparer = StringComparer.OrdinalIgnoreCase;

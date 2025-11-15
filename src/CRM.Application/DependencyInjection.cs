@@ -3,6 +3,7 @@ using CRM.Application.Finance;
 using CRM.Application.Shipments;
 using CRM.Application.Suppliers;
 using CRM.Application.Warehouses;
+using FluentValidation;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,9 @@ public static class DependencyInjection
         config.Scan(typeof(DependencyInjection).Assembly);
         services.AddSingleton(config);
         services.AddScoped<IMapper, Mapper>();
+
+        // FluentValidation - Validator'ları register et
+        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
         // Application services
         services.AddScoped<ICustomerService, CustomerService>();

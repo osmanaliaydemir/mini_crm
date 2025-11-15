@@ -558,6 +558,23 @@
   "Notifications_Option_SystemAnnouncements": "Sistem Duyuruları",
   "Notifications_Action_Save": "Tercihleri Kaydet",
   "Notifications_Action_Cancel": "İptal",
-  "Notifications_Success_Updated": "Bildirim tercihleri başarıyla güncellendi."
+  "Notifications_Success_Updated": "Bildirim tercihleri başarıyla güncellendi.",
+  "Error_ConcurrencyConflict": "Bu kayıt başka bir kullanıcı tarafından değiştirilmiş. Lütfen sayfayı yenileyip tekrar deneyin.",
+  "Validation_Customer_Name_Required": "Müşteri adı zorunludur.",
+  "Validation_Customer_Name_MaxLength": "Müşteri adı en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_LegalName_MaxLength": "Ticari ünvan en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_TaxNumber_MaxLength": "Vergi numarası en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_Email_Invalid": "Geçerli bir e-posta adresi giriniz.",
+  "Validation_Customer_Email_MaxLength": "E-posta adresi en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_Phone_MaxLength": "Telefon numarası en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_Address_MaxLength": "Adres en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_Segment_MaxLength": "Segment en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_Notes_MaxLength": "Notlar en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_PrimaryContactName_MaxLength": "İrtibat adı en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_PrimaryContactPosition_MaxLength": "İrtibat ünvanı en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_PrimaryContactEmail_Invalid": "Geçerli bir e-posta adresi giriniz.",
+  "Validation_Customer_PrimaryContactEmail_MaxLength": "İrtibat e-postası en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_PrimaryContactPhone_MaxLength": "İrtibat telefonu en fazla {MaxLength} karakter olabilir.",
+  "Validation_Customer_Id_Required": "Müşteri ID zorunludur."
 }
 

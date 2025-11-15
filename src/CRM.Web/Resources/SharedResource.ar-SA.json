@@ -514,6 +514,23 @@
   "Notifications_Option_SystemAnnouncements": "إعلانات النظام",
   "Notifications_Action_Save": "حفظ التفضيلات",
   "Notifications_Action_Cancel": "إلغاء",
-  "Notifications_Success_Updated": "تم تحديث تفضيلات الإشعارات بنجاح."
+  "Notifications_Success_Updated": "تم تحديث تفضيلات الإشعارات بنجاح.",
+  "Error_ConcurrencyConflict": "تم تعديل هذا السجل بواسطة مستخدم آخر. يرجى تحديث الصفحة والمحاولة مرة أخرى.",
+  "Validation_Customer_Name_Required": "اسم العميل مطلوب.",
+  "Validation_Customer_Name_MaxLength": "لا يمكن أن يتجاوز اسم العميل {MaxLength} حرفًا.",
+  "Validation_Customer_LegalName_MaxLength": "لا يمكن أن يتجاوز الاسم القانوني {MaxLength} حرفًا.",
+  "Validation_Customer_TaxNumber_MaxLength": "لا يمكن أن يتجاوز الرقم الضريبي {MaxLength} حرفًا.",
+  "Validation_Customer_Email_Invalid": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+  "Validation_Customer_Email_MaxLength": "لا يمكن أن يتجاوز عنوان البريد الإلكتروني {MaxLength} حرفًا.",
+  "Validation_Customer_Phone_MaxLength": "لا يمكن أن يتجاوز رقم الهاتف {MaxLength} حرفًا.",
+  "Validation_Customer_Address_MaxLength": "لا يمكن أن يتجاوز العنوان {MaxLength} حرفًا.",
+  "Validation_Customer_Segment_MaxLength": "لا يمكن أن يتجاوز القطاع {MaxLength} حرفًا.",
+  "Validation_Customer_Notes_MaxLength": "لا يمكن أن تتجاوز الملاحظات {MaxLength} حرفًا.",
+  "Validation_Customer_PrimaryContactName_MaxLength": "لا يمكن أن يتجاوز اسم جهة الاتصال الرئيسية {MaxLength} حرفًا.",
+  "Validation_Customer_PrimaryContactPosition_MaxLength": "لا يمكن أن يتجاوز منصب جهة الاتصال الرئيسية {MaxLength} حرفًا.",
+  "Validation_Customer_PrimaryContactEmail_Invalid": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+  "Validation_Customer_PrimaryContactEmail_MaxLength": "لا يمكن أن يتجاوز بريد جهة الاتصال الرئيسية {MaxLength} حرفًا.",
+  "Validation_Customer_PrimaryContactPhone_MaxLength": "لا يمكن أن يتجاوز هاتف جهة الاتصال الرئيسية {MaxLength} حرفًا.",
+  "Validation_Customer_Id_Required": "معرف العميل مطلوب."
 }
 

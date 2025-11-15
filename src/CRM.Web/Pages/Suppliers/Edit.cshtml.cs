@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using CRM.Application.Suppliers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace CRM.Web.Pages.Suppliers;
 
@@ -9,11 +11,13 @@ public class EditModel : PageModel
 {
     private readonly ISupplierService _supplierService;
     private readonly ILogger<EditModel> _logger;
+    private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public EditModel(ISupplierService supplierService, ILogger<EditModel> logger)
+    public EditModel(ISupplierService supplierService, ILogger<EditModel> logger, IStringLocalizer<SharedResource> localizer)
     {
         _supplierService = supplierService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     [BindProperty]
@@ -36,7 +40,8 @@ public class EditModel : PageModel
             ContactEmail = supplier.ContactEmail,
             ContactPhone = supplier.ContactPhone,
             AddressLine = supplier.AddressLine,
-            Notes = supplier.Notes
+            Notes = supplier.Notes,
+            RowVersion = supplier.RowVersion
         };
 
         return Page();
@@ -59,7 +64,8 @@ public class EditModel : PageModel
                 Supplier.ContactEmail,
                 Supplier.ContactPhone,
                 Supplier.AddressLine,
-                Supplier.Notes);
+                Supplier.Notes,
+                Supplier.RowVersion);
 
             await _supplierService.UpdateAsync(request, cancellationToken);
 
@@ -67,6 +73,18 @@ public class EditModel : PageModel
             TempData["StatusMessageType"] = "success";
 
             return RedirectToPage("Index");
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Concurrency conflict when updating supplier: {SupplierId}", Supplier.Id);
+            ModelState.AddModelError(string.Empty, _localizer["Error_ConcurrencyConflict"]);
+            // Reload the supplier to get the latest data
+            var supplier = await _supplierService.GetByIdAsync(Supplier.Id, cancellationToken);
+            if (supplier != null)
+            {
+                Supplier.RowVersion = supplier.RowVersion;
+            }
+            return Page();
         }
         catch (InvalidOperationException ex)
         {
@@ -115,6 +133,9 @@ public class EditModel : PageModel
         [Display(Name = "Notlar")]
         [MaxLength(500)]
         public string? Notes { get; set; }
+
+        [HiddenInput]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }
 

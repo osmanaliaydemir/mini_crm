@@ -87,7 +87,7 @@ public class CashTransactionService : ICashTransactionService
             t.RelatedCustomerId.HasValue && customers.TryGetValue(t.RelatedCustomerId.Value, out var customerName) ? customerName : null,
             t.RelatedShipmentId,
             t.RelatedShipmentId.HasValue && shipments.TryGetValue(t.RelatedShipmentId.Value, out var shipmentRef) ? shipmentRef : null,
-            t.CreatedAt)).ToList();
+            t.CreatedAt, t.RowVersion)).ToList();
     }
 
     public async Task<CashTransactionDashboardData> GetDashboardDataAsync(DateTime? from = null, DateTime? to = null, CashTransactionType? type = null, CancellationToken cancellationToken = default)

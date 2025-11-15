@@ -29,6 +29,9 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
         builder.HasMany(x => x.Unloadings)
             .WithOne(x => x.Warehouse)
             .HasForeignKey(x => x.WarehouseId);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 
@@ -46,6 +49,9 @@ public class WarehouseUnloadingConfiguration : IEntityTypeConfiguration<Warehous
 
         builder.Property(x => x.Notes)
             .HasMaxLength(500);
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 

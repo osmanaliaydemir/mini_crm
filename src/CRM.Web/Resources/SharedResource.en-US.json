@@ -555,6 +555,23 @@
   "Notifications_Option_SystemAnnouncements": "System Announcements",
   "Notifications_Action_Save": "Save Preferences",
   "Notifications_Action_Cancel": "Cancel",
-  "Notifications_Success_Updated": "Notification preferences updated successfully."
+  "Notifications_Success_Updated": "Notification preferences updated successfully.",
+  "Error_ConcurrencyConflict": "This record has been modified by another user. Please refresh the page and try again.",
+  "Validation_Customer_Name_Required": "Customer name is required.",
+  "Validation_Customer_Name_MaxLength": "Customer name cannot exceed {MaxLength} characters.",
+  "Validation_Customer_LegalName_MaxLength": "Legal name cannot exceed {MaxLength} characters.",
+  "Validation_Customer_TaxNumber_MaxLength": "Tax number cannot exceed {MaxLength} characters.",
+  "Validation_Customer_Email_Invalid": "Please enter a valid email address.",
+  "Validation_Customer_Email_MaxLength": "Email address cannot exceed {MaxLength} characters.",
+  "Validation_Customer_Phone_MaxLength": "Phone number cannot exceed {MaxLength} characters.",
+  "Validation_Customer_Address_MaxLength": "Address cannot exceed {MaxLength} characters.",
+  "Validation_Customer_Segment_MaxLength": "Segment cannot exceed {MaxLength} characters.",
+  "Validation_Customer_Notes_MaxLength": "Notes cannot exceed {MaxLength} characters.",
+  "Validation_Customer_PrimaryContactName_MaxLength": "Primary contact name cannot exceed {MaxLength} characters.",
+  "Validation_Customer_PrimaryContactPosition_MaxLength": "Primary contact position cannot exceed {MaxLength} characters.",
+  "Validation_Customer_PrimaryContactEmail_Invalid": "Please enter a valid email address.",
+  "Validation_Customer_PrimaryContactEmail_MaxLength": "Primary contact email cannot exceed {MaxLength} characters.",
+  "Validation_Customer_PrimaryContactPhone_MaxLength": "Primary contact phone cannot exceed {MaxLength} characters.",
+  "Validation_Customer_Id_Required": "Customer ID is required."
 }
 

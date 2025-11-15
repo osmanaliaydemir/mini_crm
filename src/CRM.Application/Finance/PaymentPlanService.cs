@@ -35,7 +35,7 @@ public class PaymentPlanService : IPaymentPlanService
 
         var planDto = new PaymentPlanDto(plan.Id, plan.CustomerId, plan.ShipmentId,
             plan.PlanType, plan.TotalAmount, plan.Currency, plan.StartDate,
-            plan.PeriodicityWeeks, plan.Notes, customerName, shipmentReference, plan.CreatedAt);
+            plan.PeriodicityWeeks, plan.Notes, customerName, shipmentReference, plan.CreatedAt, plan.RowVersion);
 
         var installments = plan.Installments.OrderBy(i => i.InstallmentNumber).Select(i => new PaymentInstallmentDto(
                 i.Id,

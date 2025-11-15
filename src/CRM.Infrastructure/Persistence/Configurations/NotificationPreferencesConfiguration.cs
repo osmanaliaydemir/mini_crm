@@ -80,6 +80,9 @@ public class NotificationPreferencesConfiguration : IEntityTypeConfiguration<Not
         // Unique constraint: One preference per user
         builder.HasIndex(x => x.UserId)
             .IsUnique();
+
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
     }
 }
 
