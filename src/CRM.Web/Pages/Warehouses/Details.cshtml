@@ -5,13 +5,13 @@
 
 @{
     Layout = "_DashboardLayout";
-    if (Model.Warehouse is null)
+    if (Model.Details is null)
     {
         ViewData["Title"] = Localizer["Warehouses_Details_NotFound_Title"];
     }
     else
     {
-        ViewData["Title"] = $"{Localizer["Warehouses_Details_Title"]} · {Model.Warehouse.Name}";
+        ViewData["Title"] = $"{Localizer["Warehouses_Details_Title"]} · {Model.Details.Warehouse.Name}";
     }
 }
 
@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="~/css/warehouses/details.css" asp-append-version="true" />
 }
 
-@if (Model.Warehouse is null)
+@if (Model.Details is null)
 {
     <section class="details-empty">
         <article class="details-card">
@@ -33,7 +33,8 @@
 }
 else
 {
-    var warehouse = Model.Warehouse;
+    var warehouse = Model.Details.Warehouse;
+    var unloadings = Model.Details.Unloadings;
 
     <section class="page-header details-header">
         <div>
