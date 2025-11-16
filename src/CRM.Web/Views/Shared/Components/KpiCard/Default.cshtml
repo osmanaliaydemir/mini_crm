@@ -1,0 +1,20 @@
+@using CRM.Web.ViewComponents
+@model KpiCardViewComponent.KpiCardViewModel
+
+<article class="kpi-card" @if (!string.IsNullOrEmpty(Model.DataKpi)) { <text>data-kpi="@Model.DataKpi"</text> }>
+    <div class="kpi-top">
+        <span class="kpi-label">@Model.Label</span>
+        @if (!string.IsNullOrEmpty(Model.Trend))
+        {
+            <span class="trend-chip @Model.TrendType" data-kpi-trend>
+                <span data-kpi-trend-value>@Model.Trend</span>
+            </span>
+        }
+    </div>
+    <div class="kpi-value" data-kpi-value>@Model.Value</div>
+    @if (!string.IsNullOrEmpty(Model.Meta))
+    {
+        <span class="kpi-meta" data-kpi-meta>@Model.Meta</span>
+    }
+</article>
+

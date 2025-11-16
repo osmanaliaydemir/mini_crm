@@ -24,6 +24,20 @@
         <p class="subtitle">@Localizer["Shipments_Header_Total_Subtitle"]</p>
     </div>
     <div class="header-actions">
+        <div class="btn-group">
+            <a class="btn btn-ghost" asp-page-handler="Export" asp-route-format="excel">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                @Localizer["Common_Export_Excel"]
+            </a>
+            <a class="btn btn-ghost" asp-page-handler="Export" asp-route-format="csv">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                @Localizer["Common_Export_CSV"]
+            </a>
+        </div>
         <a class="btn btn-primary" asp-page="Create">
             @Localizer["Shipments_Add_Button"]
         </a>
@@ -31,34 +45,30 @@
 </section>
 
 <section class="kpi-grid shipments-kpis" data-shipments-kpis>
-    <article class="kpi-card" data-kpi="total">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Shipments_Header_Total"]</span>
-        </div>
-        <div class="kpi-value">@Model.TotalShipments</div>
-        <span class="kpi-meta">@Localizer["Shipments_Header_Total_Subtitle"]</span>
-    </article>
-    <article class="kpi-card" data-kpi="active">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Shipments_Header_Active"]</span>
-        </div>
-        <div class="kpi-value">@Model.ActiveShipments</div>
-        <span class="kpi-meta">@Localizer["Shipments_Header_Active_Subtitle"]</span>
-    </article>
-    <article class="kpi-card" data-kpi="delivered">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Shipments_Header_Delivered"]</span>
-        </div>
-        <div class="kpi-value">@Model.DeliveredShipments</div>
-        <span class="kpi-meta">@Localizer["Shipments_Header_Delivered_Subtitle"]</span>
-    </article>
-    <article class="kpi-card" data-kpi="customs">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Shipments_Header_Customs"]</span>
-        </div>
-        <div class="kpi-value">@Model.CustomsShipments</div>
-        <span class="kpi-meta">@Localizer["Shipments_Header_Customs_Subtitle"]</span>
-    </article>
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Shipments_Header_Total"].Value, 
+        value = Model.TotalShipments, 
+        meta = Localizer["Shipments_Header_Total_Subtitle"].Value,
+        dataKpi = "total"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Shipments_Header_Active"].Value, 
+        value = Model.ActiveShipments, 
+        meta = Localizer["Shipments_Header_Active_Subtitle"].Value,
+        dataKpi = "active"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Shipments_Header_Delivered"].Value, 
+        value = Model.DeliveredShipments, 
+        meta = Localizer["Shipments_Header_Delivered_Subtitle"].Value,
+        dataKpi = "delivered"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Shipments_Header_Customs"].Value, 
+        value = Model.CustomsShipments, 
+        meta = Localizer["Shipments_Header_Customs_Subtitle"].Value,
+        dataKpi = "customs"
+    })
 </section>
 
 @if (Model.StatusSummaries?.Any() ?? false)
@@ -129,7 +139,11 @@
                             <td>@shipment.SupplierName</td>
                             <td>@shipment.CustomerName</td>
                             <td>
-                                <span class="status-chip @statusClass">@statusLabel</span>
+                                @await Component.InvokeAsync("StatusBadge", new { 
+                                    label = statusLabel, 
+                                    statusType = statusClass.Replace("status-chip--", ""),
+                                    cssClass = "status-chip"
+                                })
                             </td>
                             <td>
                                 @(shipment.LastStageUpdate.HasValue

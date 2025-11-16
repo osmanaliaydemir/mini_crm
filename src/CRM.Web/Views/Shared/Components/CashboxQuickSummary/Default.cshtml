@@ -1,0 +1,44 @@
+@using CRM.Web.ViewComponents
+@using Microsoft.Extensions.Localization
+@using CRM.Web
+@model CashboxQuickSummaryViewComponent.CashboxQuickSummaryViewModel
+@inject IStringLocalizer<SharedResource> Localizer
+@using System.Globalization
+
+@{
+    var currentCulture = CultureInfo.CurrentUICulture;
+    string FormatCurrency(decimal value) => value.ToString("C2", currentCulture);
+    var lastTransactionDisplay = Model.LastTransactionDate?.ToLocalTime().ToString("dd MMM HH:mm", currentCulture);
+    var cashNetPositive = Model.NetBalance >= 0;
+}
+
+<div class="cashbox-quick">
+    <div class="cashbox-quick__actions">
+        <a class="cashbox-chip cashbox-chip--compact" asp-page="/Finance/Cashbox/Create" title="@Localizer["Topbar_Cashbox_QuickEntry"]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+            </svg>
+            <span>@Localizer["Topbar_Cashbox_QuickEntry"]</span>
+        </a>
+        <a class="cashbox-chip cashbox-chip--compact" asp-page="/Finance/Cashbox/Index" title="@Localizer["Topbar_Cashbox_List"]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M3 3h18v18H3z"></path>
+                <path d="M3 9h18"></path>
+                <path d="M3 15h18"></path>
+            </svg>
+            <span>@Localizer["Topbar_Cashbox_List"]</span>
+        </a>
+        <a class="cashbox-chip cashbox-chip--status @(cashNetPositive ? "is-positive" : "is-negative")" asp-page="/Finance/Cashbox/Index" asp-fragment="overview" title="@Localizer["Topbar_Cashbox_CurrentBalance"]">
+            <div class="cashbox-chip__status-content">
+                <span class="cashbox-chip__label">@Localizer["Topbar_Cashbox_CurrentBalance"]</span>
+                <strong class="cashbox-chip__value">@FormatCurrency(Model.NetBalance)</strong>
+            </div>
+            @if (lastTransactionDisplay is not null)
+            {
+                <small>@string.Format(Localizer["Topbar_Cashbox_LastUpdate"], lastTransactionDisplay)</small>
+            }
+        </a>
+    </div>
+</div>
+

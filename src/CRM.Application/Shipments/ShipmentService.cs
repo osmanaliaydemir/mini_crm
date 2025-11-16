@@ -1,9 +1,12 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Caching;
 using CRM.Application.Common.Exceptions;
+using CRM.Application.Common.Pagination;
 using CRM.Domain.Shipments;
 using CRM.Domain.Enums;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CRM.Application.Shipments;
 
@@ -12,12 +15,21 @@ public class ShipmentService : IShipmentService
     private readonly IRepository<Shipment> _repository;
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<ShipmentService> _logger;
 
-    public ShipmentService(IRepository<Shipment> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
+    public ShipmentService(
+        IRepository<Shipment> repository, 
+        IApplicationDbContext context, 
+        IUnitOfWork unitOfWork,
+        ICacheService cacheService,
+        ILogger<ShipmentService> logger)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
+        _cacheService = cacheService;
+        _logger = logger;
     }
 
     public async Task<ShipmentDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -52,6 +64,28 @@ public class ShipmentService : IShipmentService
         }).ToList();
     }
 
+    public async Task<PagedResult<ShipmentListItemDto>> GetAllPagedAsync(PaginationRequest pagination, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Shipments.AsNoTracking()
+            .Include(s => s.Supplier)
+            .Include(s => s.Customer)
+            .Include(s => s.Stages)
+            .OrderByDescending(s => s.ShipmentDate);
+
+        var pagedResult = await query.ToPagedResultAsync(pagination, cancellationToken);
+
+        var items = pagedResult.Items.Select(s =>
+        {
+            var latestStage = s.Stages.OrderByDescending(stage => stage.StartedAt).FirstOrDefault();
+
+            return new ShipmentListItemDto(s.Id, s.ReferenceNumber, s.Supplier?.Name ?? "-",
+                s.Customer?.Name ?? "-", s.Status, s.ShipmentDate, s.EstimatedArrival,
+                latestStage?.StartedAt, latestStage?.Notes);
+        }).ToList();
+
+        return new PagedResult<ShipmentListItemDto>(items, pagedResult.TotalCount, pagedResult.PageNumber, pagedResult.PageSize);
+    }
+
     public async Task<Guid> CreateAsync(CreateShipmentRequest request, CancellationToken cancellationToken = default)
     {
         var shipmentDate = DateTime.SpecifyKind(request.ShipmentDate, DateTimeKind.Utc);
@@ -73,6 +107,11 @@ public class ShipmentService : IShipmentService
 
         await _repository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation - Shipment ve ana dashboard cache'lerini temizle
+        await _cacheService.RemoveAsync(CacheKeys.ShipmentDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.AnalyticsOperations, cancellationToken);
 
         return shipment.Id;
     }
@@ -109,6 +148,11 @@ public class ShipmentService : IShipmentService
 
         await _repository.UpdateAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation - Shipment ve ana dashboard cache'lerini temizle
+        await _cacheService.RemoveAsync(CacheKeys.ShipmentDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.AnalyticsOperations, cancellationToken);
     }
 
     public async Task<ShipmentDetailsDto?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -149,6 +193,15 @@ public class ShipmentService : IShipmentService
     }
 
     public async Task<ShipmentDashboardData> GetDashboardDataAsync(CancellationToken cancellationToken = default)
+    {
+        return await _cacheService.GetOrCreateAsync(
+            CacheKeys.ShipmentDashboard,
+            async () => await LoadShipmentDashboardDataAsync(cancellationToken),
+            TimeSpan.FromMinutes(5),
+            cancellationToken);
+    }
+
+    private async Task<ShipmentDashboardData> LoadShipmentDashboardDataAsync(CancellationToken cancellationToken)
     {
         var shipments = await GetAllAsync(cancellationToken);
 

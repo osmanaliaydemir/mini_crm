@@ -30,6 +30,9 @@ try
     // Serilog'u ASP.NET Core logging provider olarak ekle
     builder.Host.UseSerilog();
 
+// Memory Cache
+builder.Services.AddMemoryCache();
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
@@ -76,11 +79,17 @@ builder.Services.AddRazorPages(options =>
     {
         options.Conventions.AllowAnonymousToPage("/Auth/Login");
         options.Conventions.AllowAnonymousToPage("/Auth/ForgotPassword");
+        // Error pages should be accessible to everyone
+        options.Conventions.AllowAnonymousToPage("/Error/404");
+        options.Conventions.AllowAnonymousToPage("/Error/403");
+        options.Conventions.AllowAnonymousToPage("/Error/500");
         options.Conventions.AuthorizeFolder("/");
         options.Conventions.AuthorizeFolder("/Suppliers", "OperationsAccess");
         options.Conventions.AuthorizeFolder("/Warehouses", "OperationsAccess");
         options.Conventions.AuthorizeFolder("/Customers", "OperationsAccess");
         options.Conventions.AuthorizeFolder("/Finance", "FinanceAccess");
+        options.Conventions.AuthorizeFolder("/Users", "AdminOnly");
+        options.Conventions.AuthorizeFolder("/Settings", "AdminOnly");
         options.Conventions.AuthorizePage("/Index", "OperationsAccess");
     })
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
@@ -151,6 +160,9 @@ await using (var scope = app.Services.CreateAsyncScope())
 
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(localizationOptions);
+
+// Status Code Pages - Custom error pages için
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 // Global Exception Handler Middleware - Tüm exception'ları yakalar
 app.UseGlobalExceptionHandler();

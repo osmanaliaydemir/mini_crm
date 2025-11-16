@@ -1,12 +1,10 @@
-using System.ComponentModel.DataAnnotations;
-using CRM.Domain.Notifications;
+using CRM.Application.Notifications;
 using CRM.Infrastructure.Identity;
-using CRM.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace CRM.Web.Pages.Notifications;
 
@@ -14,16 +12,16 @@ namespace CRM.Web.Pages.Notifications;
 public class PreferencesModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly CRMDbContext _dbContext;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<PreferencesModel> _logger;
 
     public PreferencesModel(
         UserManager<ApplicationUser> userManager,
-        CRMDbContext dbContext,
+        INotificationService notificationService,
         ILogger<PreferencesModel> logger)
     {
         _userManager = userManager;
-        _dbContext = dbContext;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -38,22 +36,20 @@ public class PreferencesModel : PageModel
             return NotFound();
         }
 
-        var notificationPreferences = await _dbContext.NotificationPreferences
-            .AsNoTracking()
-            .FirstOrDefaultAsync(np => np.UserId == user.Id, cancellationToken);
+        var preferences = await _notificationService.GetPreferencesAsync(user.Id, cancellationToken);
 
-        if (notificationPreferences is not null)
+        if (preferences is not null)
         {
-            Preferences.EmailShipmentUpdates = notificationPreferences.EmailShipmentUpdates;
-            Preferences.EmailPaymentReminders = notificationPreferences.EmailPaymentReminders;
-            Preferences.EmailWarehouseAlerts = notificationPreferences.EmailWarehouseAlerts;
-            Preferences.EmailCustomerInteractions = notificationPreferences.EmailCustomerInteractions;
-            Preferences.EmailSystemAnnouncements = notificationPreferences.EmailSystemAnnouncements;
-            Preferences.InAppShipmentUpdates = notificationPreferences.InAppShipmentUpdates;
-            Preferences.InAppPaymentReminders = notificationPreferences.InAppPaymentReminders;
-            Preferences.InAppWarehouseAlerts = notificationPreferences.InAppWarehouseAlerts;
-            Preferences.InAppCustomerInteractions = notificationPreferences.InAppCustomerInteractions;
-            Preferences.InAppSystemAnnouncements = notificationPreferences.InAppSystemAnnouncements;
+            Preferences.EmailShipmentUpdates = preferences.EmailShipmentUpdates;
+            Preferences.EmailPaymentReminders = preferences.EmailPaymentReminders;
+            Preferences.EmailWarehouseAlerts = preferences.EmailWarehouseAlerts;
+            Preferences.EmailCustomerInteractions = preferences.EmailCustomerInteractions;
+            Preferences.EmailSystemAnnouncements = preferences.EmailSystemAnnouncements;
+            Preferences.InAppShipmentUpdates = preferences.InAppShipmentUpdates;
+            Preferences.InAppPaymentReminders = preferences.InAppPaymentReminders;
+            Preferences.InAppWarehouseAlerts = preferences.InAppWarehouseAlerts;
+            Preferences.InAppCustomerInteractions = preferences.InAppCustomerInteractions;
+            Preferences.InAppSystemAnnouncements = preferences.InAppSystemAnnouncements;
         }
         else
         {
@@ -88,47 +84,19 @@ public class PreferencesModel : PageModel
 
         try
         {
-            var notificationPreferences = await _dbContext.NotificationPreferences
-                .FirstOrDefaultAsync(np => np.UserId == user.Id, cancellationToken);
+            var request = new UpdateNotificationPreferencesRequest(
+                Preferences.EmailShipmentUpdates,
+                Preferences.EmailPaymentReminders,
+                Preferences.EmailWarehouseAlerts,
+                Preferences.EmailCustomerInteractions,
+                Preferences.EmailSystemAnnouncements,
+                Preferences.InAppShipmentUpdates,
+                Preferences.InAppPaymentReminders,
+                Preferences.InAppWarehouseAlerts,
+                Preferences.InAppCustomerInteractions,
+                Preferences.InAppSystemAnnouncements);
 
-            if (notificationPreferences is null)
-            {
-                // Yeni kayıt oluştur
-                notificationPreferences = new NotificationPreferences(
-                    Guid.NewGuid(),
-                    user.Id,
-                    Preferences.EmailShipmentUpdates,
-                    Preferences.EmailPaymentReminders,
-                    Preferences.EmailWarehouseAlerts,
-                    Preferences.EmailCustomerInteractions,
-                    Preferences.EmailSystemAnnouncements,
-                    Preferences.InAppShipmentUpdates,
-                    Preferences.InAppPaymentReminders,
-                    Preferences.InAppWarehouseAlerts,
-                    Preferences.InAppCustomerInteractions,
-                    Preferences.InAppSystemAnnouncements);
-
-                await _dbContext.NotificationPreferences.AddAsync(notificationPreferences, cancellationToken);
-            }
-            else
-            {
-                // Mevcut kaydı güncelle
-                notificationPreferences.Update(
-                    Preferences.EmailShipmentUpdates,
-                    Preferences.EmailPaymentReminders,
-                    Preferences.EmailWarehouseAlerts,
-                    Preferences.EmailCustomerInteractions,
-                    Preferences.EmailSystemAnnouncements,
-                    Preferences.InAppShipmentUpdates,
-                    Preferences.InAppPaymentReminders,
-                    Preferences.InAppWarehouseAlerts,
-                    Preferences.InAppCustomerInteractions,
-                    Preferences.InAppSystemAnnouncements);
-
-                _dbContext.NotificationPreferences.Update(notificationPreferences);
-            }
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _notificationService.UpdatePreferencesAsync(user.Id, request, cancellationToken);
 
             _logger.LogInformation(
                 "Notification preferences updated. UserId: {UserId}, EmailShipmentUpdates: {EmailShipmentUpdates}",
@@ -179,4 +147,3 @@ public class PreferencesModel : PageModel
         public bool InAppSystemAnnouncements { get; set; }
     }
 }
-

@@ -137,6 +137,9 @@ public class PaymentInstallmentConfiguration : IEntityTypeConfiguration<PaymentI
         builder.Property(x => x.Amount)
             .HasPrecision(18, 2);
 
+        builder.Property(x => x.PaidAmount)
+            .HasPrecision(18, 2);
+
         builder.Property(x => x.Currency)
             .HasMaxLength(10)
             .HasDefaultValue("TRY");

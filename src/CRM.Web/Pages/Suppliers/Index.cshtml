@@ -19,6 +19,20 @@
         <p class="subtitle">@Localizer["Suppliers_Page_Subtitle"]</p>
     </div>
     <div class="header-actions">
+        <div class="btn-group">
+            <a class="btn btn-ghost" asp-page-handler="Export" asp-route-format="excel">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                @Localizer["Common_Export_Excel"]
+            </a>
+            <a class="btn btn-ghost" asp-page-handler="Export" asp-route-format="csv">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                @Localizer["Common_Export_CSV"]
+            </a>
+        </div>
         <a class="btn btn-primary" asp-page="Create">
             @Localizer["Suppliers_Action_Create"]
         </a>
@@ -26,21 +40,21 @@
 </section>
 
 <section class="kpi-grid suppliers-kpis">
-    <article class="kpi-card">
-        <span class="kpi-label">@Localizer["Suppliers_Header_TotalSuppliers"]</span>
-        <div class="kpi-value">@Model.TotalSuppliers</div>
-        <span class="kpi-meta">@Localizer["Suppliers_Header_Last30Days_Value", Model.RecentSuppliersCount]</span>
-    </article>
-    <article class="kpi-card">
-        <span class="kpi-label">@Localizer["Suppliers_Header_Countries"]</span>
-        <div class="kpi-value">@Model.DistinctCountryCount</div>
-        <span class="kpi-meta">@Localizer["Suppliers_Header_Countries_Subtitle"]</span>
-    </article>
-    <article class="kpi-card">
-        <span class="kpi-label">@Localizer["Suppliers_Header_TopCountry"]</span>
-        <div class="kpi-value">@Model.TopCountryName</div>
-        <span class="kpi-meta">@Localizer["Suppliers_Header_TopCountry_Value", Model.TopCountrySupplierCount]</span>
-    </article>
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Suppliers_Header_TotalSuppliers"].Value, 
+        value = Model.TotalSuppliers, 
+        meta = Localizer["Suppliers_Header_Last30Days_Value", Model.RecentSuppliersCount].Value 
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Suppliers_Header_Countries"].Value, 
+        value = Model.DistinctCountryCount, 
+        meta = Localizer["Suppliers_Header_Countries_Subtitle"].Value 
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Suppliers_Header_TopCountry"].Value, 
+        value = Model.TopCountryName, 
+        meta = Localizer["Suppliers_Header_TopCountry_Value", Model.TopCountrySupplierCount].Value 
+    })
 </section>
 
 <section class="suppliers-insights">
@@ -143,15 +157,17 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <a class="btn btn-icon" asp-page="Details" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Details"]">
-                                    <img src="~/images/detail.png" alt="@Localizer["Suppliers_Action_Details"]" width="18" height="18" loading="lazy" />
-                                </a>
-                                <a class="btn btn-icon" asp-page="Edit" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Edit"]">
-                                    <img src="~/images/edit.png" alt="@Localizer["Suppliers_Action_Edit"]" width="18" height="18" loading="lazy" />
-                                </a>
-                                <a class="btn btn-icon" asp-page="Delete" asp-route-id="@supplier.Id" title="@Localizer["Suppliers_Action_Delete"]">
-                                    <img src="~/images/delete.png" alt="@Localizer["Suppliers_Action_Delete"]" width="18" height="18" loading="lazy" />
-                                </a>
+                                @await Component.InvokeAsync("ActionButtons", new { 
+                                    detailsPage = "Details", 
+                                    editPage = "Edit", 
+                                    deletePage = "Delete", 
+                                    detailsId = supplier.Id, 
+                                    editId = supplier.Id, 
+                                    deleteId = supplier.Id,
+                                    detailsTitle = Localizer["Suppliers_Action_Details"].Value,
+                                    editTitle = Localizer["Suppliers_Action_Edit"].Value,
+                                    deleteTitle = Localizer["Suppliers_Action_Delete"].Value
+                                })
                             </td>
                         </tr>
                     }

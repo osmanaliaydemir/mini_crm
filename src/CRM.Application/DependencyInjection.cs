@@ -1,7 +1,15 @@
+using CRM.Application.Analytics;
+using CRM.Application.AuditLogs;
+using CRM.Application.Common.Caching;
 using CRM.Application.Customers;
+using CRM.Application.Dashboard;
+using CRM.Application.ExportImport;
 using CRM.Application.Finance;
+using CRM.Application.Notifications;
+using CRM.Application.Settings;
 using CRM.Application.Shipments;
 using CRM.Application.Suppliers;
+using CRM.Application.Users;
 using CRM.Application.Warehouses;
 using FluentValidation;
 using Mapster;
@@ -23,6 +31,9 @@ public static class DependencyInjection
         // FluentValidation - Validator'ları register et
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
+        // Cache service
+        services.AddScoped<ICacheService, MemoryCacheService>();
+
         // Application services
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IShipmentService, ShipmentService>();
@@ -30,6 +41,12 @@ public static class DependencyInjection
         services.AddScoped<IWarehouseService, WarehouseService>();
         services.AddScoped<ISupplierService, SupplierService>();
         services.AddScoped<IPaymentPlanService, PaymentPlanService>();
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IExportService, ExportService>();
+        services.AddScoped<ISystemSettingsService, SystemSettingsService>();
 
         return services;
     }

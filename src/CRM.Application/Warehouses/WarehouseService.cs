@@ -1,8 +1,11 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Caching;
 using CRM.Application.Common.Exceptions;
+using CRM.Application.Common.Pagination;
 using CRM.Domain.Warehouses;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CRM.Application.Warehouses;
 
@@ -11,12 +14,21 @@ public class WarehouseService : IWarehouseService
     private readonly IRepository<Warehouse> _repository;
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<WarehouseService> _logger;
 
-    public WarehouseService(IRepository<Warehouse> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
+    public WarehouseService(
+        IRepository<Warehouse> repository, 
+        IApplicationDbContext context, 
+        IUnitOfWork unitOfWork,
+        ICacheService cacheService,
+        ILogger<WarehouseService> logger)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
+        _cacheService = cacheService;
+        _logger = logger;
     }
 
     public async Task<WarehouseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -35,12 +47,29 @@ public class WarehouseService : IWarehouseService
             w.ContactPerson, w.ContactPhone, w.Notes, w.CreatedAt, w.RowVersion)).ToList();
     }
 
+    public async Task<PagedResult<WarehouseDto>> GetAllPagedAsync(PaginationRequest pagination, CancellationToken cancellationToken = default)
+    {
+        var pagedResult = await _context.Warehouses.AsNoTracking()
+            .OrderBy(w => w.Name)
+            .ToPagedResultAsync(pagination, cancellationToken);
+
+        var items = pagedResult.Items.Select(w => new WarehouseDto(w.Id, w.Name, w.Location,
+            w.ContactPerson, w.ContactPhone, w.Notes, w.CreatedAt, w.RowVersion)).ToList();
+
+        return new PagedResult<WarehouseDto>(items, pagedResult.TotalCount, pagedResult.PageNumber, pagedResult.PageSize);
+    }
+
     public async Task<Guid> CreateAsync(CreateWarehouseRequest request, CancellationToken cancellationToken = default)
     {
         var warehouse = new Warehouse(Guid.NewGuid(), request.Name, request.Location, request.ContactPerson, request.ContactPhone);
         warehouse.Update(request.Name, request.Location, request.ContactPerson, request.ContactPhone, request.Notes);
         await _repository.AddAsync(warehouse, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation
+        await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+
         return warehouse.Id;
     }
 
@@ -58,6 +87,10 @@ public class WarehouseService : IWarehouseService
         warehouse.Update(request.Name, request.Location, request.ContactPerson, request.ContactPhone, request.Notes);
         await _repository.UpdateAsync(warehouse, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation
+        await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -70,9 +103,22 @@ public class WarehouseService : IWarehouseService
 
         await _repository.DeleteAsync(warehouse, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation
+        await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
     }
 
     public async Task<WarehouseDashboardData> GetDashboardDataAsync(CancellationToken cancellationToken = default)
+    {
+        return await _cacheService.GetOrCreateAsync(
+            CacheKeys.WarehouseDashboard,
+            async () => await LoadWarehouseDashboardDataAsync(cancellationToken),
+            TimeSpan.FromMinutes(5),
+            cancellationToken);
+    }
+
+    private async Task<WarehouseDashboardData> LoadWarehouseDashboardDataAsync(CancellationToken cancellationToken)
     {
         const string unspecifiedLocationLabel = "__UNSPECIFIED__";
 

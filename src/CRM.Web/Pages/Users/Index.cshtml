@@ -1,0 +1,144 @@
+@page
+@model CRM.Web.Pages.Users.IndexModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Users_Page_Title"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/users/list.css" asp-append-version="true" />
+}
+
+<section class="page-header">
+    <div>
+        <h1>@Localizer["Users_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Users_Page_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary" asp-page="Create">@Localizer["Users_Action_Create"]</a>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.Search))
+{
+    <div class="search-info">
+        <span>@Localizer["Common_Search_Results", Model.Search, Model.TotalCount]</span>
+        <a asp-page="Index" asp-route-page="1" class="clear-search">@Localizer["Common_Search_Clear"]</a>
+    </div>
+}
+
+<form method="get" class="search-form">
+    <div class="search-group">
+        <input type="text" name="search" value="@Model.Search" placeholder="@Localizer["Users_Search_Placeholder"]" class="search-input" />
+        <button type="submit" class="btn btn-primary">@Localizer["Common_Search"]</button>
+        @if (!string.IsNullOrWhiteSpace(Model.Search))
+        {
+            <a asp-page="Index" asp-route-page="1" class="btn btn-ghost">@Localizer["Common_Clear"]</a>
+        }
+    </div>
+</form>
+
+<div class="table-container">
+    <table class="data-table" data-crm-datatable="true" data-responsive="true">
+        <thead>
+            <tr>
+                <th>@Localizer["Users_Table_UserName"]</th>
+                <th>@Localizer["Users_Table_Email"]</th>
+                <th>@Localizer["Users_Table_FullName"]</th>
+                <th>@Localizer["Users_Table_Roles"]</th>
+                <th>@Localizer["Users_Table_EmailConfirmed"]</th>
+                <th>@Localizer["Users_Table_LockoutEnabled"]</th>
+                <th>@Localizer["Users_Table_Actions"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Users.Any())
+            {
+                foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td><strong>@user.UserName</strong></td>
+                        <td>@user.Email</td>
+                        <td>@(string.IsNullOrWhiteSpace(user.FirstName) && string.IsNullOrWhiteSpace(user.LastName) ? "-" : $"{user.FirstName} {user.LastName}")</td>
+                        <td>
+                            @if (user.Roles.Any())
+                            {
+                                foreach (var role in user.Roles)
+                                {
+                                    <span class="badge">@role</span>
+                                }
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (user.EmailConfirmed)
+                            {
+                                <span class="status-badge status-success">@Localizer["Common_Yes"]</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-warning">@Localizer["Common_No"]</span>
+                            }
+                        </td>
+                        <td>
+                            @if (user.LockoutEnabled)
+                            {
+                                <span class="status-badge status-info">@Localizer["Common_Yes"]</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-neutral">@Localizer["Common_No"]</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a asp-page="Edit" asp-route-id="@user.Id" class="btn-icon" title="@Localizer["Common_Edit"]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </a>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@user.Id" class="inline-form" onsubmit="return confirm('@Localizer["Users_Delete_Confirm"]');">
+                                    <button type="submit" class="btn-icon danger" title="@Localizer["Common_Delete"]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                            <path d="M3 6h18"></path>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="empty-state">@Localizer["Users_Table_NoRecords"]</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination">
+        @if (Model.CurrentPage > 1)
+        {
+            <a asp-page="Index" asp-route-page="@(Model.CurrentPage - 1)" asp-route-search="@Model.Search" asp-route-pageSize="@Model.PageSize" class="btn btn-ghost">@Localizer["Common_Previous"]</a>
+        }
+        <span>@Localizer["Common_PageInfo", Model.CurrentPage, Model.TotalPages]</span>
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a asp-page="Index" asp-route-page="@(Model.CurrentPage + 1)" asp-route-search="@Model.Search" asp-route-pageSize="@Model.PageSize" class="btn btn-ghost">@Localizer["Common_Next"]</a>
+        }
+    </div>
+}
+

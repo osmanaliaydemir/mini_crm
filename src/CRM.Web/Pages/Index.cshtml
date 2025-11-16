@@ -132,51 +132,43 @@
         <p class="subtitle">@Localizer["Dashboard_Intro"]</p>
     </div>
     <div class="header-actions">
-        <a class="btn btn-ghost" asp-page="/Analytics/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
+        <a class="btn btn-ghost" asp-page="/Shipments/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
         <a class="btn btn-primary" asp-page="/Shipments/Create">Yeni Sevkiyat</a>
     </div>
 </section>
 <section class="kpi-grid">
-    <article class="kpi-card" data-kpi="activeShipments">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Dashboard_Summary_ActiveShipments"]</span>
-            <span class="trend-chip positive" data-kpi-trend>
-                <span data-kpi-trend-value>@FormatPercent(activeRatio)</span>
-            </span>
-        </div>
-        <div class="kpi-value" data-kpi-value>@FormatNumber(Model.Summary.ActiveShipments)</div>
-        <span class="kpi-meta" data-kpi-meta>Son 30 gün</span>
-    </article>
-    <article class="kpi-card" data-kpi="customsShipments">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Dashboard_Summary_CustomsShipments"]</span>
-            <span class="trend-chip warning" data-kpi-trend>
-                <span data-kpi-trend-value>@FormatPercent(customsRatio)</span>
-            </span>
-        </div>
-        <div class="kpi-value" data-kpi-value>@FormatNumber(Model.Summary.ShipmentsInCustoms)</div>
-        <span class="kpi-meta" data-kpi-meta>Takip edilen dosya</span>
-    </article>
-    <article class="kpi-card" data-kpi="cashNet">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Dashboard_Summary_CashNet30"]</span>
-            <span class="trend-chip neutral" data-kpi-trend>
-                <span data-kpi-trend-value>+0%</span>
-            </span>
-        </div>
-        <div class="kpi-value" data-kpi-value>@FormatCurrency(Model.Summary.CashNetLast30)</div>
-        <span class="kpi-meta" data-kpi-meta>Net nakit</span>
-    </article>
-    <article class="kpi-card" data-kpi="satisfaction">
-        <div class="kpi-top">
-            <span class="kpi-label">@Localizer["Dashboard_Section_CRM"]</span>
-            <span class="trend-chip neutral" data-kpi-trend>
-                <span data-kpi-trend-value>@FormatPercent(deliveredRatio)</span>
-            </span>
-        </div>
-        <div class="kpi-value" data-kpi-value>@FormatNumber(Model.Summary.CustomerInteractionsLast30)</div>
-        <span class="kpi-meta" data-kpi-meta>Müşteri Etkileşimi</span>
-    </article>
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Summary_ActiveShipments"].Value, 
+        value = FormatNumber(Model.Summary.ActiveShipments), 
+        meta = "Son 30 gün",
+        trend = FormatPercent(activeRatio),
+        trendType = "positive",
+        dataKpi = "activeShipments"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Summary_CustomsShipments"].Value, 
+        value = FormatNumber(Model.Summary.ShipmentsInCustoms), 
+        meta = "Takip edilen dosya",
+        trend = FormatPercent(customsRatio),
+        trendType = "warning",
+        dataKpi = "customsShipments"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Summary_CashNet30"].Value, 
+        value = FormatCurrency(Model.Summary.CashNetLast30), 
+        meta = "Net nakit",
+        trend = "+0%",
+        trendType = "neutral",
+        dataKpi = "cashNet"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Section_CRM"].Value, 
+        value = FormatNumber(Model.Summary.CustomerInteractionsLast30), 
+        meta = "Müşteri Etkileşimi",
+        trend = FormatPercent(deliveredRatio),
+        trendType = "neutral",
+        dataKpi = "satisfaction"
+    })
 </section>
 
 <section class="insight-grid">

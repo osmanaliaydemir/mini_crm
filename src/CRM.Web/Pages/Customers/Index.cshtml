@@ -24,31 +24,45 @@
         <p class="subtitle">@Localizer["Customers_Page_Subtitle"]</p>
     </div>
     <div class="header-actions">
+        <div class="btn-group">
+            <a class="btn btn-ghost" asp-page-handler="Export" asp-route-format="excel" asp-route-search="@Model.Search">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                @Localizer["Common_Export_Excel"]
+            </a>
+            <a class="btn btn-ghost" asp-page-handler="Export" asp-route-format="csv" asp-route-search="@Model.Search">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                @Localizer["Common_Export_CSV"]
+            </a>
+        </div>
         <a class="btn btn-primary" asp-page="Create">@Localizer["Customers_Action_Create"]</a>
     </div>
 </section>
 
 <section class="kpi-grid customers-kpis">
-    <article class="kpi-card">
-        <span class="kpi-label">@Localizer["Customers_Header_TotalCustomers"]</span>
-        <div class="kpi-value">@Model.TotalCustomers</div>
-        <span class="kpi-meta">@Localizer["Customers_Header_New_Value", Model.NewCustomersCount]</span>
-    </article>
-    <article class="kpi-card">
-        <span class="kpi-label">@Localizer["Customers_Header_Segments"]</span>
-        <div class="kpi-value">@Model.DistinctSegmentCount</div>
-        <span class="kpi-meta">@Localizer["Customers_Header_Segments_Subtitle"]</span>
-    </article>
-    <article class="kpi-card">
-        <span class="kpi-label">@Localizer["Customers_Header_Interactions"]</span>
-        <div class="kpi-value">@Model.RecentInteractionsCount</div>
-        <span class="kpi-meta">@Localizer["Customers_Header_Interactions_Subtitle"]</span>
-    </article>
-    <article class="kpi-card">
-        <span class="kpi-label">@Localizer["Customers_Header_TopSegment"]</span>
-        <div class="kpi-value">@FormatSegment(Model.TopSegmentName)</div>
-        <span class="kpi-meta">@Localizer["Customers_Header_TopSegment_Value", Model.TopSegmentCustomerCount]</span>
-    </article>
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Customers_Header_TotalCustomers"].Value, 
+        value = Model.TotalCustomers, 
+        meta = Localizer["Customers_Header_New_Value", Model.NewCustomersCount].Value 
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Customers_Header_Segments"].Value, 
+        value = Model.DistinctSegmentCount, 
+        meta = Localizer["Customers_Header_Segments_Subtitle"].Value 
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Customers_Header_Interactions"].Value, 
+        value = Model.RecentInteractionsCount, 
+        meta = Localizer["Customers_Header_Interactions_Subtitle"].Value 
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Customers_Header_TopSegment"].Value, 
+        value = FormatSegment(Model.TopSegmentName), 
+        meta = Localizer["Customers_Header_TopSegment_Value", Model.TopSegmentCustomerCount].Value 
+    })
 </section>
 
 <section class="customers-insights">
@@ -180,15 +194,17 @@
                             </td>
                             <td class="cell-subtext">@(!string.IsNullOrWhiteSpace(customer.Notes) ? customer.Notes : Localizer["Customers_Details_Notes_Empty"].Value)</td>
                             <td class="text-end">
-                                <a class="btn btn-icon" asp-page="Details" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Details"]">
-                                    <img src="~/images/detail.png" alt="@Localizer["Customers_Action_Details"]" width="18" height="18" loading="lazy" />
-                                </a>
-                                <a class="btn btn-icon" asp-page="Edit" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Edit"]">
-                                    <img src="~/images/edit.png" alt="@Localizer["Customers_Action_Edit"]" width="18" height="18" loading="lazy" />
-                                </a>
-                                <a class="btn btn-icon" asp-page="Delete" asp-route-id="@customer.Id" title="@Localizer["Customers_Action_Delete"]">
-                                    <img src="~/images/delete.png" alt="@Localizer["Customers_Action_Delete"]" width="18" height="18" loading="lazy" />
-                                </a>
+                                @await Component.InvokeAsync("ActionButtons", new { 
+                                    detailsPage = "Details", 
+                                    editPage = "Edit", 
+                                    deletePage = "Delete", 
+                                    detailsId = customer.Id, 
+                                    editId = customer.Id, 
+                                    deleteId = customer.Id,
+                                    detailsTitle = Localizer["Customers_Action_Details"].Value,
+                                    editTitle = Localizer["Customers_Action_Edit"].Value,
+                                    deleteTitle = Localizer["Customers_Action_Delete"].Value
+                                })
                             </td>
                         </tr>
                     }

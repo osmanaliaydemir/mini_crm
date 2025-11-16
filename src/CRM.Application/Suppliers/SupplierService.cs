@@ -1,8 +1,11 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Caching;
 using CRM.Application.Common.Exceptions;
+using CRM.Application.Common.Pagination;
 using CRM.Domain.Suppliers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CRM.Application.Suppliers;
 
@@ -11,12 +14,21 @@ public class SupplierService : ISupplierService
     private readonly IRepository<Supplier> _repository;
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<SupplierService> _logger;
 
-    public SupplierService(IRepository<Supplier> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
+    public SupplierService(
+        IRepository<Supplier> repository, 
+        IApplicationDbContext context, 
+        IUnitOfWork unitOfWork,
+        ICacheService cacheService,
+        ILogger<SupplierService> logger)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
+        _cacheService = cacheService;
+        _logger = logger;
     }
 
     public async Task<SupplierDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -35,6 +47,18 @@ public class SupplierService : ISupplierService
             s.ContactEmail, s.ContactPhone, s.AddressLine, s.Notes, s.CreatedAt, s.RowVersion)).ToList();
     }
 
+    public async Task<PagedResult<SupplierDto>> GetAllPagedAsync(PaginationRequest pagination, CancellationToken cancellationToken = default)
+    {
+        var pagedResult = await _context.Suppliers.AsNoTracking()
+            .OrderBy(s => s.Name)
+            .ToPagedResultAsync(pagination, cancellationToken);
+
+        var items = pagedResult.Items.Select(s => new SupplierDto(s.Id, s.Name, s.Country, s.TaxNumber,
+            s.ContactEmail, s.ContactPhone, s.AddressLine, s.Notes, s.CreatedAt, s.RowVersion)).ToList();
+
+        return new PagedResult<SupplierDto>(items, pagedResult.TotalCount, pagedResult.PageNumber, pagedResult.PageSize);
+    }
+
     public async Task<Guid> CreateAsync(CreateSupplierRequest request, CancellationToken cancellationToken = default)
     {
         var supplier = new Supplier(Guid.NewGuid(), request.Name, request.Country,
@@ -45,6 +69,10 @@ public class SupplierService : ISupplierService
 
         await _repository.AddAsync(supplier, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation
+        await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
 
         return supplier.Id;
     }
@@ -65,6 +93,10 @@ public class SupplierService : ISupplierService
 
         await _repository.UpdateAsync(supplier, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation
+        await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -77,9 +109,22 @@ public class SupplierService : ISupplierService
 
         await _repository.DeleteAsync(supplier, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation
+        await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
     }
 
     public async Task<SupplierDashboardData> GetDashboardDataAsync(CancellationToken cancellationToken = default)
+    {
+        return await _cacheService.GetOrCreateAsync(
+            CacheKeys.SupplierDashboard,
+            async () => await LoadSupplierDashboardDataAsync(cancellationToken),
+            TimeSpan.FromMinutes(5),
+            cancellationToken);
+    }
+
+    private async Task<SupplierDashboardData> LoadSupplierDashboardDataAsync(CancellationToken cancellationToken)
     {
         var suppliers = await _context.Suppliers.AsNoTracking().OrderBy(s => s.Name).ToListAsync(cancellationToken);
 

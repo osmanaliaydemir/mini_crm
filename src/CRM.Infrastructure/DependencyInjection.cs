@@ -3,6 +3,7 @@ using CRM.Application.Common;
 using CRM.Infrastructure.Email;
 using CRM.Infrastructure.Identity;
 using CRM.Infrastructure.Persistence;
+using CRM.Application.Users;
 using CRM.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +65,9 @@ public static class DependencyInjection
         // Register repositories
         services.AddScoped(typeof(Persistence.Repositories.IRepository<>), typeof(Repository<>));
         services.AddScoped(typeof(CRM.Application.Common.IRepository<>), typeof(Repository<>));
+
+        // Register application services
+        services.AddScoped<CRM.Application.Users.IUserService, Identity.UserService>();
 
         return services;
     }

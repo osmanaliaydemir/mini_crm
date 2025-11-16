@@ -1,5 +1,7 @@
+using CRM.Application.ExportImport;
 using CRM.Application.Shipments;
 using CRM.Domain.Enums;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace CRM.Web.Pages.Shipments;
@@ -7,11 +9,16 @@ namespace CRM.Web.Pages.Shipments;
 public class IndexModel : PageModel
 {
     private readonly IShipmentService _shipmentService;
+    private readonly IExportService _exportService;
     private readonly ILogger<IndexModel> _logger;
 
-    public IndexModel(IShipmentService shipmentService, ILogger<IndexModel> logger)
+    public IndexModel(
+        IShipmentService shipmentService,
+        IExportService exportService,
+        ILogger<IndexModel> logger)
     {
         _shipmentService = shipmentService;
+        _exportService = exportService;
         _logger = logger;
     }
 
@@ -39,6 +46,39 @@ public class IndexModel : PageModel
         {
             _logger.LogError(ex, "Error loading shipment dashboard data");
             Shipments = Array.Empty<ShipmentListItemDto>();
+        }
+    }
+
+    public async Task<IActionResult> OnGetExportAsync(string format = "excel", CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var shipments = await _shipmentService.GetAllAsync(cancellationToken);
+            var shipmentsList = shipments.Cast<object>().ToList();
+
+            byte[] fileBytes;
+            string contentType;
+            string fileName;
+
+            if (format.Equals("csv", StringComparison.OrdinalIgnoreCase))
+            {
+                fileBytes = await _exportService.ExportShipmentsToCsvAsync(shipmentsList, cancellationToken);
+                contentType = "text/csv";
+                fileName = $"Sevkiyatlar_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            }
+            else
+            {
+                fileBytes = await _exportService.ExportShipmentsToExcelAsync(shipmentsList, cancellationToken);
+                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                fileName = $"Sevkiyatlar_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            }
+
+            return File(fileBytes, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting shipments");
+            return RedirectToPage("./Index", new { error = "Export işlemi başarısız oldu." });
         }
     }
 

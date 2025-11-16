@@ -1,8 +1,11 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Caching;
+using CRM.Application.Common.Pagination;
 using CRM.Domain.Customers;
 using CRM.Domain.Finance;
 using CRM.Domain.Shipments;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CRM.Application.Finance;
 
@@ -11,12 +14,21 @@ public class CashTransactionService : ICashTransactionService
     private readonly IRepository<CashTransaction> _repository;
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<CashTransactionService> _logger;
 
-    public CashTransactionService(IRepository<CashTransaction> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
+    public CashTransactionService(
+        IRepository<CashTransaction> repository, 
+        IApplicationDbContext context, 
+        IUnitOfWork unitOfWork,
+        ICacheService cacheService,
+        ILogger<CashTransactionService> logger)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
+        _cacheService = cacheService;
+        _logger = logger;
     }
 
     public async Task<Guid> CreateAsync(CreateCashTransactionRequest request, CancellationToken cancellationToken = default)
@@ -26,6 +38,11 @@ public class CashTransactionService : ICashTransactionService
 
         await _repository.AddAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation - Cash transaction ve ana dashboard cache'lerini temizle
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.CashTransactionDashboardPrefix, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.CashboxQuickSummary, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
 
         return transaction.Id;
     }
@@ -90,7 +107,76 @@ public class CashTransactionService : ICashTransactionService
             t.CreatedAt, t.RowVersion)).ToList();
     }
 
+    public async Task<PagedResult<CashTransactionDto>> GetAllPagedAsync(PaginationRequest pagination, DateTime? from = null, DateTime? to = null, CashTransactionType? type = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.CashTransactions.AsNoTracking().AsQueryable();
+
+        if (from.HasValue)
+        {
+            query = query.Where(t => t.TransactionDate >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(t => t.TransactionDate <= to.Value);
+        }
+
+        if (type.HasValue)
+        {
+            query = query.Where(t => t.TransactionType == type.Value);
+        }
+
+        var pagedResult = await query.OrderByDescending(t => t.TransactionDate)
+            .ToPagedResultAsync(pagination, cancellationToken);
+
+        // Get related customer and shipment names
+        var customerIds = pagedResult.Items.Where(t => t.RelatedCustomerId.HasValue).Select(t => t.RelatedCustomerId!.Value).Distinct().ToHashSet();
+        var shipmentIds = pagedResult.Items.Where(t => t.RelatedShipmentId.HasValue).Select(t => t.RelatedShipmentId!.Value).Distinct().ToHashSet();
+
+        // Fetch all relevant customers and shipments
+        Dictionary<Guid, string> customers;
+        if (customerIds.Count > 0)
+        {
+            var allCustomers = await _context.Customers.AsNoTracking().Select(c => new { c.Id, c.Name }).ToListAsync(cancellationToken);
+            customers = allCustomers.Where(c => customerIds.Contains(c.Id)).ToDictionary(c => c.Id, c => c.Name);
+        }
+        else
+        {
+            customers = new Dictionary<Guid, string>();
+        }
+
+        Dictionary<Guid, string> shipments;
+        if (shipmentIds.Count > 0)
+        {
+            var allShipments = await _context.Shipments.AsNoTracking().Select(s => new { s.Id, s.ReferenceNumber }).ToListAsync(cancellationToken);
+            shipments = allShipments.Where(s => shipmentIds.Contains(s.Id)).ToDictionary(s => s.Id, s => s.ReferenceNumber);
+        }
+        else
+        {
+            shipments = new Dictionary<Guid, string>();
+        }
+
+        var items = pagedResult.Items.Select(t => new CashTransactionDto(t.Id, t.TransactionDate, t.TransactionType,
+            t.Amount, t.Currency, t.Description, t.Category, t.RelatedCustomerId,
+            t.RelatedCustomerId.HasValue && customers.TryGetValue(t.RelatedCustomerId.Value, out var customerName) ? customerName : null,
+            t.RelatedShipmentId,
+            t.RelatedShipmentId.HasValue && shipments.TryGetValue(t.RelatedShipmentId.Value, out var shipmentRef) ? shipmentRef : null,
+            t.CreatedAt, t.RowVersion)).ToList();
+
+        return new PagedResult<CashTransactionDto>(items, pagedResult.TotalCount, pagedResult.PageNumber, pagedResult.PageSize);
+    }
+
     public async Task<CashTransactionDashboardData> GetDashboardDataAsync(DateTime? from = null, DateTime? to = null, CashTransactionType? type = null, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = CacheKeys.CashTransactionDashboard(from, to, type?.ToString());
+        return await _cacheService.GetOrCreateAsync(
+            cacheKey,
+            async () => await LoadCashTransactionDashboardDataAsync(from, to, type, cancellationToken),
+            TimeSpan.FromMinutes(3), // Cashbox için daha kısa cache (finansal veri)
+            cancellationToken);
+    }
+
+    private async Task<CashTransactionDashboardData> LoadCashTransactionDashboardDataAsync(DateTime? from, DateTime? to, CashTransactionType? type, CancellationToken cancellationToken)
     {
         var transactions = await GetAllAsync(from, to, type, cancellationToken);
 

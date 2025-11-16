@@ -1,0 +1,278 @@
+@page
+@model CRM.Web.Pages.Settings.IndexModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Settings_Page_Title"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/settings/index.css" asp-append-version="true" />
+}
+
+<section class="page-header">
+    <div>
+        <h1>@Localizer["Settings_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Settings_Page_Subtitle"]</p>
+    </div>
+</section>
+
+<div class="settings-container">
+    <div class="settings-tabs">
+        <a href="?tab=company" class="settings-tab @(Model.ActiveTab == "company" ? "active" : "")">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            @Localizer["Settings_Tab_Company"]
+        </a>
+        <a href="?tab=smtp" class="settings-tab @(Model.ActiveTab == "smtp" ? "active" : "")">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            @Localizer["Settings_Tab_Smtp"]
+        </a>
+        <a href="?tab=system" class="settings-tab @(Model.ActiveTab == "system" ? "active" : "")">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            @Localizer["Settings_Tab_System"]
+        </a>
+        <a href="?tab=maintenance" class="settings-tab @(Model.ActiveTab == "maintenance" ? "active" : "")">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            @Localizer["Settings_Tab_Maintenance"]
+        </a>
+    </div>
+
+    <div class="settings-content">
+        @if (Model.ActiveTab == "company")
+        {
+            <form method="post" asp-page-handler="CompanyInfo" class="settings-form">
+                <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+                <div class="form-card">
+                    <header>
+                        <h2>@Localizer["Settings_Section_Company_Title"]</h2>
+                        <p>@Localizer["Settings_Section_Company_Subtitle"]</p>
+                    </header>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label asp-for="CompanyInfo.CompanyName">@Localizer["Settings_Field_CompanyName"]</label>
+                            <input asp-for="CompanyInfo.CompanyName" class="form-control" />
+                            <span asp-validation-for="CompanyInfo.CompanyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="CompanyInfo.CompanyEmail">@Localizer["Settings_Field_CompanyEmail"]</label>
+                            <input asp-for="CompanyInfo.CompanyEmail" type="email" class="form-control" />
+                            <span asp-validation-for="CompanyInfo.CompanyEmail" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="CompanyInfo.CompanyPhone">@Localizer["Settings_Field_CompanyPhone"]</label>
+                            <input asp-for="CompanyInfo.CompanyPhone" class="form-control" />
+                            <span asp-validation-for="CompanyInfo.CompanyPhone" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="CompanyInfo.CompanyTaxNumber">@Localizer["Settings_Field_CompanyTaxNumber"]</label>
+                            <input asp-for="CompanyInfo.CompanyTaxNumber" class="form-control" />
+                            <span asp-validation-for="CompanyInfo.CompanyTaxNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label asp-for="CompanyInfo.CompanyAddress">@Localizer["Settings_Field_CompanyAddress"]</label>
+                            <textarea asp-for="CompanyInfo.CompanyAddress" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="CompanyInfo.CompanyAddress" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label asp-for="CompanyInfo.CompanyLogoUrl">@Localizer["Settings_Field_CompanyLogoUrl"]</label>
+                            <input asp-for="CompanyInfo.CompanyLogoUrl" type="url" class="form-control" />
+                            <span asp-validation-for="CompanyInfo.CompanyLogoUrl" class="text-danger"></span>
+                            <small class="form-text">@Localizer["Settings_Help_LogoUrl"]</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">@Localizer["Settings_Action_SaveChanges"]</button>
+                    </div>
+                </div>
+            </form>
+        }
+        else if (Model.ActiveTab == "smtp")
+        {
+            <form method="post" asp-page-handler="SmtpSettings" class="settings-form">
+                <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+                <div class="form-card">
+                    <header>
+                        <h2>@Localizer["Settings_Section_Smtp_Title"]</h2>
+                        <p>@Localizer["Settings_Section_Smtp_Subtitle"]</p>
+                    </header>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label asp-for="SmtpSettings.SmtpHost">@Localizer["Settings_Field_SmtpHost"]</label>
+                            <input asp-for="SmtpSettings.SmtpHost" class="form-control" placeholder="@Localizer["Settings_Placeholder_SmtpHost"]" />
+                            <span asp-validation-for="SmtpSettings.SmtpHost" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SmtpSettings.SmtpPort">@Localizer["Settings_Field_SmtpPort"]</label>
+                            <input asp-for="SmtpSettings.SmtpPort" type="number" class="form-control" placeholder="@Localizer["Settings_Placeholder_SmtpPort"]" />
+                            <span asp-validation-for="SmtpSettings.SmtpPort" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SmtpSettings.SmtpUsername">@Localizer["Settings_Field_SmtpUsername"]</label>
+                            <input asp-for="SmtpSettings.SmtpUsername" class="form-control" />
+                            <span asp-validation-for="SmtpSettings.SmtpUsername" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SmtpSettings.SmtpPassword">@Localizer["Settings_Field_SmtpPassword"]</label>
+                            <input asp-for="SmtpSettings.SmtpPassword" type="password" class="form-control" />
+                            <span asp-validation-for="SmtpSettings.SmtpPassword" class="text-danger"></span>
+                            <small class="form-text">@Localizer["Settings_Help_Password"]</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SmtpSettings.SmtpFromEmail">@Localizer["Settings_Field_SmtpFromEmail"]</label>
+                            <input asp-for="SmtpSettings.SmtpFromEmail" type="email" class="form-control" />
+                            <span asp-validation-for="SmtpSettings.SmtpFromEmail" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SmtpSettings.SmtpFromName">@Localizer["Settings_Field_SmtpFromName"]</label>
+                            <input asp-for="SmtpSettings.SmtpFromName" class="form-control" />
+                            <span asp-validation-for="SmtpSettings.SmtpFromName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="form-check">
+                                <input asp-for="SmtpSettings.SmtpEnableSsl" class="form-check-input" />
+                                <label asp-for="SmtpSettings.SmtpEnableSsl" class="form-check-label">@Localizer["Settings_Field_SmtpEnableSsl"]</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">@Localizer["Settings_Action_SaveChanges"]</button>
+                    </div>
+                </div>
+            </form>
+        }
+        else if (Model.ActiveTab == "system")
+        {
+            <form method="post" asp-page-handler="SystemSettings" class="settings-form">
+                <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+                <div class="form-card">
+                    <header>
+                        <h2>@Localizer["Settings_Section_System_Title"]</h2>
+                        <p>@Localizer["Settings_Section_System_Subtitle"]</p>
+                    </header>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label asp-for="SystemSettings.SessionTimeoutMinutes">@Localizer["Settings_Field_SessionTimeoutMinutes"]</label>
+                            <input asp-for="SystemSettings.SessionTimeoutMinutes" type="number" class="form-control" min="5" max="1440" />
+                            <span asp-validation-for="SystemSettings.SessionTimeoutMinutes" class="text-danger"></span>
+                            <small class="form-text">@Localizer["Settings_Help_SessionTimeout"]</small>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="form-check">
+                                <input asp-for="SystemSettings.EnableEmailNotifications" class="form-check-input" />
+                                <label asp-for="SystemSettings.EnableEmailNotifications" class="form-check-label">@Localizer["Settings_Field_EnableEmailNotifications"]</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="form-check">
+                                <input asp-for="SystemSettings.EnableSmsNotifications" class="form-check-input" />
+                                <label asp-for="SystemSettings.EnableSmsNotifications" class="form-check-label">@Localizer["Settings_Field_EnableSmsNotifications"]</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SystemSettings.SmsProvider">@Localizer["Settings_Field_SmsProvider"]</label>
+                            <input asp-for="SystemSettings.SmsProvider" class="form-control" />
+                            <span asp-validation-for="SystemSettings.SmsProvider" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SystemSettings.SmsApiKey">@Localizer["Settings_Field_SmsApiKey"]</label>
+                            <input asp-for="SystemSettings.SmsApiKey" type="password" class="form-control" />
+                            <span asp-validation-for="SystemSettings.SmsApiKey" class="text-danger"></span>
+                            <small class="form-text">@Localizer["Settings_Help_ApiKey"]</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">@Localizer["Settings_Action_SaveChanges"]</button>
+                    </div>
+                </div>
+            </form>
+        }
+        else if (Model.ActiveTab == "maintenance")
+        {
+            <form method="post" asp-page-handler="MaintenanceSettings" class="settings-form">
+                <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+                <div class="form-card">
+                    <header>
+                        <h2>@Localizer["Settings_Section_Maintenance_Title"]</h2>
+                        <p>@Localizer["Settings_Section_Maintenance_Subtitle"]</p>
+                    </header>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label asp-for="MaintenanceSettings.AuditLogRetentionDays">@Localizer["Settings_Field_AuditLogRetentionDays"]</label>
+                            <input asp-for="MaintenanceSettings.AuditLogRetentionDays" type="number" class="form-control" min="1" max="3650" />
+                            <span asp-validation-for="MaintenanceSettings.AuditLogRetentionDays" class="text-danger"></span>
+                            <small class="form-text">@Localizer["Settings_Help_AuditLogRetention"]</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="MaintenanceSettings.BackupRetentionDays">@Localizer["Settings_Field_BackupRetentionDays"]</label>
+                            <input asp-for="MaintenanceSettings.BackupRetentionDays" type="number" class="form-control" min="1" max="3650" />
+                            <span asp-validation-for="MaintenanceSettings.BackupRetentionDays" class="text-danger"></span>
+                            <small class="form-text">@Localizer["Settings_Help_BackupRetention"]</small>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="form-check">
+                                <input asp-for="MaintenanceSettings.EnableAutoBackup" class="form-check-input" />
+                                <label asp-for="MaintenanceSettings.EnableAutoBackup" class="form-check-label">@Localizer["Settings_Field_EnableAutoBackup"]</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label asp-for="MaintenanceSettings.BackupSchedule">@Localizer["Settings_Field_BackupSchedule"]</label>
+                            <input asp-for="MaintenanceSettings.BackupSchedule" class="form-control" placeholder="@Localizer["Settings_Placeholder_BackupSchedule"]" />
+                            <span asp-validation-for="MaintenanceSettings.BackupSchedule" class="text-danger"></span>
+                            <small class="form-text">@Localizer["Settings_Help_BackupSchedule"]</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">@Localizer["Settings_Action_SaveChanges"]</button>
+                    </div>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

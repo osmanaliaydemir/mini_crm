@@ -1,8 +1,11 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Caching;
 using CRM.Application.Common.Exceptions;
+using CRM.Application.Common.Pagination;
 using CRM.Domain.Customers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CRM.Application.Customers;
 
@@ -11,12 +14,21 @@ public class CustomerService : ICustomerService
     private readonly IRepository<Customer> _repository;
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<CustomerService> _logger;
 
-    public CustomerService(IRepository<Customer> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
+    public CustomerService(
+        IRepository<Customer> repository, 
+        IApplicationDbContext context, 
+        IUnitOfWork unitOfWork,
+        ICacheService cacheService,
+        ILogger<CustomerService> logger)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
+        _cacheService = cacheService;
+        _logger = logger;
     }
 
     public async Task<CustomerDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -54,6 +66,26 @@ public class CustomerService : ICustomerService
             c.LegalName, c.Segment, c.Email, c.Phone, c.Notes)).ToList();
     }
 
+    public async Task<PagedResult<CustomerListItemDto>> GetAllPagedAsync(PaginationRequest pagination, string? search = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Customers.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(c => c.Name.Contains(search) || (c.LegalName != null && c.LegalName.Contains(search)) ||
+                (c.TaxNumber != null && c.TaxNumber.Contains(search)));
+        }
+
+        var pagedResult = await query
+            .OrderBy(c => c.Name)
+            .ToPagedResultAsync(pagination, cancellationToken);
+
+        var items = pagedResult.Items.Select(c => new CustomerListItemDto(c.Id, c.Name,
+            c.LegalName, c.Segment, c.Email, c.Phone, c.Notes)).ToList();
+
+        return new PagedResult<CustomerListItemDto>(items, pagedResult.TotalCount, pagedResult.PageNumber, pagedResult.PageSize);
+    }
+
     public async Task<Guid> CreateAsync(CreateCustomerRequest request, CancellationToken cancellationToken = default)
     {
         var customer = new Customer(Guid.NewGuid(), request.Name, request.LegalName,
@@ -67,6 +99,10 @@ public class CustomerService : ICustomerService
 
         await _repository.AddAsync(customer, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation - Customer dashboard cache'lerini temizle
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
 
         return customer.Id;
     }
@@ -95,6 +131,10 @@ public class CustomerService : ICustomerService
 
         await _repository.UpdateAsync(customer, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation - Customer dashboard cache'lerini temizle
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -107,6 +147,10 @@ public class CustomerService : ICustomerService
 
         await _repository.DeleteAsync(customer, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Cache invalidation - Customer dashboard cache'lerini temizle
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
     }
 
     public async Task<CustomerDetailsDto?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -153,10 +197,24 @@ public class CustomerService : ICustomerService
         _context.CustomerInteractions.Add(interaction);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Cache invalidation - Customer dashboard ve ana dashboard cache'lerini temizle
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
+        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+
         return interaction.Id;
     }
 
     public async Task<CustomerDashboardData> GetDashboardDataAsync(string? search = null, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = CacheKeys.CustomerDashboard(search);
+        return await _cacheService.GetOrCreateAsync(
+            cacheKey,
+            async () => await LoadCustomerDashboardDataAsync(search, cancellationToken),
+            TimeSpan.FromMinutes(5),
+            cancellationToken);
+    }
+
+    private async Task<CustomerDashboardData> LoadCustomerDashboardDataAsync(string? search, CancellationToken cancellationToken)
     {
         var query = _context.Customers.AsNoTracking();
 

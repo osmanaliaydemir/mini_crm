@@ -1,0 +1,106 @@
+@page
+@model CRM.Web.Pages.Users.CreateModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Users_Form_Header_Create"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/users/form.css" asp-append-version="true" />
+}
+
+<section class="page-header form-header">
+    <div>
+        <h1>@Localizer["Users_Form_Header_Create"]</h1>
+        <p class="subtitle">@Localizer["Users_Form_Create_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Common_Back"]</a>
+    </div>
+</section>
+
+<form method="post" class="form-shell" novalidate>
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+    <div class="form-sections">
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Users_Form_Account_Title"]</h2>
+                <p>@Localizer["Users_Form_Account_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="User.UserName">@Localizer["Users_Field_UserName"]</label>
+                    <input asp-for="User.UserName" class="input-control" />
+                    <span asp-validation-for="User.UserName" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="User.Email">@Localizer["Users_Field_Email"]</label>
+                    <input asp-for="User.Email" type="email" class="input-control" />
+                    <span asp-validation-for="User.Email" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="User.Password">@Localizer["Users_Field_Password"]</label>
+                    <input asp-for="User.Password" type="password" class="input-control" />
+                    <span asp-validation-for="User.Password" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Users_Form_Personal_Title"]</h2>
+                <p>@Localizer["Users_Form_Personal_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="User.FirstName">@Localizer["Users_Field_FirstName"]</label>
+                    <input asp-for="User.FirstName" class="input-control" />
+                    <span asp-validation-for="User.FirstName" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="User.LastName">@Localizer["Users_Field_LastName"]</label>
+                    <input asp-for="User.LastName" class="input-control" />
+                    <span asp-validation-for="User.LastName" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="User.Locale">@Localizer["Users_Field_Locale"]</label>
+                    <select asp-for="User.Locale" class="input-control">
+                        <option value="">@Localizer["Common_Default"]</option>
+                        <option value="tr-TR">Türkçe (tr-TR)</option>
+                        <option value="en-US">English (en-US)</option>
+                        <option value="ar-SA">العربية (ar-SA)</option>
+                    </select>
+                    <span asp-validation-for="User.Locale" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Users_Form_Roles_Title"]</h2>
+                <p>@Localizer["Users_Form_Roles_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field full-width">
+                    @foreach (var role in Model.AllRoles)
+                    {
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="User.SelectedRoles" value="@role" />
+                            <span>@role</span>
+                        </label>
+                    }
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">@Localizer["Common_Save"]</button>
+        <a asp-page="Index" class="btn btn-ghost">@Localizer["Common_Cancel"]</a>
+    </div>
+</form>
+

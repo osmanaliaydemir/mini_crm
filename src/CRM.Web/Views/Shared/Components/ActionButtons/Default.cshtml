@@ -1,0 +1,24 @@
+@using CRM.Web.ViewComponents
+@model ActionButtonsViewComponent.ActionButtonsViewModel
+
+<div class="action-buttons">
+    @if (!string.IsNullOrEmpty(Model.DetailsPage) && Model.DetailsId.HasValue)
+    {
+        <a class="btn btn-icon" asp-page="@Model.DetailsPage" asp-route-id="@Model.DetailsId.Value" title="@Model.DetailsTitle">
+            <img src="~/images/detail.png" alt="@Model.DetailsTitle" width="18" height="18" loading="lazy" />
+        </a>
+    }
+    @if (!string.IsNullOrEmpty(Model.EditPage) && Model.EditId.HasValue)
+    {
+        <a class="btn btn-icon" asp-page="@Model.EditPage" asp-route-id="@Model.EditId.Value" title="@Model.EditTitle">
+            <img src="~/images/edit.png" alt="@Model.EditTitle" width="18" height="18" loading="lazy" />
+        </a>
+    }
+    @if (!string.IsNullOrEmpty(Model.DeletePage) && Model.DeleteId.HasValue)
+    {
+        <a class="btn btn-icon" asp-page="@Model.DeletePage" asp-route-id="@Model.DeleteId.Value" title="@Model.DeleteTitle">
+            <img src="~/images/delete.png" alt="@Model.DeleteTitle" width="18" height="18" loading="lazy" />
+        </a>
+    }
+</div>
+

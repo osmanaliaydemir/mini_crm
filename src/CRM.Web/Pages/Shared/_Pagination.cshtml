@@ -1,0 +1,124 @@
+@using CRM.Application.Common.Pagination
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@functions {
+    private string BuildPaginationUrl(int page, int pageSize)
+    {
+        var query = HttpContextAccessor.HttpContext?.Request.Query;
+        if (query == null) return $"?page={page}&pageSize={pageSize}";
+        
+        var queryParams = new System.Collections.Generic.List<string>();
+        
+        // Mevcut query parametrelerini al (page ve pageSize hariç)
+        foreach (var param in query)
+        {
+            if (param.Key != "page" && param.Key != "pageSize")
+            {
+                foreach (var value in param.Value)
+                {
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        queryParams.Add($"{param.Key}={Uri.EscapeDataString(value)}");
+                    }
+                }
+            }
+        }
+        
+        // Yeni page ve pageSize parametrelerini ekle
+        queryParams.Add($"page={page}");
+        queryParams.Add($"pageSize={pageSize}");
+        
+        return "?" + string.Join("&", queryParams);
+    }
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Pagination" class="pagination-nav">
+        <ul class="pagination">
+            @* Previous button *@
+            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                @if (Model.HasPreviousPage)
+                {
+                    <a class="page-link" href="@BuildPaginationUrl(Model.PageNumber - 1, Model.PageSize)" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="page-link" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </span>
+                }
+            </li>
+
+            @* Page numbers *@
+            @{
+                var startPage = Math.Max(1, Model.PageNumber - 2);
+                var endPage = Math.Min(Model.TotalPages, Model.PageNumber + 2);
+            }
+
+            @if (startPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="@BuildPaginationUrl(1, Model.PageSize)">1</a>
+                </li>
+                @if (startPage > 2)
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                }
+            }
+
+            @for (int i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    @if (i == Model.PageNumber)
+                    {
+                        <span class="page-link">@i</span>
+                    }
+                    else
+                    {
+                        <a class="page-link" href="@BuildPaginationUrl(i, Model.PageSize)">@i</a>
+                    }
+                </li>
+            }
+
+            @if (endPage < Model.TotalPages)
+            {
+                @if (endPage < Model.TotalPages - 1)
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                }
+                <li class="page-item">
+                    <a class="page-link" href="@BuildPaginationUrl(Model.TotalPages, Model.PageSize)">@Model.TotalPages</a>
+                </li>
+            }
+
+            @* Next button *@
+            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                @if (Model.HasNextPage)
+                {
+                    <a class="page-link" href="@BuildPaginationUrl(Model.PageNumber + 1, Model.PageSize)" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="page-link" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </span>
+                }
+            </li>
+        </ul>
+
+        <div class="pagination-info">
+            <span>@Model.StartIndex - @Model.EndIndex / @Model.TotalCount</span>
+        </div>
+    </nav>
+}
+

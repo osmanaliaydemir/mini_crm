@@ -1,0 +1,98 @@
+@page
+@model CRM.Web.Pages.AuditLogs.DetailsModel
+@using Microsoft.Extensions.Localization
+@using System.Text.Json
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["AuditLogs_Details_Title"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/auditlogs/details.css" asp-append-version="true" />
+}
+
+@if (Model.AuditLog != null)
+{
+    <section class="page-header form-header">
+        <div>
+            <h1>@Localizer["AuditLogs_Details_Title"]</h1>
+            <p class="subtitle">@Localizer["AuditLogs_Details_Subtitle"]</p>
+        </div>
+        <div class="header-actions">
+            <a asp-page="Index" class="btn btn-ghost">@Localizer["Common_Back"]</a>
+        </div>
+    </section>
+
+    <div class="details-container">
+        <div class="details-section">
+            <h2>@Localizer["AuditLogs_Details_GeneralInfo"]</h2>
+            <dl class="details-list">
+                <dt>@Localizer["AuditLogs_Table_Timestamp"]</dt>
+                <dd>@Model.AuditLog.Timestamp.ToString("yyyy-MM-dd HH:mm:ss UTC")</dd>
+
+                <dt>@Localizer["AuditLogs_Table_EntityType"]</dt>
+                <dd><strong>@Model.AuditLog.EntityType</strong></dd>
+
+                <dt>@Localizer["AuditLogs_Table_EntityId"]</dt>
+                <dd><code>@Model.AuditLog.EntityId</code></dd>
+
+                <dt>@Localizer["AuditLogs_Table_Action"]</dt>
+                <dd>
+                    @{
+                        var actionKey = $"AuditLogs_Action_{Model.AuditLog.Action}";
+                        var actionDisplay = Localizer[actionKey].Value == actionKey ? Model.AuditLog.Action : Localizer[actionKey].Value;
+                    }
+                    <span class="action-badge action-@Model.AuditLog.Action.ToLower()">@actionDisplay</span>
+                </dd>
+
+                <dt>@Localizer["AuditLogs_Table_User"]</dt>
+                <dd>@(Model.AuditLog.UserName ?? Model.AuditLog.UserId ?? "-")</dd>
+
+                <dt>@Localizer["AuditLogs_Table_IpAddress"]</dt>
+                <dd>@(Model.AuditLog.IpAddress ?? "-")</dd>
+
+                @if (!string.IsNullOrWhiteSpace(Model.AuditLog.UserAgent))
+                {
+                    <dt>@Localizer["AuditLogs_Details_UserAgent"]</dt>
+                    <dd>@Model.AuditLog.UserAgent</dd>
+                }
+            </dl>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.AuditLog.Changes))
+        {
+            <div class="details-section">
+                <h2>@Localizer["AuditLogs_Details_Changes"]</h2>
+                <div class="changes-container">
+                    <pre class="changes-json">@FormatJson(Model.AuditLog.Changes)</pre>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="error-message">
+        <p>@Localizer["AuditLogs_Details_NotFound"]</p>
+        <a asp-page="Index" class="btn btn-primary">@Localizer["Common_Back"]</a>
+    </div>
+}
+
+@functions {
+    private string FormatJson(string json)
+    {
+        try
+        {
+            var jsonDoc = JsonDocument.Parse(json);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            return JsonSerializer.Serialize(jsonDoc, options);
+        }
+        catch
+        {
+            return json;
+        }
+    }
+}
+

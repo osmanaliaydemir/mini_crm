@@ -1,6 +1,8 @@
+using CRM.Domain.Audit;
 using CRM.Domain.Customers;
 using CRM.Domain.Finance;
 using CRM.Domain.Notifications;
+using CRM.Domain.Settings;
 using CRM.Domain.Shipments;
 using CRM.Domain.Suppliers;
 using CRM.Domain.Warehouses;
@@ -21,6 +23,8 @@ public interface IApplicationDbContext
     DbSet<PaymentPlan> PaymentPlans { get; }
     DbSet<PaymentInstallment> PaymentInstallments { get; }
     DbSet<NotificationPreferences> NotificationPreferences { get; }
+    DbSet<AuditLog> AuditLogs { get; }
+    DbSet<SystemSettings> SystemSettings { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 

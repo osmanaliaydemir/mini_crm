@@ -1,0 +1,23 @@
+@using CRM.Web.ViewComponents
+@model StatusBadgeViewComponent.StatusBadgeViewModel
+
+@{
+    var badgeClass = $"status-badge status-{Model.StatusType}";
+    if (!string.IsNullOrEmpty(Model.CssClass))
+    {
+        badgeClass = $"{badgeClass} {Model.CssClass}";
+    }
+    
+    // Status chip için alternatif sınıf
+    var chipClass = $"status-chip status-chip--{Model.StatusType}";
+    if (!string.IsNullOrEmpty(Model.CssClass))
+    {
+        chipClass = $"{chipClass} {Model.CssClass}";
+    }
+    
+    // Eğer status-chip kullanılıyorsa onu kullan, yoksa status-badge
+    var finalClass = Model.CssClass?.Contains("status-chip") == true ? chipClass : badgeClass;
+}
+
+<span class="@finalClass">@Model.Label</span>
+

@@ -1,6 +1,8 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using CRM.Application.Customers;
+using CRM.Application.ExportImport;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace CRM.Web.Pages.Customers;
@@ -8,13 +10,18 @@ namespace CRM.Web.Pages.Customers;
 public class IndexModel : PageModel
 {
     private readonly ICustomerService _customerService;
+    private readonly IExportService _exportService;
     private readonly ILogger<IndexModel> _logger;
 
     public const string UnspecifiedSegmentLabel = "__UNSPECIFIED__";
 
-    public IndexModel(ICustomerService customerService, ILogger<IndexModel> logger)
+    public IndexModel(
+        ICustomerService customerService,
+        IExportService exportService,
+        ILogger<IndexModel> logger)
     {
         _customerService = customerService;
+        _exportService = exportService;
         _logger = logger;
     }
 
@@ -62,6 +69,39 @@ public class IndexModel : PageModel
             _logger.LogError(ex, "Error loading customer dashboard data");
             // Hata durumunda boş değerlerle devam et
             Customers = Array.Empty<CustomerListItemDto>();
+        }
+    }
+
+    public async Task<IActionResult> OnGetExportAsync(string format = "excel", string? search = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var customers = await _customerService.GetAllAsync(search, cancellationToken);
+            var customersList = customers.Cast<object>().ToList();
+
+            byte[] fileBytes;
+            string contentType;
+            string fileName;
+
+            if (format.Equals("csv", StringComparison.OrdinalIgnoreCase))
+            {
+                fileBytes = await _exportService.ExportCustomersToCsvAsync(customersList, cancellationToken);
+                contentType = "text/csv";
+                fileName = $"Musteriler_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            }
+            else
+            {
+                fileBytes = await _exportService.ExportCustomersToExcelAsync(customersList, cancellationToken);
+                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                fileName = $"Musteriler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            }
+
+            return File(fileBytes, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting customers");
+            return RedirectToPage("./Index", new { error = "Export işlemi başarısız oldu." });
         }
     }
 

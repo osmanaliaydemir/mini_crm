@@ -7,6 +7,8 @@ using CRM.Domain.Warehouses;
 using CRM.Domain.Customers;
 using CRM.Domain.Finance;
 using CRM.Domain.Notifications;
+using CRM.Domain.Audit;
+using CRM.Domain.Settings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +45,8 @@ public class CRMDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<PaymentInstallment> PaymentInstallments => Set<PaymentInstallment>();
     public DbSet<CashTransaction> CashTransactions => Set<CashTransaction>();
     public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<SystemSettings> SystemSettings => Set<SystemSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,6 +60,7 @@ public class CRMDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     {
         await DispatchDomainEventsAsync();
         UpdateAuditableEntities();
+        await CreateAuditLogsAsync();
         return await base.SaveChangesAsync(cancellationToken);
     }
 
@@ -76,6 +81,118 @@ public class CRMDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
                 entry.Entity.LastModifiedBy = currentUser;
                 entry.Entity.LastModifiedAt = DateTime.UtcNow;
             }
+        }
+    }
+
+    private async Task CreateAuditLogsAsync()
+    {
+        var httpContext = _httpContextAccessor?.HttpContext;
+        if (httpContext == null)
+        {
+            return;
+        }
+
+        var userId = httpContext.User?.Identity?.Name;
+        var userName = userId;
+        var ipAddress = httpContext.Connection?.RemoteIpAddress?.ToString();
+        var userAgent = httpContext.Request.Headers["User-Agent"].ToString();
+
+        // Identity user ID'sini al
+        var userIdClaim = httpContext.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrWhiteSpace(userIdClaim))
+        {
+            userId = userIdClaim;
+        }
+
+        var entries = ChangeTracker.Entries<Entity<Guid>>()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted)
+            .Where(e => !(e.Entity is AuditLog)) // AuditLog'un kendisini loglamıyoruz
+            .ToList();
+
+        foreach (var entry in entries)
+        {
+            var entityType = entry.Entity.GetType().Name;
+            var entityId = entry.Entity.Id;
+            string action;
+            string? changes = null;
+
+            if (entry.State == EntityState.Added)
+            {
+                action = "Created";
+                // Yeni entity için tüm property'leri JSON olarak kaydet
+                changes = SerializeEntityProperties(entry.Entity);
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                action = "Updated";
+                // Değişen property'leri kaydet
+                var changedProperties = entry.Properties
+                    .Where(p => p.IsModified && !p.Metadata.Name.EndsWith("RowVersion", StringComparison.OrdinalIgnoreCase))
+                    .Select(p => new
+                    {
+                        Property = p.Metadata.Name,
+                        OldValue = p.OriginalValue?.ToString(),
+                        NewValue = p.CurrentValue?.ToString()
+                    })
+                    .ToList();
+
+                if (changedProperties.Any())
+                {
+                    changes = System.Text.Json.JsonSerializer.Serialize(changedProperties);
+                }
+            }
+            else if (entry.State == EntityState.Deleted)
+            {
+                action = "Deleted";
+                // Silinen entity'nin son değerlerini kaydet
+                changes = SerializeEntityProperties(entry.Entity);
+            }
+            else
+            {
+                continue;
+            }
+
+            var auditLog = new AuditLog(
+                entityType,
+                entityId,
+                action,
+                userId,
+                userName,
+                changes,
+                ipAddress,
+                userAgent);
+
+            AuditLogs.Add(auditLog);
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private static string SerializeEntityProperties(object entity)
+    {
+        try
+        {
+            var properties = entity.GetType().GetProperties()
+                .Where(p => p.CanRead && !p.Name.EndsWith("RowVersion", StringComparison.OrdinalIgnoreCase))
+                .Where(p => !p.PropertyType.IsGenericType || !typeof(System.Collections.ICollection).IsAssignableFrom(p.PropertyType))
+                .ToDictionary(p => p.Name, p =>
+                {
+                    try
+                    {
+                        var value = p.GetValue(entity);
+                        return value?.ToString() ?? "null";
+                    }
+                    catch
+                    {
+                        return "N/A";
+                    }
+                });
+
+            return System.Text.Json.JsonSerializer.Serialize(properties);
+        }
+        catch
+        {
+            return "{}";
         }
     }
 
