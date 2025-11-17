@@ -75,6 +75,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.dataTables.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.dataTables.min.css" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true" />
     @RenderSection("Styles", required: false)
 </head>
 <body class="dashboard-body">
@@ -85,17 +86,14 @@
     <div class="layout-grid">
         <header class="topbar">
             <div class="topbar-left">
-
+                <button class="nav-trigger" data-sidebar-toggle aria-label="Menüyü aç/kapat">
+                    <span></span><span></span><span></span>
+                </button>
                 <div class="brand-avatar">GMS</div>
                 <div class="brand-info">
                     <strong>Global</strong>
                     <span>@Localizer["Dashboard_Title"]</span>
                 </div>
-               @*  <button class="nav-trigger" data-sidebar-toggle aria-label="Menüyü aç/kapat">
-                    <span></span><span></span><span></span>
-                </button>
-                <a class="topbar-logo" asp-page="/Index">GMS</a>
-                <span class="topbar-title"></span> *@
             </div>
             <div class="topbar-right">
                 <button class="theme-toggle" data-theme-toggle aria-label="Tema değiştir">
@@ -145,6 +143,7 @@
                 }
             </div>
         </header>
+        <div class="sidebar-backdrop" data-sidebar-backdrop></div>
         <aside class="sidebar" data-sidebar>
             <div class="sidebar-header">
                 
@@ -366,6 +365,47 @@
                 }
                 showLoader();
             }, true);
+        })();
+
+        // Mobile Sidebar Toggle
+        (function() {
+            const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
+            const sidebar = document.querySelector('[data-sidebar]');
+            const backdrop = document.querySelector('[data-sidebar-backdrop]');
+            
+            if (!sidebarToggle || !sidebar || !backdrop) return;
+
+            function toggleSidebar() {
+                const isOpen = sidebar.dataset.open === 'true';
+                sidebar.dataset.open = isOpen ? 'false' : 'true';
+                backdrop.dataset.visible = isOpen ? 'false' : 'true';
+                sidebarToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                document.body.style.overflow = isOpen ? '' : 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.dataset.open = 'false';
+                backdrop.dataset.visible = 'false';
+                sidebarToggle.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            }
+
+            sidebarToggle.addEventListener('click', toggleSidebar);
+            backdrop.addEventListener('click', closeSidebar);
+
+            // Close on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.dataset.open === 'true') {
+                    closeSidebar();
+                }
+            });
+
+            // Close on window resize to desktop
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 1024 && sidebar.dataset.open === 'true') {
+                    closeSidebar();
+                }
+            });
         })();
     </script>
     @RenderSection("Scripts", required: false)

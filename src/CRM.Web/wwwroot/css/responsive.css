@@ -1,0 +1,242 @@
+/* Responsive Utilities */
+
+/* Common responsive breakpoints */
+:root {
+    --breakpoint-xs: 480px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+}
+
+/* Table responsive wrapper */
+.table-responsive-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+}
+
+@media (min-width: 768px) {
+    .table-responsive-wrapper {
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* Card responsive adjustments */
+.card {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .card {
+        border-radius: 12px;
+    }
+
+    .card-body {
+        padding: 16px;
+    }
+
+    .card-header {
+        padding: 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}
+
+/* Form responsive adjustments */
+.form-grid {
+    display: grid;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-field {
+    width: 100%;
+}
+
+/* Button group responsive */
+.btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .btn-group {
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/* Filter bar responsive */
+.filter-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-bar .form-field {
+        width: 100%;
+    }
+}
+
+/* Page header responsive */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .page-header .subtitle {
+        font-size: 0.9rem;
+    }
+}
+
+/* Status bar responsive */
+.status-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+@media (max-width: 640px) {
+    .status-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .status-bar > * {
+        width: 100%;
+    }
+}
+
+/* Details grid responsive */
+.details-grid {
+    display: grid;
+    gap: 24px;
+}
+
+@media (min-width: 768px) {
+    .details-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Action buttons responsive */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .action-buttons {
+        width: 100%;
+    }
+
+    .action-buttons .btn {
+        flex: 1;
+    }
+}
+
+/* Modal responsive */
+@media (max-width: 640px) {
+    .modal-dialog {
+        margin: 8px;
+        max-width: calc(100% - 16px);
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+}
+
+/* DataTables responsive */
+@media (max-width: 768px) {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 12px;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+/* Utility classes */
+.hide-mobile {
+    display: block;
+}
+
+.show-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+
+    .show-mobile {
+        display: block !important;
+    }
+}
+
+/* Text truncation on mobile */
+@media (max-width: 640px) {
+    .text-truncate-mobile {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+}
+
