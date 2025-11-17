@@ -246,6 +246,18 @@
                         </span>
                         <span>@Localizer["Navigation_Settings"]</span>
                     </a>
+                    <a class="nav-item @(IsInSection("/Notifications/Automation") ? "active" : null)" asp-page="/Notifications/Automation/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18v4H3V3zm0 6h18v12H3V9zm4 3v2h10v-2H7zm0 4v2h7v-2H7z" /></svg>
+                        </span>
+                        <span>@Localizer["Navigation_EmailAutomation"]</span>
+                    </a>
+                    <a class="nav-item @(IsInSection("/Timeline") ? "active" : null)" asp-page="/Timeline/Index">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </span>
+                        <span>@Localizer["Navigation_Timeline"]</span>
+                    </a>
                 </div>
                 }
             </nav>

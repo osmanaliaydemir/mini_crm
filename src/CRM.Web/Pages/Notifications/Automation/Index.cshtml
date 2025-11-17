@@ -1,0 +1,146 @@
+@page
+@model CRM.Web.Pages.Notifications.Automation.IndexModel
+@using CRM.Domain.Notifications
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["EmailAutomation_Page_Title"];
+
+    string DescribeExecution(EmailExecutionType execution) => execution switch
+    {
+        EmailExecutionType.EventBased => Localizer["EmailAutomation_Execution_EventBased"].Value,
+        EmailExecutionType.Scheduled => Localizer["EmailAutomation_Execution_Scheduled"].Value,
+        _ => execution.ToString()
+    };
+
+    string DescribeResource(EmailResourceType resource) => resource switch
+    {
+        EmailResourceType.Shipment => Localizer["EmailAutomation_Resource_Shipment"].Value,
+        EmailResourceType.Finance => Localizer["EmailAutomation_Resource_Finance"].Value,
+        EmailResourceType.Task => Localizer["EmailAutomation_Resource_Task"].Value,
+        EmailResourceType.Customer => Localizer["EmailAutomation_Resource_Customer"].Value,
+        EmailResourceType.Warehouse => Localizer["EmailAutomation_Resource_Warehouse"].Value,
+        _ => resource.ToString()
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications/automation.css" asp-append-version="true" />
+}
+
+@if (TempData["StatusMessage"] != null)
+{
+    <div class="flash-message @(TempData["StatusMessageType"]?.ToString() ?? "success")">
+        <span class="flash-message__text">@TempData["StatusMessage"]</span>
+    </div>
+}
+
+<section class="page-header">
+    <div>
+        <h1>@Localizer["EmailAutomation_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["EmailAutomation_Page_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary" asp-page="Create">@Localizer["EmailAutomation_Action_Create"]</a>
+    </div>
+</section>
+
+<article class="card table-card">
+    <header class="card-header">
+        <div>
+            <h2>@Localizer["EmailAutomation_Table_Title"]</h2>
+            <p>@Localizer["EmailAutomation_Table_Description"]</p>
+        </div>
+    </header>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>@Localizer["EmailAutomation_Table_Name"]</th>
+                    <th>@Localizer["EmailAutomation_Table_Resource"]</th>
+                    <th>@Localizer["EmailAutomation_Table_Trigger"]</th>
+                    <th>@Localizer["EmailAutomation_Table_Execution"]</th>
+                    <th>@Localizer["EmailAutomation_Table_Recipients"]</th>
+                    <th>@Localizer["EmailAutomation_Table_Status"]</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Rules.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center">@Localizer["EmailAutomation_Table_Empty"]</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var rule in Model.Rules)
+                    {
+                        var emailRecipients = rule.Recipients
+                            .Where(r => r.RecipientType == EmailRecipientType.CustomEmail && !string.IsNullOrWhiteSpace(r.EmailAddress))
+                            .Select(r => r.EmailAddress!.Trim())
+                            .ToList();
+                        var userCount = rule.Recipients.Count(r => r.RecipientType == EmailRecipientType.User && r.UserId.HasValue);
+                        var roleNames = rule.Recipients
+                            .Where(r => r.RecipientType == EmailRecipientType.Role && !string.IsNullOrWhiteSpace(r.RoleName))
+                            .Select(r => r.RoleName!)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+                        var summaryParts = new List<string>();
+                        if (emailRecipients.Count > 0)
+                        {
+                            summaryParts.Add(string.Join(", ", emailRecipients));
+                        }
+                        if (userCount > 0)
+                        {
+                            summaryParts.Add(Localizer["EmailAutomation_UserRecipient_Summary", userCount].Value);
+                        }
+                        if (roleNames.Count > 0)
+                        {
+                            summaryParts.Add(Localizer["EmailAutomation_RoleRecipient_Summary", string.Join(", ", roleNames)].Value);
+                        }
+                        var recipientSummary = summaryParts.Count == 0
+                            ? Localizer["EmailAutomation_Table_NoRecipients"].Value
+                            : string.Join(" | ", summaryParts);
+                        <tr>
+                            <td>
+                                <strong>@rule.Name</strong>
+                                @if (!string.IsNullOrWhiteSpace(rule.CronExpression))
+                                {
+                                    <div class="muted">@rule.CronExpression</div>
+                                }
+                            </td>
+                            <td>@DescribeResource(rule.ResourceType)</td>
+                            <td>@rule.TriggerType</td>
+                            <td>@DescribeExecution(rule.ExecutionType)</td>
+                            <td>@recipientSummary</td>
+                            <td>
+                                @if (rule.IsActive)
+                                {
+                                    <span class="status-badge success">@Localizer["EmailAutomation_Status_Active"]</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge">@Localizer["EmailAutomation_Status_Inactive"]</span>
+                                }
+                            </td>
+                            <td class="text-right action-buttons">
+                                <a class="btn btn-link" asp-page="Details" asp-route-id="@rule.Id">@Localizer["EmailAutomation_Action_View"]</a>
+                                <a class="btn btn-link" asp-page="Create" asp-route-id="@rule.Id">@Localizer["EmailAutomation_Action_Edit"]</a>
+                                <form method="post" asp-page-handler="ToggleStatus" asp-route-id="@rule.Id" data-no-loader="true" style="display: inline;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-link">
+                                        @(rule.IsActive ? Localizer["EmailAutomation_Action_Deactivate"].Value : Localizer["EmailAutomation_Action_Activate"].Value)
+                                    </button>
+                                </form>
+                                <a class="btn btn-link text-danger" asp-page="Delete" asp-route-id="@rule.Id">@Localizer["EmailAutomation_Action_Delete"]</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</article>
+

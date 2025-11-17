@@ -2,6 +2,8 @@ using CRM.Application.Common;
 using CRM.Application.Common.Caching;
 using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Pagination;
+using CRM.Application.Notifications.Automation;
+using CRM.Domain.Notifications;
 using CRM.Domain.Warehouses;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -16,19 +18,25 @@ public class WarehouseService : IWarehouseService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
     private readonly ILogger<WarehouseService> _logger;
+    private readonly IEmailAutomationService _emailAutomationService;
+    private readonly IUserDirectory _userDirectory;
 
     public WarehouseService(
         IRepository<Warehouse> repository, 
         IApplicationDbContext context, 
         IUnitOfWork unitOfWork,
         ICacheService cacheService,
-        ILogger<WarehouseService> logger)
+        ILogger<WarehouseService> logger,
+        IEmailAutomationService emailAutomationService,
+        IUserDirectory userDirectory)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
         _logger = logger;
+        _emailAutomationService = emailAutomationService;
+        _userDirectory = userDirectory;
     }
 
     public async Task<WarehouseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -69,6 +77,8 @@ public class WarehouseService : IWarehouseService
         // Cache invalidation
         await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
         await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+
+        await SendWarehouseCreatedNotificationAsync(warehouse, cancellationToken);
 
         return warehouse.Id;
     }
@@ -254,5 +264,38 @@ public class WarehouseService : IWarehouseService
 
     private static string NormalizeLocation(string? location, string unspecifiedLabel) =>
         string.IsNullOrWhiteSpace(location) ? unspecifiedLabel : location.Trim();
+
+    private async Task SendWarehouseCreatedNotificationAsync(Warehouse warehouse, CancellationToken cancellationToken)
+    {
+        var recipients = await _userDirectory.GetAllUserEmailsAsync(cancellationToken);
+        if (recipients.Count == 0)
+        {
+            return;
+        }
+
+        var content = $@"<p><strong>Depo:</strong> {warehouse.Name}</p>
+                         <p><strong>Lokasyon:</strong> {warehouse.Location ?? "-"}</p>
+                         <p><strong>İrtibat:</strong> {warehouse.ContactPerson ?? "-"} ({warehouse.ContactPhone ?? "-"})</p>
+                         <p><strong>Notlar:</strong> {warehouse.Notes ?? "-"}</p>";
+
+        var context = new EmailAutomationEventContext
+        {
+            ResourceType = EmailResourceType.Warehouse,
+            TriggerType = EmailTriggerType.WarehouseCreated,
+            RelatedEntityId = warehouse.Id,
+            TemplateKey = "GenericNotification",
+            Subject = $"Yeni Depo Eklendi - {warehouse.Name}",
+            Placeholders = new Dictionary<string, string>
+            {
+                ["Title"] = "Yeni Depo Kaydı",
+                ["Description"] = $"{warehouse.Name} adlı depo sisteme eklendi.",
+                ["Content"] = content
+            },
+            AdditionalEmails = recipients,
+            ForceSendWhenNoRule = true
+        };
+
+        await _emailAutomationService.HandleEventAsync(context, cancellationToken);
+    }
 }
 

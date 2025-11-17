@@ -2,6 +2,8 @@ using CRM.Application.Common;
 using CRM.Application.Common.Caching;
 using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Pagination;
+using CRM.Application.Notifications.Automation;
+using CRM.Domain.Notifications;
 using CRM.Domain.Shipments;
 using CRM.Domain.Enums;
 using Mapster;
@@ -17,19 +19,22 @@ public class ShipmentService : IShipmentService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
     private readonly ILogger<ShipmentService> _logger;
+    private readonly IEmailAutomationService _emailAutomationService;
 
     public ShipmentService(
         IRepository<Shipment> repository, 
         IApplicationDbContext context, 
         IUnitOfWork unitOfWork,
         ICacheService cacheService,
-        ILogger<ShipmentService> logger)
+        ILogger<ShipmentService> logger,
+        IEmailAutomationService emailAutomationService)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
         _logger = logger;
+        _emailAutomationService = emailAutomationService;
     }
 
     public async Task<ShipmentDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -118,7 +123,11 @@ public class ShipmentService : IShipmentService
 
     public async Task UpdateAsync(UpdateShipmentRequest request, CancellationToken cancellationToken = default)
     {
-        var shipment = await _context.Shipments.Include(s => s.Stages).FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
+        var shipment = await _context.Shipments
+            .Include(s => s.Stages)
+            .Include(s => s.Supplier)
+            .Include(s => s.Customer)
+            .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
 
         if (shipment == null)
         {
@@ -127,6 +136,8 @@ public class ShipmentService : IShipmentService
 
         // Set RowVersion for optimistic concurrency control
         shipment.RowVersion = request.RowVersion;
+
+        var previousStatus = shipment.Status;
 
         shipment.ReassignSupplier(request.SupplierId);
         shipment.ReassignCustomer(request.CustomerId);
@@ -153,6 +164,16 @@ public class ShipmentService : IShipmentService
         await _cacheService.RemoveAsync(CacheKeys.ShipmentDashboard, cancellationToken);
         await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
         await _cacheService.RemoveAsync(CacheKeys.AnalyticsOperations, cancellationToken);
+
+        if (previousStatus != shipment.Status)
+        {
+            await SendShipmentStatusChangedNotificationAsync(shipment, previousStatus, cancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.StageNotes))
+        {
+            await SendShipmentNoteNotificationAsync(shipment, request.StageNotes!, cancellationToken);
+        }
     }
 
     public async Task<ShipmentDetailsDto?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -215,6 +236,53 @@ public class ShipmentService : IShipmentService
 
         return new ShipmentDashboardData(shipments, totalShipments,
             activeShipments, deliveredShipments, customsShipments, statusSummaries);
+    }
+
+    private async Task SendShipmentStatusChangedNotificationAsync(Shipment shipment, ShipmentStatus previousStatus, CancellationToken cancellationToken)
+    {
+        var subject = $"Sevkiyat Durum Güncellemesi - {shipment.ReferenceNumber}";
+        var content = $@"<p><strong>Referans:</strong> {shipment.ReferenceNumber}</p>
+                         <p><strong>Müşteri:</strong> {shipment.Customer?.Name ?? "-"} | <strong>Tedarikçi:</strong> {shipment.Supplier?.Name ?? "-"}</p>
+                         <p><strong>Durum:</strong> {previousStatus} → {shipment.Status}</p>
+                         <p><strong>Varış:</strong> {(shipment.EstimatedArrival?.ToString("dd.MM.yyyy") ?? "-")}</p>
+                         <p><strong>Notlar:</strong> {shipment.Notes ?? "-"}</p>";
+
+        var context = new EmailAutomationEventContext
+        {
+            ResourceType = EmailResourceType.Shipment,
+            TriggerType = EmailTriggerType.ShipmentStatusChanged,
+            RelatedEntityId = shipment.Id,
+            TemplateKey = "GenericNotification",
+            Subject = subject,
+            Placeholders = new Dictionary<string, string>
+            {
+                ["Title"] = "Sevkiyat Durumu Güncellendi",
+                ["Description"] = $"{shipment.ReferenceNumber} numaralı sevkiyatın durumu güncellendi.",
+                ["Content"] = content
+            }
+        };
+
+        await _emailAutomationService.HandleEventAsync(context, cancellationToken);
+    }
+
+    private async Task SendShipmentNoteNotificationAsync(Shipment shipment, string note, CancellationToken cancellationToken)
+    {
+        var context = new EmailAutomationEventContext
+        {
+            ResourceType = EmailResourceType.Shipment,
+            TriggerType = EmailTriggerType.ShipmentNoteAdded,
+            RelatedEntityId = shipment.Id,
+            TemplateKey = "GenericNotification",
+            Subject = $"Sevkiyat Notu Güncellendi - {shipment.ReferenceNumber}",
+            Placeholders = new Dictionary<string, string>
+            {
+                ["Title"] = "Sevkiyat Notu Eklendi",
+                ["Description"] = $"{shipment.ReferenceNumber} numaralı sevkiyata yeni bir not eklendi.",
+                ["Content"] = $"<p>{note}</p>"
+            }
+        };
+
+        await _emailAutomationService.HandleEventAsync(context, cancellationToken);
     }
 }
 

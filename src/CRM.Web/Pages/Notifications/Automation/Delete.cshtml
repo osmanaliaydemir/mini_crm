@@ -1,0 +1,46 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Notifications.Automation.DeleteModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["EmailAutomation_Delete_Title"];
+    var ruleName = string.IsNullOrWhiteSpace(Model.RuleName)
+        ? Localizer["EmailAutomation_Field_Name"].Value
+        : Model.RuleName;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications/automation.css" asp-append-version="true" />
+}
+
+<section class="page-header delete-header">
+    <div>
+        <h1>@Localizer["EmailAutomation_Delete_Title"]</h1>
+        <p class="subtitle">@Localizer["EmailAutomation_Delete_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["EmailAutomation_Action_Back"]</a>
+    </div>
+</section>
+
+<section class="card">
+    <div class="card-body">
+        <div class="delete-card">
+            <div class="delete-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v5" />
+                    <path d="M12 16h.01" />
+                </svg>
+            </div>
+            <p class="delete-message">@string.Format(Localizer["EmailAutomation_Delete_Message"].Value, ruleName)</p>
+            <form method="post" class="delete-actions">
+                <input type="hidden" asp-for="RuleId" />
+                <a class="btn btn-ghost" asp-page="Index">@Localizer["EmailAutomation_Form_Cancel"]</a>
+                <button type="submit" class="btn btn-danger">@Localizer["EmailAutomation_Action_Delete_Confirm"]</button>
+            </form>
+        </div>
+    </div>
+</section>
+

@@ -80,12 +80,14 @@
 
 #### 9. **Raporlama Modülü**
 - ⚠️ **Durum**: Temel analitik var ama gelişmiş raporlama yok
+- ✅ **Tamamlanan**:
+  - ✅ Zamanlama ile otomatik rapor gönderimi (finans özeti - Email Automation ile)
+  - ✅ Rapor parametreleri (tarih aralığı - rangeDays)
 - 📝 **Geliştirilmesi Gereken**:
   - Özelleştirilebilir raporlar
   - Rapor şablonları (Analytics/Templates sayfası var ama içerik yok)
   - PDF rapor export
-  - Zamanlama ile otomatik rapor gönderimi
-  - Rapor parametreleri (tarih aralığı, filtreler)
+  - Gelişmiş rapor parametreleri (filtreler, gruplama)
 
 #### 10. **Stok Yönetimi (Inventory)**
 - ⚠️ **Durum**: Warehouse var ama stok takibi eksik
@@ -107,13 +109,19 @@
   - Tag bazlı filtreleme ve arama
 
 #### 12. **Hatırlatıcılar ve Bildirimler**
-- ⚠️ **Durum**: NotificationPreferences var ama aktif bildirim sistemi yok
+- ✅ **Durum**: Email Automation sistemi tamamlandı
+- ✅ **Tamamlanan**:
+  - ✅ E-posta bildirimleri (otomatik ve zamanlanmış)
+  - ✅ Email Automation Rules sistemi (CRUD, aktif/pasif yönetimi)
+  - ✅ Olay bazlı bildirimler (sevkiyat durum değişimi, görev atama/tamamlanma, yeni müşteri/depo)
+  - ✅ Zamanlanmış bildirimler (günlük/haftalık/aylık - Quartz.NET ile)
+  - ✅ Finans özeti otomatik rapor gönderimi
+  - ✅ Kullanıcı, rol ve özel e-posta bazlı alıcı yönetimi
+  - ✅ Bildirim tercihleri entegrasyonu (NotificationPreferences)
 - 📝 **Geliştirilmesi Gereken**:
-  - Hatırlatıcı entity'si (Reminder)
-  - E-posta bildirimleri
   - SMS bildirimleri (opsiyonel)
   - Push notification (opsiyonel)
-  - Bildirim merkezi
+  - Bildirim merkezi (in-app notification center)
 
 #### 13. **Global Arama**
 - ❌ **Durum**: Hiç yok
@@ -141,12 +149,19 @@
   - Fatura ödeme takibi
 
 #### 16. **E-posta Entegrasyonu**
-- ❌ **Durum**: EmailSender var ama entegrasyon yok
+
+- Sistem Ayarları > SMTP sekmesinde girilen bilgiler kullanılarak e-posta gönderimi yapılır.
+- Şablonlar `CRM.Infrastructure/Email/Templates` klasöründe `.html` olarak saklanır ve yerelleştirilebilir placeholder'lar içerir.
+- Parola sıfırlama akışı `IEmailTemplateService` üzerinden `PasswordReset` şablonunu kullanır, başlık ve içerik `SharedResource` lokalizasyon dosyalarından beslenir.
+- ✅ **Durum**: SMTP tabanlı gönderim + parola sıfırlama şablonu devrede
+- ✅ **Tamamlanan**:
+  - ✅ İş akışı tetikleyen otomatik bildirimler (sevkiyat statü değişimi, not ekleme)
+  - ✅ Görev atama/tamamlanma bildirimleri
+  - ✅ Yeni müşteri/depo ekleme bildirimleri
+  - ✅ Zamanlanmış e-posta gönderimi (Quartz.NET ile)
+  - ✅ Generic email template sistemi
 - 📝 **Geliştirilmesi Gereken**:
-  - E-posta gönderme altyapısı
-  - E-posta şablonları
-  - E-posta geçmişi
-  - E-posta otomasyonu (sevkiyat statü değişikliklerinde)
+  - E-posta geçmişi / loglama ekranı
 
 #### 17. **API Dokümantasyonu**
 - ❌ **Durum**: Hiç yok
@@ -175,11 +190,15 @@
   - Otomatik yedekleme zamanlaması
 
 #### 20. **Aktivite Timeline**
-- ⚠️ **Durum**: Dashboard'da ActivityFeed var ama detaylı timeline yok
-- 📝 **Geliştirilmesi Gereken**:
-  - Genel aktivite timeline sayfası
-  - Entity bazlı timeline
-  - Aktivite filtreleme
+- ✅ **Durum**: Detaylı timeline sistemi tamamlandı
+- ✅ **Tamamlanan**:
+  - ✅ Genel aktivite timeline sayfası (`/Timeline/Index`)
+  - ✅ Entity bazlı timeline sayfası (`/Timeline/Details`)
+  - ✅ Aktivite filtreleme (entity tipi, işlem tipi, tarih aralığı, kullanıcı)
+  - ✅ Tüm entity tipleri için aktivite takibi (Sevkiyat, Müşteri, Görev, Finans, Depo, Tedarikçi, Etkileşim, E-posta Otomasyonu)
+  - ✅ Sayfalama desteği
+  - ✅ AuditLog tabanlı aktivite kayıtları
+  - ✅ Timeline görselleştirme (renkli marker'lar, tip rozetleri)
 
 #### 21. **İyileştirmeler**
 - 📝 **Performans**:
@@ -214,11 +233,11 @@
 ### Faz 3: Destekleyici Modüller (2-3 Hafta)
 8. **Takvim ve Randevu** - Müşteri ilişkileri için faydalı
 9. **Stok Yönetimi** - Depo operasyonları için gerekli
-10. **Hatırlatıcılar ve Bildirimler** - Kullanıcı deneyimi için önemli
+10. ✅ **Hatırlatıcılar ve Bildirimler** - **TAMAMLANDI** (Email Automation sistemi)
 11. **Global Arama** - Kullanılabilirlik için önemli
 
 ### Faz 4: İyileştirmeler (1-2 Hafta)
-12. **E-posta Entegrasyonu**
+12. ✅ **E-posta Entegrasyonu** - **KISMEN TAMAMLANDI** (Otomatik bildirimler eklendi, e-posta geçmişi eksik)
 13. **API Dokümantasyonu**
 14. **Sistem Ayarları**
 15. **Performans ve Güvenlik İyileştirmeleri**
@@ -234,7 +253,7 @@
 
 ### Teknoloji Önerileri
 1. **SignalR**: Gerçek zamanlı bildirimler için
-2. **Hangfire/Quartz**: Zamanlanmış görevler için
+2. ✅ **Quartz.NET**: Zamanlanmış görevler için - **TAMAMLANDI** (Email Automation için entegre edildi)
 3. **MediatR**: CQRS pattern için daha iyi bir implementasyon
 4. **AutoMapper**: Mapster yerine (opsiyonel)
 
@@ -249,11 +268,13 @@
 
 ## 📊 İstatistikler
 
-- **Toplam Entity Sayısı**: ~17
-- **Toplam Modül Sayısı**: 10 (tamamlanmış)
-- **Eksik Modül Sayısı**: ~15-20
+- **Toplam Entity Sayısı**: ~19 (EmailAutomationRule, EmailAutomationRuleRecipient eklendi)
+- **Toplam Modül Sayısı**: 12 (tamamlanmış) - Email Automation ve Activity Timeline eklendi
+- **Eksik Modül Sayısı**: ~13-17
 - **Dil Desteği**: 3 dil (TR, EN, AR)
 - **Rol Sayısı**: 2 (Admin, Personel)
+- **Zamanlanmış İş Altyapısı**: Quartz.NET entegre edildi
+- **Aktivite Takibi**: AuditLog tabanlı timeline sistemi aktif
 
 ---
 
@@ -277,6 +298,7 @@ Bu modüllerin eklenmesi ile uygulama **tam bir CRM sistemi** haline gelecektir.
 ---
 
 **Rapor Tarihi**: 2024-11-17
+**Son Güncelleme**: 2024-11-17 (Email Automation ve Activity Timeline sistemleri tamamlandı)
 **Hazırlayan**: AI Assistant
-**Versiyon**: 1.0
+**Versiyon**: 1.2
 

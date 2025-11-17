@@ -24,6 +24,8 @@ public interface IApplicationDbContext
     DbSet<PaymentPlan> PaymentPlans { get; }
     DbSet<PaymentInstallment> PaymentInstallments { get; }
     DbSet<NotificationPreferences> NotificationPreferences { get; }
+    DbSet<EmailAutomationRule> EmailAutomationRules { get; }
+    DbSet<EmailAutomationRuleRecipient> EmailAutomationRuleRecipients { get; }
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<SystemSettings> SystemSettings { get; }
     DbSet<TaskDb> Tasks { get; }

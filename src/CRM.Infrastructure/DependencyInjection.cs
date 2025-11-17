@@ -1,9 +1,11 @@
 using CRM.Application.Authentication;
 using CRM.Application.Common;
+using CRM.Application.Notifications.Automation;
+using CRM.Application.Timeline;
+using CRM.Application.Users;
 using CRM.Infrastructure.Email;
 using CRM.Infrastructure.Identity;
 using CRM.Infrastructure.Persistence;
-using CRM.Application.Users;
 using CRM.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<CRMDbContext>());
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<CRMDbContext>());
         services.AddScoped<IEmailSender, EmailSender>();
+        services.AddSingleton<IEmailTemplateService, EmbeddedEmailTemplateService>();
 
         // Register repositories
         services.AddScoped(typeof(Persistence.Repositories.IRepository<>), typeof(Repository<>));
@@ -68,6 +71,10 @@ public static class DependencyInjection
 
         // Register application services
         services.AddScoped<CRM.Application.Users.IUserService, Identity.UserService>();
+        services.AddScoped<IUserDirectory, Identity.UserDirectory>();
+        services.AddScoped<IEmailAutomationScheduler, Scheduling.QuartzEmailAutomationScheduler>();
+        services.AddScoped<IActivityTimelineService, Timeline.ActivityTimelineService>();
+        services.AddHostedService<Scheduling.EmailAutomationBootstrapper>();
 
         return services;
     }

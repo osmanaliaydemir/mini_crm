@@ -1,0 +1,213 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Notifications.Automation.DetailsModel
+@using CRM.Domain.Notifications
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Model.Rule != null 
+        ? $"{Localizer["EmailAutomation_Details_Title"]} · {Model.Rule.Name}" 
+        : Localizer["EmailAutomation_Details_NotFound_Title"];
+
+    string DescribeExecution(EmailExecutionType execution) => execution switch
+    {
+        EmailExecutionType.EventBased => Localizer["EmailAutomation_Execution_EventBased"].Value,
+        EmailExecutionType.Scheduled => Localizer["EmailAutomation_Execution_Scheduled"].Value,
+        _ => execution.ToString()
+    };
+
+    string DescribeResource(EmailResourceType resource) => resource switch
+    {
+        EmailResourceType.Shipment => Localizer["EmailAutomation_Resource_Shipment"].Value,
+        EmailResourceType.Finance => Localizer["EmailAutomation_Resource_Finance"].Value,
+        EmailResourceType.Task => Localizer["EmailAutomation_Resource_Task"].Value,
+        EmailResourceType.Customer => Localizer["EmailAutomation_Resource_Customer"].Value,
+        EmailResourceType.Warehouse => Localizer["EmailAutomation_Resource_Warehouse"].Value,
+        _ => resource.ToString()
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications/automation.css" asp-append-version="true" />
+}
+
+@if (Model.Rule == null)
+{
+    <section class="details-empty">
+        <article class="card">
+            <h1>@Localizer["EmailAutomation_Details_NotFound_Title"]</h1>
+            <p>@Localizer["EmailAutomation_Details_NotFound_Message"]</p>
+            <div class="form-actions">
+                <a class="btn btn-primary" asp-page="Index">@Localizer["EmailAutomation_Action_Back"]</a>
+            </div>
+        </article>
+    </section>
+}
+else
+{
+    var rule = Model.Rule;
+    var emailRecipients = rule.Recipients
+        .Where(r => r.RecipientType == EmailRecipientType.CustomEmail && !string.IsNullOrWhiteSpace(r.EmailAddress))
+        .Select(r => r.EmailAddress!.Trim())
+        .ToList();
+    var userRecipients = rule.Recipients
+        .Where(r => r.RecipientType == EmailRecipientType.User && r.UserId.HasValue)
+        .ToList();
+    var roleRecipients = rule.Recipients
+        .Where(r => r.RecipientType == EmailRecipientType.Role && !string.IsNullOrWhiteSpace(r.RoleName))
+        .Select(r => r.RoleName!)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    <section class="page-header details-header">
+        <div>
+            <h1>@rule.Name</h1>
+            <p class="subtitle">
+                @DescribeResource(rule.ResourceType) · @DescribeExecution(rule.ExecutionType)
+                @if (rule.IsActive)
+                {
+                    <span class="status-badge success">@Localizer["EmailAutomation_Status_Active"]</span>
+                }
+                else
+                {
+                    <span class="status-badge">@Localizer["EmailAutomation_Status_Inactive"]</span>
+                }
+            </p>
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["EmailAutomation_Action_Back"]</a>
+            <a class="btn btn-primary" asp-page="Create" asp-route-id="@rule.Id">@Localizer["EmailAutomation_Action_Edit"]</a>
+        </div>
+    </section>
+
+    <section class="card-grid automation-grid">
+        <article class="card">
+            <header class="card-header">
+                <div>
+                    <h2>@Localizer["EmailAutomation_Details_General_Title"]</h2>
+                    <p>@Localizer["EmailAutomation_Details_General_Subtitle"]</p>
+                </div>
+            </header>
+            <div class="card-body">
+                <dl class="details-list">
+                    <div>
+                        <dt>@Localizer["EmailAutomation_Field_Name"]</dt>
+                        <dd>@rule.Name</dd>
+                    </div>
+                    <div>
+                        <dt>@Localizer["EmailAutomation_Field_ResourceType"]</dt>
+                        <dd>@DescribeResource(rule.ResourceType)</dd>
+                    </div>
+                    <div>
+                        <dt>@Localizer["EmailAutomation_Field_TriggerType"]</dt>
+                        <dd>@rule.TriggerType</dd>
+                    </div>
+                    <div>
+                        <dt>@Localizer["EmailAutomation_Field_ExecutionType"]</dt>
+                        <dd>@DescribeExecution(rule.ExecutionType)</dd>
+                    </div>
+                    <div>
+                        <dt>@Localizer["EmailAutomation_Field_TemplateKey"]</dt>
+                        <dd>@rule.TemplateKey</dd>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(rule.CronExpression))
+                    {
+                        <div>
+                            <dt>@Localizer["EmailAutomation_Field_CronExpression"]</dt>
+                            <dd><code>@rule.CronExpression</code></dd>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(rule.TimeZoneId))
+                    {
+                        <div>
+                            <dt>@Localizer["EmailAutomation_Field_TimeZone"]</dt>
+                            <dd>@rule.TimeZoneId</dd>
+                        </div>
+                    }
+                    @if (rule.RelatedEntityId.HasValue)
+                    {
+                        <div>
+                            <dt>@Localizer["EmailAutomation_Field_RelatedEntity"]</dt>
+                            <dd>@rule.RelatedEntityId</dd>
+                        </div>
+                    }
+                    <div>
+                        <dt>@Localizer["EmailAutomation_Field_IsActive"]</dt>
+                        <dd>
+                            @if (rule.IsActive)
+                            {
+                                <span class="status-badge success">@Localizer["EmailAutomation_Status_Active"]</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge">@Localizer["EmailAutomation_Status_Inactive"]</span>
+                            }
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </article>
+
+        <article class="card">
+            <header class="card-header">
+                <div>
+                    <h2>@Localizer["EmailAutomation_Details_Recipients_Title"]</h2>
+                    <p>@Localizer["EmailAutomation_Details_Recipients_Subtitle"]</p>
+                </div>
+            </header>
+            <div class="card-body">
+                @if (emailRecipients.Count > 0)
+                {
+                    <div class="recipient-section">
+                        <h3>@Localizer["EmailAutomation_Field_CustomEmails"]</h3>
+                        <ul>
+                            @foreach (var email in emailRecipients)
+                            {
+                                <li>@email</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                @if (userRecipients.Count > 0)
+                {
+                    <div class="recipient-section">
+                        <h3>@Localizer["EmailAutomation_Field_UserRecipients"] (@userRecipients.Count)</h3>
+                        <p class="muted">@Localizer["EmailAutomation_Details_UserRecipients_Note"]</p>
+                    </div>
+                }
+                @if (roleRecipients.Count > 0)
+                {
+                    <div class="recipient-section">
+                        <h3>@Localizer["EmailAutomation_Field_RoleRecipients"]</h3>
+                        <ul>
+                            @foreach (var role in roleRecipients)
+                            {
+                                <li>@role</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                @if (emailRecipients.Count == 0 && userRecipients.Count == 0 && roleRecipients.Count == 0)
+                {
+                    <p class="muted">@Localizer["EmailAutomation_Table_NoRecipients"]</p>
+                }
+            </div>
+        </article>
+
+        @if (!string.IsNullOrWhiteSpace(rule.Metadata))
+        {
+            <article class="card">
+                <header class="card-header">
+                    <div>
+                        <h2>@Localizer["EmailAutomation_Details_Metadata_Title"]</h2>
+                        <p>@Localizer["EmailAutomation_Details_Metadata_Subtitle"]</p>
+                    </div>
+                </header>
+                <div class="card-body">
+                    <pre class="metadata-display">@rule.Metadata</pre>
+                </div>
+            </article>
+        }
+    </section>
+}
+

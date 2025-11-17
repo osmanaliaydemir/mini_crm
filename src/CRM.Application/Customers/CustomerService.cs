@@ -2,7 +2,9 @@ using CRM.Application.Common;
 using CRM.Application.Common.Caching;
 using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Pagination;
+using CRM.Application.Notifications.Automation;
 using CRM.Domain.Customers;
+using CRM.Domain.Notifications;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -16,19 +18,25 @@ public class CustomerService : ICustomerService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
     private readonly ILogger<CustomerService> _logger;
+    private readonly IEmailAutomationService _emailAutomationService;
+    private readonly IUserDirectory _userDirectory;
 
     public CustomerService(
         IRepository<Customer> repository, 
         IApplicationDbContext context, 
         IUnitOfWork unitOfWork,
         ICacheService cacheService,
-        ILogger<CustomerService> logger)
+        ILogger<CustomerService> logger,
+        IEmailAutomationService emailAutomationService,
+        IUserDirectory userDirectory)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
         _logger = logger;
+        _emailAutomationService = emailAutomationService;
+        _userDirectory = userDirectory;
     }
 
     public async Task<CustomerDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -103,6 +111,8 @@ public class CustomerService : ICustomerService
         // Cache invalidation - Customer dashboard cache'lerini temizle
         await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
         await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+
+        await SendCustomerCreatedNotificationAsync(customer, cancellationToken);
 
         return customer.Id;
     }
@@ -320,5 +330,39 @@ public class CustomerService : ICustomerService
 
     private static string NormalizeSegment(string? segment, string unspecifiedLabel) =>
         string.IsNullOrWhiteSpace(segment) ? unspecifiedLabel : segment.Trim();
+
+    private async Task SendCustomerCreatedNotificationAsync(Customer customer, CancellationToken cancellationToken)
+    {
+        var recipients = await _userDirectory.GetAllUserEmailsAsync(cancellationToken);
+        if (recipients.Count == 0)
+        {
+            return;
+        }
+
+        var primaryContact = customer.Contacts.FirstOrDefault();
+        var content = $@"<p><strong>Firma:</strong> {customer.Name}</p>
+                         <p><strong>Sektör:</strong> {customer.Segment ?? "-"} | <strong>VKN:</strong> {customer.TaxNumber ?? "-"}</p>
+                         <p><strong>E-posta:</strong> {customer.Email ?? "-"} | <strong>Telefon:</strong> {customer.Phone ?? "-"}</p>
+                         <p><strong>Yetkili:</strong> {primaryContact?.FullName ?? "-"} - {primaryContact?.Email ?? "-"} / {primaryContact?.Phone ?? "-"}</p>";
+
+        var context = new EmailAutomationEventContext
+        {
+            ResourceType = EmailResourceType.Customer,
+            TriggerType = EmailTriggerType.CustomerCreated,
+            RelatedEntityId = customer.Id,
+            TemplateKey = "GenericNotification",
+            Subject = $"Yeni Müşteri Eklendi - {customer.Name}",
+            Placeholders = new Dictionary<string, string>
+            {
+                ["Title"] = "Yeni Müşteri Kaydı",
+                ["Description"] = $"{customer.Name} adlı müşteri sisteme eklendi.",
+                ["Content"] = content
+            },
+            AdditionalEmails = recipients,
+            ForceSendWhenNoRule = true
+        };
+
+        await _emailAutomationService.HandleEventAsync(context, cancellationToken);
+    }
 }
 

@@ -1,0 +1,277 @@
+@page
+@model CRM.Web.Pages.Notifications.Automation.CreateModel
+@using CRM.Domain.Notifications
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["EmailAutomation_Form_Header_Create"];
+
+    string DescribeExecution(EmailExecutionType execution) => execution switch
+    {
+        EmailExecutionType.EventBased => Localizer["EmailAutomation_Execution_EventBased"].Value,
+        EmailExecutionType.Scheduled => Localizer["EmailAutomation_Execution_Scheduled"].Value,
+        _ => execution.ToString()
+    };
+
+    string DescribeResource(EmailResourceType resource) => resource switch
+    {
+        EmailResourceType.Shipment => Localizer["EmailAutomation_Resource_Shipment"].Value,
+        EmailResourceType.Finance => Localizer["EmailAutomation_Resource_Finance"].Value,
+        EmailResourceType.Task => Localizer["EmailAutomation_Resource_Task"].Value,
+        EmailResourceType.Customer => Localizer["EmailAutomation_Resource_Customer"].Value,
+        EmailResourceType.Warehouse => Localizer["EmailAutomation_Resource_Warehouse"].Value,
+        _ => resource.ToString()
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications/automation.css" asp-append-version="true" />
+}
+
+<section class="page-header form-header">
+    <div>
+        <h1>@(Model.IsEditMode ? Localizer["EmailAutomation_Form_Header_Edit"] : Localizer["EmailAutomation_Form_Header_Create"])</h1>
+        <p class="subtitle">@(Model.IsEditMode ? Localizer["EmailAutomation_Form_Edit_Subtitle"] : Localizer["EmailAutomation_Form_Create_Subtitle"])</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["EmailAutomation_Action_Back"]</a>
+    </div>
+</section>
+
+<article class="card">
+    <header class="card-header">
+        <div>
+            <h2>@Localizer["EmailAutomation_Form_Title"]</h2>
+            <p>@Localizer["EmailAutomation_Form_Description"]</p>
+        </div>
+    </header>
+    <div class="card-body">
+        <form method="post" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Input.Id" />
+            <input type="hidden" asp-for="Input.RowVersion" />
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <div class="form-grid two-columns">
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_Name"]</span>
+                    <input asp-for="Input.Name" class="form-control" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </label>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_TemplateKey"]</span>
+                    <input asp-for="Input.TemplateKey" class="form-control" />
+                </label>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_ResourceType"]</span>
+                    <select asp-for="Input.ResourceType" class="form-select" data-resource-select>
+                        @foreach (EmailResourceType resource in Enum.GetValues(typeof(EmailResourceType)))
+                        {
+                            <option value="@resource">@DescribeResource(resource)</option>
+                        }
+                    </select>
+                </label>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_TriggerType"]</span>
+                    <select asp-for="Input.TriggerType" class="form-select" data-trigger-select>
+                        @foreach (var option in Model.TriggerOptions)
+                        {
+                            <option value="@option.TriggerType" data-resource="@option.ResourceType">@option.Label</option>
+                        }
+                    </select>
+                </label>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_ExecutionType"]</span>
+                    <select asp-for="Input.ExecutionType" class="form-select" data-execution-select>
+                        <option value="@EmailExecutionType.EventBased">@DescribeExecution(EmailExecutionType.EventBased)</option>
+                        <option value="@EmailExecutionType.Scheduled">@DescribeExecution(EmailExecutionType.Scheduled)</option>
+                    </select>
+                </label>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_TimeZone"]</span>
+                    <input asp-for="Input.TimeZoneId" class="form-control" />
+                </label>
+            </div>
+
+            <div class="form-grid two-columns" data-schedule-fields hidden>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_ScheduledTime"]</span>
+                    <input asp-for="Input.ScheduledTime" class="form-control" type="time" />
+                    <span asp-validation-for="Input.ScheduledTime" class="text-danger"></span>
+                </label>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_IsActive"]</span>
+                    <select asp-for="Input.IsActive" class="form-select">
+                        <option value="true">@Localizer["Common_Yes"]</option>
+                        <option value="false">@Localizer["Common_No"]</option>
+                    </select>
+                </label>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_ScheduleFrequency"]</span>
+                    <select asp-for="Input.ScheduleFrequency" class="form-select" data-frequency-select>
+                        @foreach (var option in Model.ScheduleFrequencyOptions)
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    </select>
+                    <small>@Localizer["EmailAutomation_Field_ScheduleFrequency_Help"]</small>
+                </label>
+            </div>
+
+            <div class="form-grid two-columns" data-frequency-weekly hidden>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_WeeklyDays"]</span>
+                    <select asp-for="Input.WeeklyDays" class="form-select" multiple size="7">
+                        @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+                        {
+                            <option value="@day">@Localizer[$"EmailAutomation_Weekday_{day}"]</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.WeeklyDays" class="text-danger"></span>
+                    <small>@Localizer["EmailAutomation_Field_WeeklyDays_Help"]</small>
+                </label>
+            </div>
+
+            <div class="form-grid two-columns" data-frequency-monthly hidden>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_MonthlyDay"]</span>
+                    <input asp-for="Input.MonthlyDay" class="form-control" type="number" min="1" max="31" />
+                    <span asp-validation-for="Input.MonthlyDay" class="text-danger"></span>
+                    <small>@Localizer["EmailAutomation_Field_MonthlyDay_Help"]</small>
+                </label>
+            </div>
+
+            <div class="form-grid two-columns">
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_RelatedEntity"]</span>
+                    <input asp-for="Input.RelatedEntityId" class="form-control" placeholder="GUID" />
+                </label>
+            </div>
+
+            <div class="form-grid two-columns" data-general-metadata>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_Metadata"]</span>
+                    <textarea asp-for="Input.Metadata" class="form-control" rows="3" placeholder='{"rangeDays":1}'></textarea>
+                </label>
+            </div>
+
+            <div class="form-grid two-columns" data-finance-metadata hidden>
+                <label class="form-field">
+                    <span>@Localizer["EmailAutomation_Field_FinanceRangeDays"]</span>
+                    <input asp-for="Input.FinanceRangeDays" type="number" min="1" max="30" class="form-control" />
+                    <span asp-validation-for="Input.FinanceRangeDays" class="text-danger"></span>
+                    <small>@Localizer["EmailAutomation_Field_FinanceRangeDays_Help"]</small>
+                </label>
+            </div>
+
+            <label class="form-field">
+                <span>@Localizer["EmailAutomation_Field_CustomEmails"]</span>
+                <textarea asp-for="Input.CustomEmails" class="form-control" rows="3" placeholder="user1@example.com, user2@example.com"></textarea>
+                <small>@Localizer["EmailAutomation_Field_CustomEmails_Help"]</small>
+                <span asp-validation-for="Input.CustomEmails" class="text-danger"></span>
+            </label>
+
+            <label class="form-field">
+                <span>@Localizer["EmailAutomation_Field_UserRecipients"]</span>
+                <select asp-for="Input.SelectedUserIds" class="form-select" multiple size="6">
+                    @foreach (var option in Model.UserOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+                <small>@Localizer["EmailAutomation_Field_UserRecipients_Help"]</small>
+            </label>
+
+            <label class="form-field">
+                <span>@Localizer["EmailAutomation_Field_RoleRecipients"]</span>
+                <select asp-for="Input.SelectedRoles" class="form-select" multiple size="5">
+                    @foreach (var option in Model.RoleOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+                <small>@Localizer["EmailAutomation_Field_RoleRecipients_Help"]</small>
+            </label>
+
+            <div class="form-actions">
+                <a class="btn btn-ghost" asp-page="Index">@Localizer["EmailAutomation_Form_Cancel"]</a>
+                <button type="submit" class="btn btn-primary">@(Model.IsEditMode ? Localizer["EmailAutomation_Action_Update"] : Localizer["EmailAutomation_Action_Create"])</button>
+            </div>
+        </form>
+    </div>
+</article>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const resourceSelect = document.querySelector('[data-resource-select]');
+            const triggerSelect = document.querySelector('[data-trigger-select]');
+            const executionSelect = document.querySelector('[data-execution-select]');
+            const scheduleFields = document.querySelector('[data-schedule-fields]');
+            const frequencySelect = document.querySelector('[data-frequency-select]');
+            const weeklySection = document.querySelector('[data-frequency-weekly]');
+            const monthlySection = document.querySelector('[data-frequency-monthly]');
+            const financeSection = document.querySelector('[data-finance-metadata]');
+            const metadataSection = document.querySelector('[data-general-metadata]');
+
+            const filterTriggers = () => {
+                const resource = resourceSelect.value;
+                let firstVisible = null;
+
+                Array.from(triggerSelect.options).forEach(option => {
+                    const match = option.dataset.resource === resource;
+                    option.hidden = !match;
+                    if (match && !firstVisible) {
+                        firstVisible = option.value;
+                    }
+                });
+
+                if (firstVisible && triggerSelect.value !== firstVisible && triggerSelect.selectedOptions[0]?.hidden) {
+                    triggerSelect.value = firstVisible;
+                }
+
+                toggleFinanceSection();
+            };
+
+            const toggleFrequencySections = () => {
+                const freq = frequencySelect?.value ?? 'Daily';
+                const isScheduled = executionSelect.value === 'Scheduled';
+                if (weeklySection) {
+                    weeklySection.hidden = !isScheduled || freq !== 'Weekly';
+                }
+                if (monthlySection) {
+                    monthlySection.hidden = !isScheduled || freq !== 'Monthly';
+                }
+            };
+
+            const toggleScheduleFields = () => {
+                const isScheduled = executionSelect.value === 'Scheduled';
+                scheduleFields.hidden = !isScheduled;
+                toggleFrequencySections();
+            };
+
+            const toggleFinanceSection = () => {
+                const resource = resourceSelect.value;
+                const trigger = triggerSelect.value;
+                const isFinanceSummary = resource === 'Finance' && trigger === 'FinanceSummaryScheduled';
+                if (financeSection) {
+                    financeSection.hidden = !isFinanceSummary;
+                }
+                if (metadataSection) {
+                    metadataSection.hidden = isFinanceSummary;
+                }
+            };
+
+            resourceSelect.addEventListener('change', filterTriggers);
+            triggerSelect.addEventListener('change', toggleFinanceSection);
+            executionSelect.addEventListener('change', toggleScheduleFields);
+            frequencySelect?.addEventListener('change', toggleFrequencySections);
+
+            filterTriggers();
+            toggleScheduleFields();
+            toggleFinanceSection();
+        });
+    </script>
+}
+

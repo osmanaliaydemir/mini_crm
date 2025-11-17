@@ -1,7 +1,10 @@
 using CRM.Application.Common;
 using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Pagination;
+using CRM.Application.Notifications.Automation;
+using CRM.Domain.Notifications;
 using CRM.Domain.Tasks;
+using TaskStatus = CRM.Domain.Tasks.TaskStatus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -13,17 +16,23 @@ public class TaskService : ITaskService
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<TaskService> _logger;
+    private readonly IEmailAutomationService _emailAutomationService;
+    private readonly IUserDirectory _userDirectory;
 
     public TaskService(
         IRepository<TaskDb> repository,
         IApplicationDbContext context,
         IUnitOfWork unitOfWork,
-        ILogger<TaskService> logger)
+        ILogger<TaskService> logger,
+        IEmailAutomationService emailAutomationService,
+        IUserDirectory userDirectory)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _emailAutomationService = emailAutomationService;
+        _userDirectory = userDirectory;
     }
 
     public async Task<TaskDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -144,6 +153,11 @@ public class TaskService : ITaskService
         await _repository.AddAsync(task, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        if (task.AssignedToUserId.HasValue)
+        {
+            await SendTaskAssignedNotificationAsync(task, task.AssignedToUserId.Value, cancellationToken);
+        }
+
         return task.Id;
     }
 
@@ -154,6 +168,9 @@ public class TaskService : ITaskService
         {
             throw new NotFoundException(nameof(TaskDb), request.Id);
         }
+
+        var previousAssignedUserId = task.AssignedToUserId;
+        var previousStatus = task.Status;
 
         task.RowVersion = request.RowVersion;
 
@@ -169,6 +186,18 @@ public class TaskService : ITaskService
 
         await _repository.UpdateAsync(task, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (task.AssignedToUserId.HasValue &&
+            task.AssignedToUserId != previousAssignedUserId)
+        {
+            await SendTaskAssignedNotificationAsync(task, task.AssignedToUserId.Value, cancellationToken);
+        }
+
+        if (task.Status == TaskStatus.Completed &&
+            previousStatus != TaskStatus.Completed)
+        {
+            await SendTaskCompletedNotificationAsync(task, cancellationToken);
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -191,9 +220,16 @@ public class TaskService : ITaskService
             throw new NotFoundException(nameof(TaskDb), id);
         }
 
+        var previousStatus = task.Status;
+
         task.UpdateStatus(status);
         await _repository.UpdateAsync(task, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (status == TaskStatus.Completed && previousStatus != TaskStatus.Completed)
+        {
+            await SendTaskCompletedNotificationAsync(task, cancellationToken);
+        }
     }
 
     public async Task AssignToAsync(Guid id, Guid? userId, CancellationToken cancellationToken = default)
@@ -207,6 +243,79 @@ public class TaskService : ITaskService
         task.AssignTo(userId);
         await _repository.UpdateAsync(task, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (userId.HasValue)
+        {
+            await SendTaskAssignedNotificationAsync(task, userId.Value, cancellationToken);
+        }
+    }
+
+    private async Task SendTaskAssignedNotificationAsync(TaskDb task, Guid assignedUserId, CancellationToken cancellationToken)
+    {
+        var context = new EmailAutomationEventContext
+        {
+            ResourceType = EmailResourceType.Task,
+            TriggerType = EmailTriggerType.TaskAssigned,
+            RelatedEntityId = task.Id,
+            TemplateKey = "GenericNotification",
+            Subject = $"Görev Atandı - {task.Title}",
+            Placeholders = new Dictionary<string, string>
+            {
+                ["Title"] = "Yeni Görev Ataması",
+                ["Description"] = $"{task.Title} başlıklı görev size atandı.",
+                ["Content"] = BuildTaskDetailContent(task),
+                ["Footer"] = "Bu e-posta görev ataması gerçekleştiği için gönderildi."
+            },
+            AdditionalUserIds = new[] { assignedUserId },
+            ForceSendWhenNoRule = true
+        };
+
+        await _emailAutomationService.HandleEventAsync(context, cancellationToken);
+    }
+
+    private async Task SendTaskCompletedNotificationAsync(TaskDb task, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(task.CreatedBy))
+        {
+            return;
+        }
+
+        var creatorEmail = await _userDirectory.GetEmailByUserNameAsync(task.CreatedBy, cancellationToken);
+        if (string.IsNullOrWhiteSpace(creatorEmail))
+        {
+            return;
+        }
+
+        var context = new EmailAutomationEventContext
+        {
+            ResourceType = EmailResourceType.Task,
+            TriggerType = EmailTriggerType.TaskCompleted,
+            RelatedEntityId = task.Id,
+            TemplateKey = "GenericNotification",
+            Subject = $"Görev Tamamlandı - {task.Title}",
+            Placeholders = new Dictionary<string, string>
+            {
+                ["Title"] = "Görev Tamamlandı",
+                ["Description"] = $"{task.Title} başlıklı görev tamamlandı.",
+                ["Content"] = BuildTaskDetailContent(task),
+                ["Footer"] = "Bu e-posta görev durumu tamamlandığı için gönderildi."
+            },
+            AdditionalEmails = new[] { creatorEmail },
+            ForceSendWhenNoRule = true
+        };
+
+        await _emailAutomationService.HandleEventAsync(context, cancellationToken);
+    }
+
+    private static string BuildTaskDetailContent(TaskDb task)
+    {
+        var dueDate = task.DueDate.HasValue ? task.DueDate.Value.ToString("dd.MM.yyyy") : "-";
+        var description = string.IsNullOrWhiteSpace(task.Description) ? "Açıklama girilmedi." : task.Description;
+
+        return $@"<p><strong>Öncelik:</strong> {task.Priority}</p>
+                  <p><strong>Durum:</strong> {task.Status}</p>
+                  <p><strong>Bitiş Tarihi:</strong> {dueDate}</p>
+                  <p><strong>Açıklama:</strong> {description}</p>";
     }
 }
 

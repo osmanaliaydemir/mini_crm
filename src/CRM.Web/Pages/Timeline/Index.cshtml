@@ -1,0 +1,168 @@
+@page
+@model CRM.Web.Pages.Timeline.IndexModel
+@using CRM.Application.Timeline
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Timeline_Page_Title"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/timeline/index.css" asp-append-version="true" />
+}
+
+<section class="page-header timeline-header">
+    <div>
+        <h1>@Localizer["Timeline_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Timeline_Page_Subtitle"]</p>
+    </div>
+</section>
+
+<section class="timeline-filters">
+    <form method="get" class="filter-form">
+        <div class="filter-grid">
+            <div class="form-field">
+                <label>@Localizer["Timeline_Filter_Type"]</label>
+                <select asp-for="Type" class="form-select">
+                    <option value="">@Localizer["Timeline_Filter_All"]</option>
+                    @foreach (var option in Model.ActivityTypeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label>@Localizer["Timeline_Filter_Action"]</label>
+                <select asp-for="Action" class="form-select">
+                    <option value="">@Localizer["Timeline_Filter_All"]</option>
+                    @foreach (var option in Model.ActivityActionOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label>@Localizer["Timeline_Filter_FromDate"]</label>
+                <input type="date" asp-for="FromDate" class="form-control" />
+            </div>
+
+            <div class="form-field">
+                <label>@Localizer["Timeline_Filter_ToDate"]</label>
+                <input type="date" asp-for="ToDate" class="form-control" />
+            </div>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">@Localizer["Timeline_Filter_Apply"]</button>
+            <a asp-page="Index" class="btn btn-ghost">@Localizer["Timeline_Filter_Clear"]</a>
+        </div>
+    </form>
+</section>
+
+@if (Model.Timeline != null)
+{
+    <section class="timeline-content">
+        @if (Model.Timeline.Items.Count == 0)
+        {
+            <article class="card">
+                <div class="card-body">
+                    <p class="empty-message">@Localizer["Timeline_Empty"]</p>
+                </div>
+            </article>
+        }
+        else
+        {
+            <article class="card">
+                <div class="card-body">
+                    <ul class="timeline-list">
+                        @foreach (var item in Model.Timeline.Items)
+                        {
+                            <li class="timeline-item">
+                                <div class="timeline-marker @GetActivityTypeClass(item.Type)"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <span class="timeline-time">@item.OccurredAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                        <span class="timeline-type-badge @GetActivityTypeClass(item.Type)">@GetActivityTypeLabel(item.Type)</span>
+                                    </div>
+                                    <div class="timeline-title">@GetActivityTitle(item)</div>
+                                    <div class="timeline-description">@item.Description</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.UserName))
+                                    {
+                                        <div class="timeline-user">@Localizer["Timeline_By"] @item.UserName</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.EntityId) && Guid.TryParse(item.EntityId, out var entityId))
+                                    {
+                                        <div class="timeline-actions">
+                                            <a class="btn btn-link" asp-page="Details" asp-route-entityType="@((int)item.Type)" asp-route-entityId="@entityId">
+                                                @Localizer["Timeline_ViewDetails"]
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+
+                    @if (Model.Timeline.TotalPages > 1)
+                    {
+                        <div class="pagination">
+                            @if (Model.Timeline.PageNumber > 1)
+                            {
+                                <a asp-page="Index" asp-route-Type="@Model.Type" asp-route-Action="@Model.Action" 
+                                   asp-route-FromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" 
+                                   asp-route-ToDate="@Model.ToDate?.ToString("yyyy-MM-dd")" 
+                                   asp-route-UserId="@Model.UserId" 
+                                   asp-route-PageNumber="@(Model.Timeline.PageNumber - 1)" 
+                                   class="btn btn-ghost">@Localizer["Common_Previous"]</a>
+                            }
+
+                            <span class="pagination-info">
+                                @Localizer["Common_Page_Info", Model.Timeline.PageNumber, Model.Timeline.TotalPages, Model.Timeline.TotalCount]
+                            </span>
+
+                            @if (Model.Timeline.PageNumber < Model.Timeline.TotalPages)
+                            {
+                                <a asp-page="Index" asp-route-Type="@Model.Type" asp-route-Action="@Model.Action" 
+                                   asp-route-FromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" 
+                                   asp-route-ToDate="@Model.ToDate?.ToString("yyyy-MM-dd")" 
+                                   asp-route-UserId="@Model.UserId" 
+                                   asp-route-PageNumber="@(Model.Timeline.PageNumber + 1)" 
+                                   class="btn btn-ghost">@Localizer["Common_Next"]</a>
+                            }
+                        </div>
+                    }
+                </div>
+            </article>
+        }
+    </section>
+}
+
+@functions {
+    string GetActivityTypeClass(ActivityType type) => type switch
+    {
+        ActivityType.Shipment => "type-shipment",
+        ActivityType.Customer => "type-customer",
+        ActivityType.Task => "type-task",
+        ActivityType.Finance => "type-finance",
+        ActivityType.Warehouse => "type-warehouse",
+        ActivityType.Supplier => "type-supplier",
+        ActivityType.CustomerInteraction => "type-interaction",
+        ActivityType.EmailAutomation => "type-automation",
+        _ => "type-other"
+    };
+
+    string GetActivityTypeLabel(ActivityType type) => Localizer[$"Timeline_ActivityType_{type}"].Value;
+
+    string GetActivityTitle(ActivityTimelineItem item)
+    {
+        var actionLabel = Localizer[$"Timeline_ActivityAction_{item.Action}"].Value;
+        var typeLabel = GetActivityTypeLabel(item.Type);
+        var entityName = !string.IsNullOrWhiteSpace(item.EntityName) ? item.EntityName : item.EntityId;
+
+        return $"{actionLabel} {typeLabel}: {entityName}";
+    }
+}
+

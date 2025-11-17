@@ -2,10 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using CRM.Application.Common;
 using CRM.Infrastructure.Identity;
+using CRM.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Localization;
 
 namespace CRM.Web.Pages.Auth;
 
@@ -13,12 +15,21 @@ public class ForgotPasswordModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailSender _emailSender;
+    private readonly IEmailTemplateService _emailTemplateService;
     private readonly ILogger<ForgotPasswordModel> _logger;
+    private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public ForgotPasswordModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, ILogger<ForgotPasswordModel> logger)
+    public ForgotPasswordModel(
+        UserManager<ApplicationUser> userManager,
+        IEmailSender emailSender,
+        IEmailTemplateService emailTemplateService,
+        IStringLocalizer<SharedResource> localizer,
+        ILogger<ForgotPasswordModel> logger)
     {
         _userManager = userManager;
         _emailSender = emailSender;
+        _emailTemplateService = emailTemplateService;
+        _localizer = localizer;
         _logger = logger;
     }
 
@@ -61,33 +72,23 @@ public class ForgotPasswordModel : PageModel
                 values: new { token, email = Input.Email },
                 protocol: Request.Scheme);
 
-            // E-posta içeriği oluştur
-            var emailSubject = "Şifre Sıfırlama Talebi";
-            var emailBody = $@"
-                <html>
-                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                        <h2 style='color: #2c3e50;'>Şifre Sıfırlama Talebi</h2>
-                        <p>Merhaba,</p>
-                        <p>Hesabınız için şifre sıfırlama talebinde bulunuldu. Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
-                        <p style='margin: 30px 0;'>
-                            <a href='{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}' 
-                               style='background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                                Şifremi Sıfırla
-                            </a>
-                        </p>
-                        <p>Veya aşağıdaki bağlantıyı tarayıcınıza kopyalayıp yapıştırabilirsiniz:</p>
-                        <p style='word-break: break-all; color: #666; font-size: 12px;'>{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}</p>
-                        <p style='margin-top: 30px; color: #666; font-size: 12px;'>
-                            <strong>Not:</strong> Bu bağlantı 24 saat geçerlidir. Eğer bu talebi siz yapmadıysanız, bu e-postayı görmezden gelebilirsiniz.
-                        </p>
-                        <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;' />
-                        <p style='color: #999; font-size: 11px;'>Bu otomatik bir e-postadır, lütfen yanıtlamayın.</p>
-                    </div>
-                </body>
-                </html>";
+            var emailSubject = _localizer["Email_Subject_PasswordReset"].Value;
+            var placeholders = new Dictionary<string, string>
+            {
+                ["Title"] = _localizer["Email_PasswordReset_Title"].Value,
+                ["Description"] = _localizer["Email_PasswordReset_Description"].Value,
+                ["ActionUrl"] = HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty),
+                ["ActionText"] = _localizer["Email_PasswordReset_Action"].Value,
+                ["FallbackInstruction"] = _localizer["Email_PasswordReset_FallbackInstruction"].Value,
+                ["FallbackUrl"] = HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty),
+                ["Note"] = _localizer["Email_PasswordReset_Note"].Value
+            };
 
-            // E-postayı gönder
+            var emailBody = await _emailTemplateService.RenderTemplateAsync(
+                "PasswordReset",
+                placeholders,
+                cancellationToken);
+
             await _emailSender.SendEmailAsync(user.Email!, emailSubject, emailBody, cancellationToken);
 
             _logger.LogInformation("Şifre sıfırlama e-postası gönderildi. Kullanıcı: {Email}", Input.Email);

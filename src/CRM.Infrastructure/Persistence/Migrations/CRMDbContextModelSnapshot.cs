@@ -414,6 +414,103 @@ namespace CRM.Infrastructure.Persistence.Migrations
                     b.ToTable("PaymentPlans", (string)null);
                 });
 
+            modelBuilder.Entity("CRM.Domain.Notifications.EmailAutomationRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CronExpression")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("ExecutionType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ResourceType")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("TimeZoneId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("TriggerType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailAutomationRules", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Domain.Notifications.EmailAutomationRuleRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EmailAddress")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("RecipientType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RoleName")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("RuleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RuleId");
+
+                    b.ToTable("EmailAutomationRuleRecipients", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Domain.Notifications.NotificationPreferences", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1364,6 +1461,15 @@ namespace CRM.Infrastructure.Persistence.Migrations
                     b.Navigation("PaymentPlan");
                 });
 
+            modelBuilder.Entity("CRM.Domain.Notifications.EmailAutomationRuleRecipient", b =>
+                {
+                    b.HasOne("CRM.Domain.Notifications.EmailAutomationRule", null)
+                        .WithMany("Recipients")
+                        .HasForeignKey("RuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CRM.Domain.Notifications.NotificationPreferences", b =>
                 {
                     b.HasOne("CRM.Infrastructure.Identity.ApplicationUser", null)
@@ -1550,6 +1656,11 @@ namespace CRM.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CRM.Domain.Finance.PaymentPlan", b =>
                 {
                     b.Navigation("Installments");
+                });
+
+            modelBuilder.Entity("CRM.Domain.Notifications.EmailAutomationRule", b =>
+                {
+                    b.Navigation("Recipients");
                 });
 
             modelBuilder.Entity("CRM.Domain.Shipments.Shipment", b =>

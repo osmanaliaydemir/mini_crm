@@ -46,6 +46,8 @@ public class CRMDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<PaymentInstallment> PaymentInstallments => Set<PaymentInstallment>();
     public DbSet<CashTransaction> CashTransactions => Set<CashTransaction>();
     public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
+    public DbSet<EmailAutomationRule> EmailAutomationRules => Set<EmailAutomationRule>();
+    public DbSet<EmailAutomationRuleRecipient> EmailAutomationRuleRecipients => Set<EmailAutomationRuleRecipient>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<SystemSettings> SystemSettings => Set<SystemSettings>();
     public DbSet<TaskDb> Tasks => Set<TaskDb>();
