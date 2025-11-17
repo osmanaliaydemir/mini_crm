@@ -13,10 +13,7 @@ public class DetailsModel : PageModel
     private readonly ILogger<DetailsModel> _logger;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public DetailsModel(
-        IAuditLogService auditLogService,
-        ILogger<DetailsModel> logger,
-        IStringLocalizer<SharedResource> localizer)
+    public DetailsModel(IAuditLogService auditLogService, ILogger<DetailsModel> logger, IStringLocalizer<SharedResource> localizer)
     {
         _auditLogService = auditLogService;
         _logger = logger;

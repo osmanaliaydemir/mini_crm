@@ -15,10 +15,7 @@ public class ForgotPasswordModel : PageModel
     private readonly IEmailSender _emailSender;
     private readonly ILogger<ForgotPasswordModel> _logger;
 
-    public ForgotPasswordModel(
-        UserManager<ApplicationUser> userManager,
-        IEmailSender emailSender,
-        ILogger<ForgotPasswordModel> logger)
+    public ForgotPasswordModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender, ILogger<ForgotPasswordModel> logger)
     {
         _userManager = userManager;
         _emailSender = emailSender;
@@ -40,7 +37,7 @@ public class ForgotPasswordModel : PageModel
         }
 
         var user = await _userManager.FindByEmailAsync(Input.Email);
-        
+
         // Güvenlik: Kullanıcı bulunamasa bile başarı mesajı göster
         // Bu, e-posta adreslerinin sistemde olup olmadığını keşfetmeyi engeller
         if (user is null || !await _userManager.IsEmailConfirmedAsync(user))

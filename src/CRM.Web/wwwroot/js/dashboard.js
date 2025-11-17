@@ -253,18 +253,35 @@ function renderTasks() {
         return;
     }
 
-    taskList.innerHTML = tasks.map((task) => `
-        <li class="task-card">
-            <strong>${task.title}</strong>
-            <div class="task-meta">
-                <span>${task.owner}</span>
-                <span>${task.due}</span>
-            </div>
-            <div class="progress-bar">
-                <span style="width:${task.progress}%"></span>
-            </div>
-        </li>
-    `).join('');
+    taskList.innerHTML = tasks.map((task) => {
+        const statusClass = task.statusClass || 'info';
+        const statusLabel = task.statusLabel || task.status || '';
+        const priorityClass = task.priorityClass || 'info';
+        const priorityLabel = task.priorityLabel || task.priority || '';
+        const ownerLabel = task.ownerLabel || task.owner || '';
+        const dueLabel = task.dueLabel || task.due || '';
+        const progress = typeof task.progress === 'number' ? task.progress : 0;
+        const isOverdue = Boolean(task.isOverdue);
+        const detailsUrl = task.detailsUrl || `/Tasks/Details?id=${task.id}`;
+
+        return `
+        <li class="task-card ${isOverdue ? 'overdue' : ''}">
+            <a class="task-link" href="${detailsUrl}">
+                <div class="task-header">
+                    <span class="task-title">${task.title}</span>
+                    <span class="badge badge-${statusClass}">${statusLabel}</span>
+                </div>
+                <div class="task-meta">
+                    <span class="task-due ${isOverdue ? 'text-danger' : ''}">${dueLabel}</span>
+                    <span class="task-assigned">${ownerLabel}</span>
+                    <span class="badge badge-${priorityClass}">${priorityLabel}</span>
+                </div>
+                <div class="progress-bar">
+                    <span style="width:${progress}%"></span>
+                </div>
+            </a>
+        </li>`;
+    }).join('');
 }
 
 function renderActivityFeed() {

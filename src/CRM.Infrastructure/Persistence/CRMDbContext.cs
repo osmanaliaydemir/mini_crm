@@ -9,6 +9,7 @@ using CRM.Domain.Finance;
 using CRM.Domain.Notifications;
 using CRM.Domain.Audit;
 using CRM.Domain.Settings;
+using CRM.Domain.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +48,7 @@ public class CRMDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<SystemSettings> SystemSettings => Set<SystemSettings>();
+    public DbSet<TaskDb> Tasks => Set<TaskDb>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

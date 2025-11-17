@@ -90,6 +90,7 @@ builder.Services.AddRazorPages(options =>
         options.Conventions.AuthorizeFolder("/Finance", "FinanceAccess");
         options.Conventions.AuthorizeFolder("/Users", "AdminOnly");
         options.Conventions.AuthorizeFolder("/Settings", "AdminOnly");
+        options.Conventions.AuthorizeFolder("/Tasks", "OperationsAccess");
         options.Conventions.AuthorizePage("/Index", "OperationsAccess");
     })
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)

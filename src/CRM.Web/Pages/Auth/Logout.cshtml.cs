@@ -16,11 +16,8 @@ public class LogoutModel : PageModel
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<LogoutModel> _logger;
 
-    public LogoutModel(
-        SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
-        IServiceScopeFactory serviceScopeFactory,
-        ILogger<LogoutModel> logger)
+    public LogoutModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, 
+        IServiceScopeFactory serviceScopeFactory, ILogger<LogoutModel> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
@@ -46,14 +43,14 @@ public class LogoutModel : PageModel
         {
             var logoutUserId = userId;
             var logoutUserName = userName;
-            
+
             _ = Task.Run(async () =>
             {
                 try
                 {
                     using var scope = _serviceScopeFactory.CreateScope();
                     var auditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
-                    
+
                     await auditLogService.CreateLogAsync(new CreateAuditLogRequest(
                         "ApplicationUser",
                         logoutUserId,

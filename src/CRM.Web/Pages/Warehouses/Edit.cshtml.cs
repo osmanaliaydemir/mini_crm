@@ -54,14 +54,9 @@ public class EditModel : PageModel
 
         try
         {
-            var request = new UpdateWarehouseRequest(
-                Warehouse.Id,
-                Warehouse.Name,
-                Warehouse.Location,
-                Warehouse.ContactPerson,
-                Warehouse.ContactPhone,
-                Warehouse.Notes,
-                Warehouse.RowVersion);
+            var request = new UpdateWarehouseRequest(Warehouse.Id, Warehouse.Name,
+                Warehouse.Location, Warehouse.ContactPerson, Warehouse.ContactPhone,
+                Warehouse.Notes, Warehouse.RowVersion);
 
             await _warehouseService.UpdateAsync(request, cancellationToken);
 

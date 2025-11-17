@@ -19,12 +19,8 @@ public class CreateModel : PageModel
     private readonly IStringLocalizer<SharedResource> _localizer;
     private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(
-        ICashTransactionService cashTransactionService,
-        ICustomerService customerService,
-        IShipmentService shipmentService,
-        IStringLocalizer<SharedResource> localizer,
-        ILogger<CreateModel> logger)
+    public CreateModel(ICashTransactionService cashTransactionService, ICustomerService customerService,
+        IShipmentService shipmentService, IStringLocalizer<SharedResource> localizer, ILogger<CreateModel> logger)
     {
         _cashTransactionService = cashTransactionService;
         _customerService = customerService;

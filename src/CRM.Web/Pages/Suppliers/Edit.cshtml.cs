@@ -56,16 +56,9 @@ public class EditModel : PageModel
 
         try
         {
-            var request = new UpdateSupplierRequest(
-                Supplier.Id,
-                Supplier.Name,
-                Supplier.Country,
-                Supplier.TaxNumber,
-                Supplier.ContactEmail,
-                Supplier.ContactPhone,
-                Supplier.AddressLine,
-                Supplier.Notes,
-                Supplier.RowVersion);
+            var request = new UpdateSupplierRequest(Supplier.Id, Supplier.Name, Supplier.Country,
+                Supplier.TaxNumber, Supplier.ContactEmail, Supplier.ContactPhone, Supplier.AddressLine,
+                Supplier.Notes, Supplier.RowVersion);
 
             await _supplierService.UpdateAsync(request, cancellationToken);
 

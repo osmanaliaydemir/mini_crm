@@ -1,0 +1,156 @@
+@page
+@model CRM.Web.Pages.Tasks.IndexModel
+@using CRM.Domain.Tasks
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Tasks_Page_Title"];
+    var taskItems = Model.Tasks?.Items ?? Array.Empty<CRM.Application.Tasks.TaskDto>();
+    var hasTasks = taskItems.Any();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/tasks/list.css" asp-append-version="true" />
+}
+
+<section class="page-header tasks-header">
+    <div>
+        <h1>@Localizer["Tasks_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Tasks_Page_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary" asp-page="Create">@Localizer["Tasks_Action_Create"]</a>
+    </div>
+</section>
+
+<div class="tasks-table-section">
+    <article class="card table-card wide">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Tasks_Table_Title"]</h2>
+                <p>@Localizer["Tasks_Table_Subtitle"]</p>
+            </div>
+            <form method="get" class="table-actions tasks-filter-form">
+                <label class="tasks-filter-form__control">
+                    <span>@Localizer["Tasks_Filter_Status"]</span>
+                    <select name="status">
+                        <option value="">@Localizer["Tasks_Filter_All"]</option>
+                        <option value="0" selected="@(Model.FilterStatus == Domain.Tasks.TaskStatus.Pending)">@Localizer["Tasks_Status_Pending"]</option>
+                        <option value="1" selected="@(Model.FilterStatus == Domain.Tasks.TaskStatus.InProgress)">@Localizer["Tasks_Status_InProgress"]</option>
+                        <option value="2" selected="@(Model.FilterStatus == Domain.Tasks.TaskStatus.Completed)">@Localizer["Tasks_Status_Completed"]</option>
+                        <option value="3" selected="@(Model.FilterStatus == Domain.Tasks.TaskStatus.Cancelled)">@Localizer["Tasks_Status_Cancelled"]</option>
+                    </select>
+                </label>
+                <button type="submit" class="btn btn-primary">@Localizer["Common_Filter"]</button>
+                <a asp-page="Index" class="btn btn-ghost">@Localizer["Common_Clear"]</a>
+            </form>
+        </header>
+        <div class="table-wrapper">
+            <table class="data-table" data-tasks-table>
+                <thead>
+                    <tr>
+                        <th>@Localizer["Tasks_Table_Title"]</th>
+                        <th>@Localizer["Tasks_Table_Status"]</th>
+                        <th>@Localizer["Tasks_Table_Priority"]</th>
+                        <th>@Localizer["Tasks_Table_AssignedTo"]</th>
+                        <th>@Localizer["Tasks_Table_DueDate"]</th>
+                        <th class="text-end">@Localizer["Tasks_Table_Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (hasTasks)
+                    {
+                        @foreach (var task in taskItems)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="cell-strong">
+                                        <a asp-page="Details" asp-route-id="@task.Id">@task.Title</a>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(task.Description))
+                                    {
+                                        <div class="cell-subtext">@(task.Description.Length > 50 ? task.Description.Substring(0, 50) + "..." : task.Description)</div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge badge-@(task.Status == Domain.Tasks.TaskStatus.Completed ? "success" : task.Status == Domain.Tasks.TaskStatus.Cancelled ? "danger" : task.Status == Domain.Tasks.TaskStatus.InProgress ? "warning" : "info")">
+                                        @Localizer[$"Tasks_Status_{task.Status}"]
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-@(task.Priority == Domain.Tasks.TaskPriority.Urgent ? "danger" : task.Priority == Domain.Tasks.TaskPriority.High ? "warning" : "info")">
+                                        @Localizer[$"Tasks_Priority_{task.Priority}"]
+                                    </span>
+                                </td>
+                                <td>@(task.AssignedToUserName ?? Localizer["Tasks_Field_Unassigned"].Value)</td>
+                                <td>
+                                    @if (task.DueDate.HasValue)
+                                    {
+                                        var isOverdue = task.DueDate.Value < DateTime.UtcNow && task.Status != Domain.Tasks.TaskStatus.Completed;
+                                        <span class="@(isOverdue ? "text-danger" : "")">
+                                            @task.DueDate.Value.ToString("dd.MM.yyyy HH:mm")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @await Component.InvokeAsync("ActionButtons", new { 
+                                        detailsPage = "Details", 
+                                        editPage = "Edit", 
+                                        deletePage = "Delete", 
+                                        detailsId = task.Id, 
+                                        editId = task.Id, 
+                                        deleteId = task.Id,
+                                        detailsTitle = Localizer["Tasks_Action_Details"].Value,
+                                        editTitle = Localizer["Tasks_Action_Edit"].Value,
+                                        deleteTitle = Localizer["Tasks_Action_Delete"].Value
+                                    })
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="table-empty-message">
+                                    @Localizer["Tasks_Table_Empty"]
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if ((Model.Tasks?.TotalCount ?? 0) > 0)
+        {
+            <div class="pagination">
+                @if ((Model.Tasks?.PageNumber ?? 1) > 1)
+                {
+                    <a asp-page="Index"
+                       asp-route-page="@((Model.Tasks?.PageNumber ?? 1) - 1)"
+                       asp-route-status="@((int?)Model.FilterStatus)"
+                       class="btn btn-ghost">@Localizer["Common_Previous"]</a>
+                }
+                <span>@Localizer["Common_Page_Info", Model.Tasks?.PageNumber ?? 1, Model.Tasks?.TotalPages ?? 1, Model.Tasks?.TotalCount ?? 0]</span>
+                @if ((Model.Tasks?.PageNumber ?? 1) < (Model.Tasks?.TotalPages ?? 1))
+                {
+                    <a asp-page="Index"
+                       asp-route-page="@((Model.Tasks?.PageNumber ?? 1) + 1)"
+                       asp-route-status="@((int?)Model.FilterStatus)"
+                       class="btn btn-ghost">@Localizer["Common_Next"]</a>
+                }
+            </div>
+        }
+    </article>
+</div>
+
+@section Scripts {
+    <script src="~/js/tasks/list.js" asp-append-version="true"></script>
+}
+

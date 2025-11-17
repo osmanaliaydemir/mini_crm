@@ -14,10 +14,7 @@ public class IndexModel : PageModel
     private readonly ILogger<IndexModel> _logger;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public IndexModel(
-        ISystemSettingsService settingsService,
-        ILogger<IndexModel> logger,
-        IStringLocalizer<SharedResource> localizer)
+    public IndexModel(ISystemSettingsService settingsService, ILogger<IndexModel> logger, IStringLocalizer<SharedResource> localizer)
     {
         _settingsService = settingsService;
         _logger = logger;

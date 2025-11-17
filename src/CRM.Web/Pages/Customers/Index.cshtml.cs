@@ -15,10 +15,7 @@ public class IndexModel : PageModel
 
     public const string UnspecifiedSegmentLabel = "__UNSPECIFIED__";
 
-    public IndexModel(
-        ICustomerService customerService,
-        IExportService exportService,
-        ILogger<IndexModel> logger)
+    public IndexModel(ICustomerService customerService, IExportService exportService, ILogger<IndexModel> logger)
     {
         _customerService = customerService;
         _exportService = exportService;

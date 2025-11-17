@@ -9,6 +9,7 @@ using CRM.Application.Notifications;
 using CRM.Application.Settings;
 using CRM.Application.Shipments;
 using CRM.Application.Suppliers;
+using CRM.Application.Tasks;
 using CRM.Application.Users;
 using CRM.Application.Warehouses;
 using FluentValidation;
@@ -47,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IExportService, ExportService>();
         services.AddScoped<ISystemSettingsService, SystemSettingsService>();
+        services.AddScoped<ITaskService, TaskService>();
 
         return services;
     }

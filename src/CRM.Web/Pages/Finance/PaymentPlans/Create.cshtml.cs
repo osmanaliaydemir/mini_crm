@@ -17,11 +17,8 @@ public class CreateModel : PageModel
     private readonly IShipmentService _shipmentService;
     private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(
-        IPaymentPlanService paymentPlanService,
-        ICustomerService customerService,
-        IShipmentService shipmentService,
-        ILogger<CreateModel> logger)
+    public CreateModel(IPaymentPlanService paymentPlanService, ICustomerService customerService,
+        IShipmentService shipmentService, ILogger<CreateModel> logger)
     {
         _paymentPlanService = paymentPlanService;
         _customerService = customerService;

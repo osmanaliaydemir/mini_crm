@@ -1,0 +1,108 @@
+@page
+@model CRM.Web.Pages.Tasks.CreateModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Tasks_Form_Header_Create"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/tasks/form.css" asp-append-version="true" />
+}
+
+<section class="page-header form-header">
+    <div>
+        <h1>@Localizer["Tasks_Form_Header_Create"]</h1>
+        <p class="subtitle">@Localizer["Tasks_Form_Create_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Tasks_Action_Back"]</a>
+    </div>
+</section>
+
+<form method="post" class="form-shell" novalidate>
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+    <div class="form-sections">
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Tasks_Form_Basic_Title"]</h2>
+                <p>@Localizer["Tasks_Form_Basic_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field full">
+                    <label asp-for="Task.Title">@Localizer["Tasks_Field_Title"]</label>
+                    <input asp-for="Task.Title" class="input-control" />
+                    <span asp-validation-for="Task.Title" class="input-error"></span>
+                </div>
+                <div class="input-field full">
+                    <label asp-for="Task.Description">@Localizer["Tasks_Field_Description"]</label>
+                    <textarea asp-for="Task.Description" class="input-control textarea" rows="4"></textarea>
+                    <span asp-validation-for="Task.Description" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Tasks_Form_Details_Title"]</h2>
+                <p>@Localizer["Tasks_Form_Details_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Task.Status">@Localizer["Tasks_Field_Status"]</label>
+                    <select asp-for="Task.Status" asp-items="Model.Statuses" class="input-control"></select>
+                    <span asp-validation-for="Task.Status" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Task.Priority">@Localizer["Tasks_Field_Priority"]</label>
+                    <select asp-for="Task.Priority" asp-items="Model.Priorities" class="input-control"></select>
+                    <span asp-validation-for="Task.Priority" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Task.DueDate">@Localizer["Tasks_Field_DueDate"]</label>
+                    <input asp-for="Task.DueDate" type="datetime-local" class="input-control" />
+                    <span asp-validation-for="Task.DueDate" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Task.AssignedToUserId">@Localizer["Tasks_Field_AssignedTo"]</label>
+                    <select asp-for="Task.AssignedToUserId" asp-items="Model.Users" class="input-control">
+                        <option value="">@Localizer["Tasks_Field_Unassigned"]</option>
+                    </select>
+                    <span asp-validation-for="Task.AssignedToUserId" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>@Localizer["Tasks_Form_Related_Title"]</h2>
+                <p>@Localizer["Tasks_Form_Related_Subtitle"]</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Task.RelatedEntityType">@Localizer["Tasks_Field_RelatedEntityType"]</label>
+                    <input asp-for="Task.RelatedEntityType" class="input-control" placeholder="Customer, Shipment, etc." />
+                    <span asp-validation-for="Task.RelatedEntityType" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Task.RelatedEntityId">@Localizer["Tasks_Field_RelatedEntityId"]</label>
+                    <input asp-for="Task.RelatedEntityId" type="text" class="input-control" />
+                    <span asp-validation-for="Task.RelatedEntityId" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="form-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Tasks_Form_Cancel"]</a>
+        <button type="submit" class="btn btn-primary">@Localizer["Tasks_Form_Submit"]</button>
+    </footer>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

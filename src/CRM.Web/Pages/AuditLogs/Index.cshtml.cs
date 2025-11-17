@@ -14,10 +14,7 @@ public class IndexModel : PageModel
     private readonly ILogger<IndexModel> _logger;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public IndexModel(
-        IAuditLogService auditLogService,
-        ILogger<IndexModel> logger,
-        IStringLocalizer<SharedResource> localizer)
+    public IndexModel(IAuditLogService auditLogService, ILogger<IndexModel> logger, IStringLocalizer<SharedResource> localizer)
     {
         _auditLogService = auditLogService;
         _logger = logger;
@@ -56,18 +53,10 @@ public class IndexModel : PageModel
         try
         {
             var pagination = PaginationRequest.Create(CurrentPage, PageSize);
-
             EntityTypes = await _auditLogService.GetEntityTypesAsync(cancellationToken);
 
-            AuditLogs = await _auditLogService.GetAllPagedAsync(
-                pagination,
-                EntityType,
-                null, // entityId - şimdilik null
-                Action,
-                UserId,
-                FromDate,
-                ToDate,
-                cancellationToken);
+            AuditLogs = await _auditLogService.GetAllPagedAsync(pagination, EntityType, null, // entityId - şimdilik null
+                Action, UserId, FromDate, ToDate, cancellationToken);
         }
         catch (Exception ex)
         {

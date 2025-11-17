@@ -12,10 +12,7 @@ public class IndexModel : PageModel
     private readonly IExportService _exportService;
     private readonly ILogger<IndexModel> _logger;
 
-    public IndexModel(
-        IShipmentService shipmentService,
-        IExportService exportService,
-        ILogger<IndexModel> logger)
+    public IndexModel(IShipmentService shipmentService, IExportService exportService, ILogger<IndexModel> logger)
     {
         _shipmentService = shipmentService;
         _exportService = exportService;

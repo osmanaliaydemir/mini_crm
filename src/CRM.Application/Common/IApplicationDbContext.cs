@@ -5,6 +5,7 @@ using CRM.Domain.Notifications;
 using CRM.Domain.Settings;
 using CRM.Domain.Shipments;
 using CRM.Domain.Suppliers;
+using CRM.Domain.Tasks;
 using CRM.Domain.Warehouses;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,7 @@ public interface IApplicationDbContext
     DbSet<NotificationPreferences> NotificationPreferences { get; }
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<SystemSettings> SystemSettings { get; }
+    DbSet<TaskDb> Tasks { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 

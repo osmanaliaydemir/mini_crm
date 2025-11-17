@@ -1,3 +1,5 @@
+using CRM.Domain.Tasks;
+
 namespace CRM.Application.Dashboard;
 
 public sealed record DashboardData
@@ -10,6 +12,7 @@ public sealed record DashboardData
     public IReadOnlyList<CashFlowPoint> CashFlowTrend { get; init; } = Array.Empty<CashFlowPoint>();
     public IReadOnlyList<TimeSeriesPoint> CustomerInteractionTrend { get; init; } = Array.Empty<TimeSeriesPoint>();
     public Dictionary<string, IReadOnlyList<ActivityEvent>> ActivityFeed { get; init; } = new();
+    public IReadOnlyList<TaskSummary> TodayTasks { get; init; } = Array.Empty<TaskSummary>();
 }
 
 public sealed record DashboardSummary(
@@ -36,4 +39,6 @@ public sealed record CashFlowPoint(DateTime PeriodStart, decimal Income, decimal
 public sealed record CategoryPoint(string Label, int Value);
 
 public sealed record ActivityEvent(DateTime OccurredAt, Domain.Enums.ShipmentStatus Status, string ReferenceNumber, string? CustomerDisplay);
+
+public sealed record TaskSummary(Guid Id, string Title, Domain.Tasks.TaskStatus Status, Domain.Tasks.TaskPriority Priority, DateTime? DueDate, Guid? AssignedToUserId, string? AssignedToUserName);
 

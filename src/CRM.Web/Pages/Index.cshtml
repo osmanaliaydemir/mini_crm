@@ -4,6 +4,7 @@
 @using System.Globalization
 @using System.Text.Json
 @using CRM.Web
+@using CRM.Domain.Tasks
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
 
@@ -111,10 +112,81 @@
 
     var serializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
+    var todayTaskCards = Model.DashboardData.TodayTasks.Select(t =>
+    {
+        var hasDueDate = t.DueDate.HasValue;
+        var dueLocal = hasDueDate ? DateTime.SpecifyKind(t.DueDate!.Value, DateTimeKind.Utc).ToLocalTime() : (DateTime?)null;
+        var dueText = dueLocal?.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture) ?? Localizer["Dashboard_Tasks_NoDueDate"].Value;
+        var assignedLabel = t.AssignedToUserId.HasValue && Model.UserNames.TryGetValue(t.AssignedToUserId.Value, out var assignedUserName)
+            ? assignedUserName
+            : Localizer["Tasks_Field_Unassigned"].Value;
+        var isOverdue = dueLocal.HasValue && dueLocal < DateTime.Now && t.Status != CRM.Domain.Tasks.TaskStatus.Completed;
+        var statusClass = t.Status == CRM.Domain.Tasks.TaskStatus.Completed ? "success"
+            : t.Status == CRM.Domain.Tasks.TaskStatus.Cancelled ? "danger"
+            : t.Status == CRM.Domain.Tasks.TaskStatus.InProgress ? "warning"
+            : "info";
+        var priorityClass = t.Priority == TaskPriority.Urgent ? "danger"
+            : t.Priority == TaskPriority.High ? "warning"
+            : "info";
+        var statusLabel = Localizer[$"Tasks_Status_{t.Status}"].Value;
+        var priorityLabel = Localizer[$"Tasks_Priority_{t.Priority}"].Value;
+        var priorityWeight = t.Priority switch
+        {
+            TaskPriority.Urgent => 1.0,
+            TaskPriority.High => 0.75,
+            TaskPriority.Medium => 0.5,
+            _ => 0.25
+        };
+        var completion = t.Status == CRM.Domain.Tasks.TaskStatus.Completed
+            ? 1.0
+            : t.Status == CRM.Domain.Tasks.TaskStatus.InProgress
+                ? 0.6
+                : t.Status == CRM.Domain.Tasks.TaskStatus.Pending
+                    ? 0.3
+                    : 0.1;
+        var progressPercent = Math.Clamp((priorityWeight * 0.4 + completion * 0.6) * 100, 5, 100);
+
+        return new
+        {
+            t.Id,
+            t.Title,
+            Status = t.Status,
+            StatusClass = statusClass,
+            StatusLabel = statusLabel,
+            PriorityClass = priorityClass,
+            PriorityLabel = priorityLabel,
+            DueText = dueText,
+            DueIso = t.DueDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            OwnerLabel = assignedLabel,
+            IsOverdue = isOverdue,
+            Progress = (int)Math.Round(progressPercent, 0, MidpointRounding.AwayFromZero),
+            DetailsUrl = Url.Page("/Tasks/Details", new { id = t.Id })
+        };
+    }).ToList();
+
+    var taskItems = todayTaskCards.Select(t => new
+    {
+        id = t.Id,
+        title = t.Title,
+        status = t.Status.ToString(),
+        statusClass = t.StatusClass,
+        statusLabel = t.StatusLabel,
+        priority = t.PriorityLabel,
+        priorityClass = t.PriorityClass,
+        priorityLabel = t.PriorityLabel,
+        due = t.DueText,
+        dueLabel = t.DueText,
+        owner = t.OwnerLabel,
+        ownerLabel = t.OwnerLabel,
+        isOverdue = t.IsOverdue,
+        progress = t.Progress,
+        detailsUrl = t.DetailsUrl
+    }).ToArray();
+
     var dashboardPayload = new
     {
         status = statusItems,
-        tasks = Array.Empty<object>(),
+        tasks = taskItems,
         suppliers = new { labels = supplierLabels, values = supplierValues },
         ranges = new Dictionary<string, object>
         {
@@ -244,13 +316,42 @@
     <article class="card todo-card">
         <header class="card-header">
             <div>
-                <h2>Operasyon Görevleri</h2>
-                <p>Bugün tamamlanması gereken işler</p>
+                <h2>@Localizer["Navigation_Tasks"]</h2>
+                <p>@Localizer["Dashboard_Tasks_Subtitle"]</p>
             </div>
-            <a class="btn btn-ghost" asp-page="/Tasks/Index">Yeni Görev</a>
+            <a class="btn btn-ghost" asp-page="/Tasks/Index">@Localizer["Tasks_Action_Create"]</a>
         </header>
         <ul id="taskList" class="task-list">
-            <li class="task-card empty-state">Görev verisi henüz bulunamadı.</li>
+            @if (todayTaskCards.Any())
+            {
+                @foreach (var task in todayTaskCards)
+                {
+                    <li class="task-card @(task.IsOverdue ? "overdue" : "")">
+                        <a href="@task.DetailsUrl" class="task-link">
+                            <div class="task-header">
+                                <span class="task-title">@task.Title</span>
+                                <span class="badge badge-@task.StatusClass">@task.StatusLabel</span>
+                            </div>
+                            <div class="task-meta">
+                                <span class="task-due @(task.IsOverdue ? "text-danger" : "")">
+                                    @Localizer["Tasks_Field_DueDate"]: @task.DueText
+                                </span>
+                                <span class="task-assigned">
+                                    @Localizer["Tasks_Field_AssignedTo"]: @task.OwnerLabel
+                                </span>
+                                <span class="badge badge-@task.PriorityClass">@task.PriorityLabel</span>
+                            </div>
+                            <div class="progress-bar">
+                                <span style="width:@task.Progress%"></span>
+                            </div>
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="task-card empty-state">@Localizer["Dashboard_Tasks_Empty"]</li>
+            }
         </ul>
     </article>
 

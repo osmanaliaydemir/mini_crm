@@ -1,0 +1,55 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Tasks.DeleteModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Tasks_Form_Header_Delete"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/tasks/form.css" asp-append-version="true" />
+}
+
+<section class="page-header form-header">
+    <div>
+        <h1>@Localizer["Tasks_Form_Header_Delete"]</h1>
+        <p class="subtitle">@Localizer["Tasks_Form_Delete_Subtitle"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Tasks_Action_Back"]</a>
+    </div>
+</section>
+
+<div class="form-shell delete-form">
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+    <section class="form-card delete-card">
+        <header>
+            <div class="delete-card__status">
+                <span class="delete-card__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+                        <path d="M9 3h6M10 3v1m4-1v1M4 7h16" />
+                        <path d="M6 7v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7" />
+                        <path d="M10 11v6M14 11v6" />
+                    </svg>
+                </span>
+                <div>
+                    <span class="delete-card__label">@Localizer["Tasks_Form_Header_Delete"]</span>
+                    <p>@Localizer["Tasks_Form_Delete_Subtitle"]</p>
+                </div>
+            </div>
+        </header>
+        <div class="delete-card__content">
+            <p>@Localizer["Tasks_Delete_Confirm_Message", Model.TaskTitle]</p>
+            <small>@Localizer["Tasks_Delete_Warning"]</small>
+        </div>
+        <form method="post" class="delete-card__actions">
+            <input type="hidden" asp-for="TaskId" />
+            <a class="btn btn-ghost" asp-page="Index">@Localizer["Tasks_Form_Cancel"]</a>
+            <button type="submit" class="btn btn-danger">@Localizer["Tasks_Form_Delete"]</button>
+        </form>
+    </section>
+</div>
+

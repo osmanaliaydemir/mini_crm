@@ -32,14 +32,8 @@ public class CreateModel : PageModel
 
         try
         {
-            var request = new CreateSupplierRequest(
-                Supplier.Name,
-                Supplier.Country,
-                Supplier.TaxNumber,
-                Supplier.ContactEmail,
-                Supplier.ContactPhone,
-                Supplier.AddressLine,
-                Supplier.Notes);
+            var request = new CreateSupplierRequest(Supplier.Name, Supplier.Country, Supplier.TaxNumber,
+                Supplier.ContactEmail, Supplier.ContactPhone, Supplier.AddressLine, Supplier.Notes);
 
             await _supplierService.CreateAsync(request, cancellationToken);
 

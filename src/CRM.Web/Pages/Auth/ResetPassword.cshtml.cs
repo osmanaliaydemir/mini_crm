@@ -14,9 +14,7 @@ public class ResetPasswordModel : PageModel
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<ResetPasswordModel> _logger;
 
-    public ResetPasswordModel(
-        UserManager<ApplicationUser> userManager,
-        ILogger<ResetPasswordModel> logger)
+    public ResetPasswordModel(UserManager<ApplicationUser> userManager, ILogger<ResetPasswordModel> logger)
     {
         _userManager = userManager;
         _logger = logger;

@@ -15,10 +15,7 @@ public class PreferencesModel : PageModel
     private readonly INotificationService _notificationService;
     private readonly ILogger<PreferencesModel> _logger;
 
-    public PreferencesModel(
-        UserManager<ApplicationUser> userManager,
-        INotificationService notificationService,
-        ILogger<PreferencesModel> logger)
+    public PreferencesModel(UserManager<ApplicationUser> userManager, INotificationService notificationService, ILogger<PreferencesModel> logger)
     {
         _userManager = userManager;
         _notificationService = notificationService;

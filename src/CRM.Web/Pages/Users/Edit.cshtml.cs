@@ -55,16 +55,9 @@ public class EditModel : PageModel
 
         try
         {
-            var request = new UpdateUserRequest(
-                User.Id,
-                User.Email,
-                User.FirstName,
-                User.LastName,
-                User.Locale,
-                User.EmailConfirmed,
-                User.LockoutEnabled,
-                User.LockoutEnd,
-                User.SelectedRoles?.ToList() ?? new List<string>());
+            var request = new UpdateUserRequest(User.Id, User.Email, User.FirstName,
+                User.LastName, User.Locale, User.EmailConfirmed,
+                User.LockoutEnabled, User.LockoutEnd, User.SelectedRoles?.ToList() ?? new List<string>());
 
             await _userService.UpdateAsync(request, cancellationToken);
 

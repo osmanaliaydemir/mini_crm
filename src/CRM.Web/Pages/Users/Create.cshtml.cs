@@ -38,14 +38,8 @@ public class CreateModel : PageModel
 
         try
         {
-            var request = new CreateUserRequest(
-                User.UserName,
-                User.Email,
-                User.Password,
-                User.FirstName,
-                User.LastName,
-                User.Locale,
-                User.SelectedRoles?.ToList() ?? new List<string>());
+            var request = new CreateUserRequest(User.UserName, User.Email, User.Password,
+                User.FirstName, User.LastName, User.Locale, User.SelectedRoles?.ToList() ?? new List<string>());
 
             await _userService.CreateAsync(request, cancellationToken);
 

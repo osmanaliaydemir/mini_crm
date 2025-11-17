@@ -67,13 +67,8 @@ public class DetailsModel : PageModel
 
         try
         {
-            var request = new AddUnloadingRequest(
-                UnloadingInput.WarehouseId,
-                UnloadingInput.ShipmentId,
-                UnloadingInput.TruckPlate,
-                UnloadingInput.UnloadedAt,
-                UnloadingInput.UnloadedVolume,
-                UnloadingInput.Notes);
+            var request = new AddUnloadingRequest(UnloadingInput.WarehouseId, UnloadingInput.ShipmentId,
+                UnloadingInput.TruckPlate, UnloadingInput.UnloadedAt, UnloadingInput.UnloadedVolume, UnloadingInput.Notes);
 
             await _warehouseService.AddUnloadingAsync(request, cancellationToken);
 
@@ -91,7 +86,7 @@ public class DetailsModel : PageModel
         {
             _logger.LogError(ex, "Error adding unloading for warehouse: {WarehouseId}", UnloadingInput.WarehouseId);
             ModelState.AddModelError(string.Empty, "Boşaltma kaydı eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
-            
+
             ShipmentOptions = Details.ShipmentOptions.Select(s => new SelectListItem
             {
                 Value = s.Id.ToString(),

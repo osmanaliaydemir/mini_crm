@@ -22,13 +22,8 @@ public class EditModel : PageModel
     private readonly ILogger<EditModel> _logger;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public EditModel(
-        IShipmentService shipmentService,
-        ISupplierService supplierService,
-        ICustomerService customerService,
-        IApplicationDbContext context,
-        ILogger<EditModel> logger,
-        IStringLocalizer<SharedResource> localizer)
+    public EditModel(IShipmentService shipmentService, ISupplierService supplierService, ICustomerService customerService,
+        IApplicationDbContext context, ILogger<EditModel> logger, IStringLocalizer<SharedResource> localizer)
     {
         _shipmentService = shipmentService;
         _supplierService = supplierService;
@@ -97,21 +92,10 @@ public class EditModel : PageModel
 
         try
         {
-            var request = new UpdateShipmentRequest(
-                Input.Id,
-                Input.SupplierId,
-                Input.CustomerId,
-                Input.ReferenceNumber,
-                Input.ShipmentDate,
-                Input.EstimatedArrival,
-                Input.Status,
-                Input.LoadingPort,
-                Input.DischargePort,
-                Input.Notes,
-                Input.StageStartedAt,
-                Input.StageCompletedAt,
-                Input.StageNotes,
-                Input.RowVersion);
+            var request = new UpdateShipmentRequest(Input.Id, Input.SupplierId, Input.CustomerId, Input.ReferenceNumber,
+                Input.ShipmentDate, Input.EstimatedArrival, Input.Status, Input.LoadingPort,
+                Input.DischargePort, Input.Notes, Input.StageStartedAt,
+                Input.StageCompletedAt, Input.StageNotes, Input.RowVersion);
 
             await _shipmentService.UpdateAsync(request, cancellationToken);
 

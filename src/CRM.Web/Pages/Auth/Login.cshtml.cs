@@ -15,11 +15,8 @@ public class LoginModel : PageModel
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(
-        SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
-        IServiceScopeFactory serviceScopeFactory,
-        ILogger<LoginModel> logger)
+    public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager,
+        IServiceScopeFactory serviceScopeFactory, ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
@@ -71,7 +68,7 @@ public class LoginModel : PageModel
                 {
                     using var scope = _serviceScopeFactory.CreateScope();
                     var auditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
-                    
+
                     await auditLogService.CreateLogAsync(new CreateAuditLogRequest(
                         "ApplicationUser",
                         Guid.Empty, // Kullanıcı bulunamadı
@@ -101,14 +98,14 @@ public class LoginModel : PageModel
             var failedUserName = user.UserName;
             var lockedOut = signInResult.IsLockedOut;
             var notAllowed = signInResult.IsNotAllowed;
-            
+
             _ = Task.Run(async () =>
             {
                 try
                 {
                     using var scope = _serviceScopeFactory.CreateScope();
                     var auditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
-                    
+
                     await auditLogService.CreateLogAsync(new CreateAuditLogRequest(
                         "ApplicationUser",
                         failedUserId,
@@ -141,14 +138,14 @@ public class LoginModel : PageModel
         var loginUserId = user.Id;
         var loginUserName = user.UserName;
         var rememberMe = Input.RememberMe;
-        
+
         _ = Task.Run(async () =>
         {
             try
             {
                 using var scope = _serviceScopeFactory.CreateScope();
                 var auditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
-                
+
                 await auditLogService.CreateLogAsync(new CreateAuditLogRequest(
                     "ApplicationUser",
                     loginUserId,

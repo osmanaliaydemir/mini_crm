@@ -32,12 +32,8 @@ public class CreateModel : PageModel
 
         try
         {
-            var request = new CreateWarehouseRequest(
-                Warehouse.Name,
-                Warehouse.Location,
-                Warehouse.ContactPerson,
-                Warehouse.ContactPhone,
-                Warehouse.Notes);
+            var request = new CreateWarehouseRequest(Warehouse.Name, Warehouse.Location,
+                Warehouse.ContactPerson, Warehouse.ContactPhone, Warehouse.Notes);
 
             await _warehouseService.CreateAsync(request, cancellationToken);
 

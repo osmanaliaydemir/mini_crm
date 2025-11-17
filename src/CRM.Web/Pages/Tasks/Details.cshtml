@@ -1,0 +1,135 @@
+@page "{id:guid}"
+@model CRM.Web.Pages.Tasks.DetailsModel
+@using CRM.Domain.Tasks
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Tasks_Form_Header_Details"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/tasks/details.css" asp-append-version="true" />
+}
+
+<section class="page-header form-header">
+    <div>
+        <h1>@Localizer["Tasks_Form_Header_Details"]</h1>
+        <p class="subtitle">@Model.Task?.Title</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">@Localizer["Tasks_Action_Back"]</a>
+        <a class="btn btn-primary" asp-page="Edit" asp-route-id="@Model.Task?.Id">@Localizer["Tasks_Action_Edit"]</a>
+    </div>
+</section>
+
+@if (Model.Task != null)
+{
+    <div class="details-container">
+        <div class="details-grid">
+            <section class="details-card">
+                <header>
+                    <h2>@Localizer["Tasks_Form_Basic_Title"]</h2>
+                </header>
+                <dl class="details-list">
+                    <div class="detail-item">
+                        <dt>@Localizer["Tasks_Field_Title"]</dt>
+                        <dd>@Model.Task.Title</dd>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Task.Description))
+                    {
+                        <div class="detail-item">
+                            <dt>@Localizer["Tasks_Field_Description"]</dt>
+                            <dd>@Model.Task.Description</dd>
+                        </div>
+                    }
+                </dl>
+            </section>
+
+            <section class="details-card">
+                <header>
+                    <h2>@Localizer["Tasks_Form_Details_Title"]</h2>
+                </header>
+                <dl class="details-list">
+                    <div class="detail-item">
+                        <dt>@Localizer["Tasks_Field_Status"]</dt>
+                        <dd>
+                            <span class="badge badge-@(Model.Task.Status == Domain.Tasks.TaskStatus.Completed ? "success" : Model.Task.Status == Domain.Tasks.TaskStatus.Cancelled ? "danger" : "info")">
+                                @Localizer[$"Tasks_Status_{Model.Task.Status}"]
+                            </span>
+                        </dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>@Localizer["Tasks_Field_Priority"]</dt>
+                        <dd>
+                            <span class="badge badge-@(Model.Task.Priority == TaskPriority.Urgent ? "danger" : Model.Task.Priority == TaskPriority.High ? "warning" : "info")">
+                                @Localizer[$"Tasks_Priority_{Model.Task.Priority}"]
+                            </span>
+                        </dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>@Localizer["Tasks_Field_DueDate"]</dt>
+                        <dd>@(Model.Task.DueDate?.ToString("dd.MM.yyyy HH:mm") ?? "-")</dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>@Localizer["Tasks_Field_AssignedTo"]</dt>
+                        <dd>@(Model.Task.AssignedToUserName ?? Localizer["Tasks_Field_Unassigned"].Value)</dd>
+                    </div>
+                </dl>
+            </section>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Task.RelatedEntityType) || Model.Task.RelatedEntityId.HasValue)
+            {
+                <section class="details-card">
+                    <header>
+                        <h2>@Localizer["Tasks_Form_Related_Title"]</h2>
+                    </header>
+                    <dl class="details-list">
+                        @if (!string.IsNullOrWhiteSpace(Model.Task.RelatedEntityType))
+                        {
+                            <div class="detail-item">
+                                <dt>@Localizer["Tasks_Field_RelatedEntityType"]</dt>
+                                <dd>@Model.Task.RelatedEntityType</dd>
+                            </div>
+                        }
+                        @if (Model.Task.RelatedEntityId.HasValue)
+                        {
+                            <div class="detail-item">
+                                <dt>@Localizer["Tasks_Field_RelatedEntityId"]</dt>
+                                <dd>@Model.Task.RelatedEntityId</dd>
+                            </div>
+                        }
+                    </dl>
+                </section>
+            }
+
+            <section class="details-card">
+                <header>
+                    <h2>@Localizer["Common_Metadata_Title"]</h2>
+                </header>
+                <dl class="details-list">
+                    <div class="detail-item">
+                        <dt>@Localizer["Common_CreatedAt"]</dt>
+                        <dd>@Model.Task.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Task.CreatedBy))
+                    {
+                        <div class="detail-item">
+                            <dt>@Localizer["Common_CreatedBy"]</dt>
+                            <dd>@Model.Task.CreatedBy</dd>
+                        </div>
+                    }
+                    @if (Model.Task.LastModifiedAt.HasValue)
+                    {
+                        <div class="detail-item">
+                            <dt>@Localizer["Common_LastModifiedAt"]</dt>
+                            <dd>@Model.Task.LastModifiedAt.Value.ToString("dd.MM.yyyy HH:mm")</dd>
+                        </div>
+                    }
+                </dl>
+            </section>
+        </div>
+    </div>
+}
+

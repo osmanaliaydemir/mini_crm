@@ -11,10 +11,7 @@ internal sealed class JsonStringLocalizerFactory : IStringLocalizerFactory
     private readonly IFileProvider _fileProvider;
     private readonly ILoggerFactory _loggerFactory;
 
-    public JsonStringLocalizerFactory(
-        IOptions<JsonLocalizationOptions> options,
-        IFileProvider fileProvider,
-        ILoggerFactory loggerFactory)
+    public JsonStringLocalizerFactory(IOptions<JsonLocalizationOptions> options, IFileProvider fileProvider, ILoggerFactory loggerFactory)
     {
         _options = options.Value;
         _fileProvider = fileProvider;

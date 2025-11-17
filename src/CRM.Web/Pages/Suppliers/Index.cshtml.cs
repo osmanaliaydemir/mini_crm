@@ -13,10 +13,7 @@ public class IndexModel : PageModel
     private readonly IExportService _exportService;
     private readonly ILogger<IndexModel> _logger;
 
-    public IndexModel(
-        ISupplierService supplierService,
-        IExportService exportService,
-        ILogger<IndexModel> logger)
+    public IndexModel(ISupplierService supplierService, IExportService exportService, ILogger<IndexModel> logger)
     {
         _supplierService = supplierService;
         _exportService = exportService;

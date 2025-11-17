@@ -17,12 +17,7 @@ internal sealed class JsonStringLocalizer : IStringLocalizer
 
     private readonly ConcurrentDictionary<string, Lazy<IDictionary<string, string>>> _cache = new(StringComparer.OrdinalIgnoreCase);
 
-    public JsonStringLocalizer(
-        string resourceName,
-        JsonLocalizationOptions options,
-        IFileProvider fileProvider,
-        ILogger<JsonStringLocalizer> logger,
-        CultureInfo? culture = null)
+    public JsonStringLocalizer(string resourceName, JsonLocalizationOptions options, IFileProvider fileProvider, ILogger<JsonStringLocalizer> logger, CultureInfo? culture = null)
     {
         _resourceName = resourceName;
         _options = options;
@@ -31,8 +26,7 @@ internal sealed class JsonStringLocalizer : IStringLocalizer
         _culture = culture;
     }
 
-    public LocalizedString this[string name]
-        => GetString(name);
+    public LocalizedString this[string name] => GetString(name);
 
     public LocalizedString this[string name, params object[] arguments]
     {

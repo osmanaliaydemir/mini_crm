@@ -2,6 +2,7 @@ using CRM.Application.Common;
 using CRM.Application.Common.Caching;
 using CRM.Domain.Enums;
 using CRM.Domain.Finance;
+using CRM.Domain.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -167,6 +168,31 @@ public class DashboardService : IDashboardService
             ["90d"] = BuildActivityEvents(shipments, nowUtc, 90)
         };
 
+        // Get today's tasks (due today or overdue, not completed)
+        var todayStart = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
+        var todayEnd = todayStart.AddDays(1);
+        var todayTasks = await _context.Tasks
+            .AsNoTracking()
+            .Where(t => t.Status != Domain.Tasks.TaskStatus.Completed && 
+                       t.Status != Domain.Tasks.TaskStatus.Cancelled &&
+                       t.DueDate.HasValue &&
+                       t.DueDate.Value <= todayEnd)
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate)
+            .Take(10)
+            .ToListAsync(cancellationToken);
+
+        // User names will be loaded in the view layer using UserManager
+        var taskSummaries = todayTasks.Select(t => new TaskSummary(
+            t.Id,
+            t.Title,
+            t.Status,
+            t.Priority,
+            t.DueDate,
+            t.AssignedToUserId,
+            null // User names will be loaded in the view layer if needed
+        )).ToList();
+
         return new DashboardData
         {
             Summary = summary,
@@ -176,7 +202,8 @@ public class DashboardService : IDashboardService
             WarehouseVolumeTrend = warehouseVolumeTrend,
             CashFlowTrend = cashFlowTrend,
             CustomerInteractionTrend = customerInteractionTrend,
-            ActivityFeed = activityFeed
+            ActivityFeed = activityFeed,
+            TodayTasks = taskSummaries
         };
     }
 
