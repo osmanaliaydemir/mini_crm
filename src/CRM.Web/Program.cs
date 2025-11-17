@@ -34,6 +34,13 @@ try
 // Memory Cache
 builder.Services.AddMemoryCache();
 
+// Response Caching - Static content and API responses
+builder.Services.AddResponseCaching(options =>
+{
+    options.MaximumBodySize = 64 * 1024 * 1024; // 64 MB
+    options.UseCaseSensitivePaths = false;
+});
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
@@ -60,7 +67,13 @@ builder.Services
         options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Auth/Login";
         options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8); // 8 saat oturum süresi
         options.Cookie.Name = "__crm_portal";
+        
+        // Cookie Security - OWASP Best Practices
+        options.Cookie.HttpOnly = true; // JavaScript'ten erişilemez
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // HTTPS'de Secure
+        options.Cookie.SameSite = SameSiteMode.Strict; // CSRF koruması
     });
 
 const string AdminRole = "Admin";
@@ -166,11 +179,24 @@ await using (var scope = app.Services.CreateAsyncScope())
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(localizationOptions);
 
+// Security Headers Middleware - Güvenlik başlıklarını ekle
+app.UseSecurityHeaders();
+
+// Response Caching - Static content caching
+app.UseResponseCaching();
+
 // Status Code Pages - Custom error pages için
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 // Global Exception Handler Middleware - Tüm exception'ları yakalar
 app.UseGlobalExceptionHandler();
+
+// Rate Limiting Middleware - Brute force ve DDoS koruması
+app.UseRateLimiting(options =>
+{
+    options.MaxRequests = 10; // Login ve API için 10 istek
+    options.Window = TimeSpan.FromMinutes(1); // 1 dakika içinde
+});
 
 if (!app.Environment.IsDevelopment())
 {

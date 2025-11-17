@@ -884,6 +884,23 @@
   "Timeline_ActivityAction_Assigned": "Assigned",
   "Timeline_ActivityAction_Completed": "Completed",
   "Timeline_ActivityAction_NoteAdded": "Note Added",
-  "Timeline_ActivityAction_InteractionAdded": "Interaction Added"
+  "Timeline_ActivityAction_InteractionAdded": "Interaction Added",
+  "Search_Page_Title": "Global Search",
+  "Search_Page_Subtitle": "Search across all entities in the system",
+  "Search_Placeholder": "Search...",
+  "Search_Button": "Search",
+  "Search_Filter_EntityTypes": "Filter by Type",
+  "Search_NoResults": "No results found",
+  "Search_NoResults_Description": "Try adjusting your search terms or filters",
+  "Search_Results_Count": "Found {1} results for \"{0}\"",
+  "Search_EntityType_Customer": "Customers",
+  "Search_EntityType_Shipment": "Shipments",
+  "Search_EntityType_Supplier": "Suppliers",
+  "Search_EntityType_Warehouse": "Warehouses",
+  "Search_EntityType_Task": "Tasks",
+  "Search_EntityType_PaymentPlan": "Payment Plans",
+  "Search_EntityType_CashTransaction": "Cash Transactions",
+  "Search_EntityType_User": "Users",
+  "Search_EntityType_CustomerInteraction": "Customer Interactions"
 }
 

@@ -30,6 +30,10 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
             .WithOne(x => x.Warehouse)
             .HasForeignKey(x => x.WarehouseId);
 
+        // Performance indexes
+        builder.HasIndex(x => x.Name);
+        builder.HasIndex(x => x.CreatedAt);
+
         builder.Property(x => x.RowVersion)
             .IsRowVersion();
     }
@@ -49,6 +53,11 @@ public class WarehouseUnloadingConfiguration : IEntityTypeConfiguration<Warehous
 
         builder.Property(x => x.Notes)
             .HasMaxLength(500);
+
+        // Performance indexes
+        builder.HasIndex(x => x.WarehouseId);
+        builder.HasIndex(x => x.UnloadedAt);
+        builder.HasIndex(x => new { x.WarehouseId, x.UnloadedAt }); // Composite index for warehouse queries
 
         builder.Property(x => x.RowVersion)
             .IsRowVersion();

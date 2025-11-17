@@ -46,6 +46,13 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .HasForeignKey(x => x.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Performance indexes
+        builder.HasIndex(x => x.Name);
+        builder.HasIndex(x => x.Email);
+        builder.HasIndex(x => x.Segment);
+        builder.HasIndex(x => x.CreatedAt);
+        builder.HasIndex(x => new { x.Name, x.Segment }); // Composite index for common queries
+
         builder.Property(x => x.RowVersion)
             .IsRowVersion();
     }
@@ -69,6 +76,10 @@ public class CustomerContactConfiguration : IEntityTypeConfiguration<CustomerCon
 
         builder.Property(x => x.Position)
             .HasMaxLength(100);
+
+        // Performance indexes
+        builder.HasIndex(x => x.CustomerId);
+        builder.HasIndex(x => x.Email);
     }
 }
 
@@ -93,6 +104,12 @@ public class CustomerInteractionConfiguration : IEntityTypeConfiguration<Custome
 
         builder.Property(x => x.RecordedBy)
             .HasMaxLength(100);
+
+        // Performance indexes
+        builder.HasIndex(x => x.CustomerId);
+        builder.HasIndex(x => x.InteractionDate);
+        builder.HasIndex(x => x.InteractionType);
+        builder.HasIndex(x => new { x.CustomerId, x.InteractionDate }); // Composite index for timeline queries
 
         builder.Property(x => x.RowVersion)
             .IsRowVersion();
@@ -125,6 +142,12 @@ public class PaymentPlanConfiguration : IEntityTypeConfiguration<PaymentPlan>
             .WithOne(x => x.PaymentPlan)
             .HasForeignKey(x => x.PaymentPlanId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Performance indexes
+        builder.HasIndex(x => x.CustomerId);
+        builder.HasIndex(x => x.ShipmentId);
+        builder.HasIndex(x => x.CreatedAt);
+        builder.HasIndex(x => new { x.CustomerId, x.CreatedAt }); // Composite index for customer payment plans
     }
 }
 
@@ -149,6 +172,10 @@ public class PaymentInstallmentConfiguration : IEntityTypeConfiguration<PaymentI
 
         builder.Property(x => x.RowVersion)
             .IsRowVersion();
+
+        // Performance indexes
+        builder.HasIndex(x => x.PaymentPlanId);
+        builder.HasIndex(x => x.DueDate);
     }
 }
 
@@ -173,6 +200,13 @@ public class CashTransactionConfiguration : IEntityTypeConfiguration<CashTransac
 
         builder.Property(x => x.Category)
             .HasMaxLength(150);
+
+        // Performance indexes
+        builder.HasIndex(x => x.TransactionDate);
+        builder.HasIndex(x => x.TransactionType);
+        builder.HasIndex(x => x.RelatedCustomerId);
+        builder.HasIndex(x => x.RelatedShipmentId);
+        builder.HasIndex(x => new { x.TransactionDate, x.TransactionType }); // Composite index for filtering
 
         builder.Property(x => x.RowVersion)
             .IsRowVersion();

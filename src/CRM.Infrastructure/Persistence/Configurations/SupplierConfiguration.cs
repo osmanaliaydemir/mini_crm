@@ -32,6 +32,11 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
         builder.Property(x => x.Notes)
             .HasMaxLength(500);
 
+        // Performance indexes
+        builder.HasIndex(x => x.Name);
+        builder.HasIndex(x => x.Country);
+        builder.HasIndex(x => x.CreatedAt);
+
         builder.Property(x => x.RowVersion)
             .IsRowVersion();
     }

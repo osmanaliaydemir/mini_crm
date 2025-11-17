@@ -1,0 +1,139 @@
+@page
+@model CRM.Web.Pages.Search.IndexModel
+@using CRM.Application.Search
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Search_Page_Title"];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/search/index.css" asp-append-version="true" />
+}
+
+<section class="page-header search-header">
+    <div>
+        <h1>@Localizer["Search_Page_Title"]</h1>
+        <p class="subtitle">@Localizer["Search_Page_Subtitle"]</p>
+    </div>
+</section>
+
+<section class="search-section">
+    <form method="get" class="search-form">
+        <div class="search-input-wrapper">
+            <input type="text" 
+                   name="query" 
+                   value="@Model.Query" 
+                   placeholder="@Localizer["Search_Placeholder"]" 
+                   class="search-input" 
+                   autofocus 
+                   autocomplete="off" />
+            <button type="submit" class="search-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Query))
+        {
+            <div class="search-filters">
+                <label>@Localizer["Search_Filter_EntityTypes"]</label>
+                <div class="filter-checkboxes">
+                    @foreach (var option in Model.EntityTypeOptions)
+                    {
+                        var isChecked = Model.EntityTypes?.Contains(option.Value.ToString(), StringComparer.OrdinalIgnoreCase) == true;
+                        <label class="filter-checkbox">
+                            <input type="checkbox" 
+                                   name="entityTypes" 
+                                   value="@option.Value.ToString()" 
+                                   @(isChecked ? "checked" : "") />
+                            <span>@option.Label</span>
+                        </label>
+                    }
+                </div>
+            </div>
+        }
+    </form>
+</section>
+
+@if (Model.HasSearched && Model.SearchResults != null)
+{
+    <section class="search-results">
+        @if (Model.SearchResults.Results.Count == 0)
+        {
+            <article class="card">
+                <div class="card-body">
+                    <div class="empty-results">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <h3>@Localizer["Search_NoResults"]</h3>
+                        <p>@Localizer["Search_NoResults_Description"]</p>
+                    </div>
+                </div>
+            </article>
+        }
+        else
+        {
+            <div class="results-summary">
+                <p>@Localizer["Search_Results_Count", Model.SearchResults.TotalCount, Model.Query ?? ""]</p>
+            </div>
+
+            <div class="results-by-type">
+                @foreach (var group in Model.SearchResults.Results.GroupBy(r => r.Type))
+                {
+                    <article class="card result-group">
+                        <div class="card-header">
+                            <h2>@Localizer[$"Search_EntityType_{group.Key}"]</h2>
+                            <span class="result-count">@group.Count()</span>
+                        </div>
+                        <div class="card-body">
+                            <ul class="result-list">
+                                @foreach (var result in group)
+                                {
+                                    <li class="result-item">
+                                        <a href="@result.Url" class="result-link">
+                                            <div class="result-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                                                    @if (result.Type == SearchEntityType.Customer)
+                                                    {
+                                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                                        <circle cx="9" cy="7" r="4"></circle>
+                                                    }
+                                                    else if (result.Type == SearchEntityType.Shipment)
+                                                    {
+                                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                                    }
+                                                    else
+                                                    {
+                                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                    }
+                                                </svg>
+                                            </div>
+                                            <div class="result-content">
+                                                <div class="result-title">@result.Title</div>
+                                                @if (!string.IsNullOrWhiteSpace(result.Subtitle))
+                                                {
+                                                    <div class="result-subtitle">@result.Subtitle</div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(result.Description))
+                                                {
+                                                    <div class="result-description">@result.Description</div>
+                                                }
+                                            </div>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+}
+

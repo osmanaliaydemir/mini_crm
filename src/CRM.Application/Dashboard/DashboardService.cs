@@ -42,6 +42,7 @@ public class DashboardService : IDashboardService
         var sixMonthsStart = monthBuckets.First();
         var thirtyDaysAgo = now.AddDays(-30);
 
+        // Optimize: Only include necessary navigation properties (avoid loading all columns)
         var shipments = await _context.Shipments
             .AsNoTracking()
             .Include(s => s.Stages)

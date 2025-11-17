@@ -960,6 +960,23 @@
   "Timeline_ActivityAction_Assigned": "Atandı",
   "Timeline_ActivityAction_Completed": "Tamamlandı",
   "Timeline_ActivityAction_NoteAdded": "Not Eklendi",
-  "Timeline_ActivityAction_InteractionAdded": "Etkileşim Eklendi"
+  "Timeline_ActivityAction_InteractionAdded": "Etkileşim Eklendi",
+  "Search_Page_Title": "Global Arama",
+  "Search_Page_Subtitle": "Sistemdeki tüm varlıklarda arama yapın",
+  "Search_Placeholder": "Ara...",
+  "Search_Button": "Ara",
+  "Search_Filter_EntityTypes": "Tipe Göre Filtrele",
+  "Search_NoResults": "Sonuç bulunamadı",
+  "Search_NoResults_Description": "Arama terimlerinizi veya filtrelerinizi değiştirmeyi deneyin",
+  "Search_Results_Count": "\"{0}\" için {1} sonuç bulundu",
+  "Search_EntityType_Customer": "Müşteriler",
+  "Search_EntityType_Shipment": "Sevkiyatlar",
+  "Search_EntityType_Supplier": "Tedarikçiler",
+  "Search_EntityType_Warehouse": "Depolar",
+  "Search_EntityType_Task": "Görevler",
+  "Search_EntityType_PaymentPlan": "Ödeme Planları",
+  "Search_EntityType_CashTransaction": "Nakit İşlemleri",
+  "Search_EntityType_User": "Kullanıcılar",
+  "Search_EntityType_CustomerInteraction": "Müşteri Etkileşimleri"
 }
 

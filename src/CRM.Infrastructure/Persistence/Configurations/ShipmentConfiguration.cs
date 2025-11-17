@@ -46,6 +46,13 @@ public class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
             .HasForeignKey(x => x.ShipmentId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Performance indexes
+        builder.HasIndex(x => x.ReferenceNumber).IsUnique();
+        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => x.CustomerId);
+        builder.HasIndex(x => x.CreatedAt);
+        builder.HasIndex(x => new { x.Status, x.CreatedAt }); // Composite index for status filtering
+
         builder.Property(x => x.RowVersion)
             .IsRowVersion();
     }

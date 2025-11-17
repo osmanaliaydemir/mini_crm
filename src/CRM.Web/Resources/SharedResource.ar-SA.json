@@ -915,6 +915,23 @@
   "Timeline_ActivityAction_Assigned": "تم الإسناد",
   "Timeline_ActivityAction_Completed": "تم الإكمال",
   "Timeline_ActivityAction_NoteAdded": "تمت إضافة ملاحظة",
-  "Timeline_ActivityAction_InteractionAdded": "تمت إضافة تفاعل"
+  "Timeline_ActivityAction_InteractionAdded": "تمت إضافة تفاعل",
+  "Search_Page_Title": "البحث الشامل",
+  "Search_Page_Subtitle": "البحث في جميع الكيانات في النظام",
+  "Search_Placeholder": "بحث...",
+  "Search_Button": "بحث",
+  "Search_Filter_EntityTypes": "تصفية حسب النوع",
+  "Search_NoResults": "لم يتم العثور على نتائج",
+  "Search_NoResults_Description": "حاول تعديل مصطلحات البحث أو الفلاتر",
+  "Search_Results_Count": "تم العثور على {1} نتيجة لـ \"{0}\"",
+  "Search_EntityType_Customer": "العملاء",
+  "Search_EntityType_Shipment": "الشحنات",
+  "Search_EntityType_Supplier": "الموردون",
+  "Search_EntityType_Warehouse": "المستودعات",
+  "Search_EntityType_Task": "المهام",
+  "Search_EntityType_PaymentPlan": "خطط الدفع",
+  "Search_EntityType_CashTransaction": "المعاملات النقدية",
+  "Search_EntityType_User": "المستخدمون",
+  "Search_EntityType_CustomerInteraction": "تفاعلات العملاء"
 }
 

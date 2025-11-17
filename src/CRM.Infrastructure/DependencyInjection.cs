@@ -1,6 +1,7 @@
 using CRM.Application.Authentication;
 using CRM.Application.Common;
 using CRM.Application.Notifications.Automation;
+using CRM.Application.Search;
 using CRM.Application.Timeline;
 using CRM.Application.Users;
 using CRM.Infrastructure.Email;
@@ -46,12 +47,22 @@ public static class DependencyInjection
 
         var identityBuilder = services.AddIdentityCore<ApplicationUser>(options =>
         {
-            options.Password.RequiredLength = 6;
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireUppercase = false;
-            options.Password.RequireNonAlphanumeric = false;
+            // OWASP Password Policy Guidelines
+            options.Password.RequiredLength = 12; // Minimum 12 karakter
+            options.Password.RequireDigit = true; // En az 1 rakam
+            options.Password.RequireLowercase = true; // En az 1 küçük harf
+            options.Password.RequireUppercase = true; // En az 1 büyük harf
+            options.Password.RequireNonAlphanumeric = true; // En az 1 özel karakter
+            options.Password.RequiredUniqueChars = 4; // En az 4 farklı karakter
+
+            // Account Lockout - Brute force koruması
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // 15 dakika kilit
+            options.Lockout.MaxFailedAccessAttempts = 5; // 5 başarısız deneme
+            options.Lockout.AllowedForNewUsers = true; // Yeni kullanıcılar için de aktif
+
+            // User settings
             options.User.RequireUniqueEmail = true;
+            options.SignIn.RequireConfirmedEmail = false; // İsteğe bağlı: Email doğrulama
         });
 
         identityBuilder = new IdentityBuilder(identityBuilder.UserType, typeof(ApplicationRole), identityBuilder.Services);
@@ -74,6 +85,7 @@ public static class DependencyInjection
         services.AddScoped<IUserDirectory, Identity.UserDirectory>();
         services.AddScoped<IEmailAutomationScheduler, Scheduling.QuartzEmailAutomationScheduler>();
         services.AddScoped<IActivityTimelineService, Timeline.ActivityTimelineService>();
+        services.AddScoped<IGlobalSearchService, Search.GlobalSearchService>();
         services.AddHostedService<Scheduling.EmailAutomationBootstrapper>();
 
         return services;
