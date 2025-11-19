@@ -87,6 +87,38 @@
 
         <section class="form-card">
             <header>
+                <h2>Ürünler</h2>
+                <p>Sevkiyata dahil edilecek ürünleri seçin</p>
+            </header>
+            <div id="items-container">
+                @for (int i = 0; i < (Model.Input.Items?.Count ?? 0); i++)
+                {
+                    <div class="item-row">
+                        <div class="input-field">
+                            <label>Ürün</label>
+                            <select asp-for="Input.Items[i].VariantId" asp-items="Model.ProductOptions" class="input-control">
+                                <option value="">Ürün seçin</option>
+                            </select>
+                        </div>
+                        <div class="input-field">
+                            <label>Miktar</label>
+                            <input asp-for="Input.Items[i].Quantity" type="number" step="0.01" class="input-control" />
+                        </div>
+                        <div class="input-field">
+                            <label>Hacim</label>
+                            <input asp-for="Input.Items[i].Volume" type="number" step="0.01" class="input-control" />
+                        </div>
+                        <div class="input-field">
+                            <button type="button" class="btn btn-sm btn-danger remove-item">Kaldır</button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <button type="button" id="add-item" class="btn btn-ghost">Ürün Ekle</button>
+        </section>
+
+        <section class="form-card">
+            <header>
                 <h2>@Localizer["Shipments_Form_Stage_Header"]</h2>
                 <p>@Localizer["Shipments_Form_Stage_Subtitle"]</p>
             </header>
@@ -118,5 +150,74 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const itemsContainer = document.getElementById('items-container');
+            const addItemBtn = document.getElementById('add-item');
+            @{
+                var productOptionsList = (Model.ProductOptions != null && Model.ProductOptions.Any())
+                    ? Model.ProductOptions.Select(p => new { Value = p.Value ?? string.Empty, Text = p.Text ?? string.Empty }).ToArray()
+                    : Array.Empty<object>();
+            }
+            const productOptions = @Html.Raw(Json.Serialize(productOptionsList));
+            
+            console.log('ProductOptions loaded:', productOptions);
+            console.log('ProductOptions count:', productOptions ? productOptions.length : 0);
+
+            if (!productOptions || productOptions.length === 0) {
+                console.warn('ProductOptions is empty or undefined');
+            }
+
+            function addItemRow() {
+                const index = itemsContainer.children.length;
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                
+                let optionsHtml = '<option value="">Ürün seçin</option>';
+                if (productOptions && Array.isArray(productOptions) && productOptions.length > 0) {
+                    productOptions.forEach(function(p) {
+                        const value = p.Value || '';
+                        const text = p.Text || '';
+                        if (value && text) {
+                            optionsHtml += `<option value="${value}">${text}</option>`;
+                        }
+                    });
+                }
+                
+                row.innerHTML = `
+                    <div class="input-field">
+                        <label>Ürün</label>
+                        <select name="Input.Items[${index}].VariantId" class="input-control">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Miktar</label>
+                        <input name="Input.Items[${index}].Quantity" type="number" step="0.01" class="input-control" />
+                    </div>
+                    <div class="input-field">
+                        <label>Hacim</label>
+                        <input name="Input.Items[${index}].Volume" type="number" step="0.01" class="input-control" />
+                    </div>
+                    <div class="input-field">
+                        <button type="button" class="btn btn-sm btn-danger remove-item">Kaldır</button>
+                    </div>
+                `;
+                itemsContainer.appendChild(row);
+            }
+
+            if (addItemBtn) {
+                addItemBtn.addEventListener('click', addItemRow);
+            }
+
+            if (itemsContainer) {
+                itemsContainer.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('remove-item')) {
+                        e.target.closest('.item-row').remove();
+                    }
+                });
+            }
+        });
+    </script>
 }
 

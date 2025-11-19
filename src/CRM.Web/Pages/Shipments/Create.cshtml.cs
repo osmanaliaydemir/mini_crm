@@ -3,6 +3,7 @@ using System.Linq;
 using CRM.Application.Shipments;
 using CRM.Application.Suppliers;
 using CRM.Application.Customers;
+using CRM.Application.Products;
 using CRM.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -15,13 +16,15 @@ public class CreateModel : PageModel
     private readonly IShipmentService _shipmentService;
     private readonly ISupplierService _supplierService;
     private readonly ICustomerService _customerService;
+    private readonly IProductService _productService;
     private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(IShipmentService shipmentService, ISupplierService supplierService, ICustomerService customerService, ILogger<CreateModel> logger)
+    public CreateModel(IShipmentService shipmentService, ISupplierService supplierService, ICustomerService customerService, IProductService productService, ILogger<CreateModel> logger)
     {
         _shipmentService = shipmentService;
         _supplierService = supplierService;
         _customerService = customerService;
+        _productService = productService;
         _logger = logger;
     }
 
@@ -31,6 +34,7 @@ public class CreateModel : PageModel
     public IList<SelectListItem> SupplierOptions { get; private set; } = new List<SelectListItem>();
     public IList<SelectListItem> CustomerOptions { get; private set; } = new List<SelectListItem>();
     public IList<SelectListItem> StatusOptions { get; private set; } = new List<SelectListItem>();
+    public IList<SelectListItem> ProductOptions { get; private set; } = new List<SelectListItem>();
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
@@ -50,6 +54,11 @@ public class CreateModel : PageModel
 
         try
         {
+            var items = Input.Items?
+                .Where(i => i.VariantId != Guid.Empty && i.Quantity > 0)
+                .Select(i => new ShipmentItemRequest(i.VariantId, i.Quantity, i.Volume))
+                .ToList();
+
             var request = new CreateShipmentRequest(
                 Input.SupplierId,
                 Input.CustomerId,
@@ -62,7 +71,8 @@ public class CreateModel : PageModel
                 Input.Notes,
                 Input.StageStartedAt,
                 Input.StageCompletedAt,
-                Input.StageNotes);
+                Input.StageNotes,
+                items);
 
             var shipmentId = await _shipmentService.CreateAsync(request, cancellationToken);
 
@@ -86,6 +96,13 @@ public class CreateModel : PageModel
 
         var customers = await _customerService.GetAllAsync(cancellationToken: cancellationToken);
         CustomerOptions = customers.Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToList();
+
+        var products = await _productService.GetAllAsync(cancellationToken: cancellationToken);
+        ProductOptions = products.Select(p => new SelectListItem
+        {
+            Text = $"{p.Name} ({p.Species ?? "-"} / {p.Grade ?? "-"})",
+            Value = p.Id.ToString()
+        }).ToList();
 
         StatusOptions = Enum.GetValues(typeof(ShipmentStatus))
             .Cast<ShipmentStatus>()
@@ -132,6 +149,15 @@ public class CreateModel : PageModel
 
         [MaxLength(500)]
         public string? StageNotes { get; set; }
+
+        public List<ShipmentItemInput> Items { get; set; } = new();
+    }
+
+    public sealed class ShipmentItemInput
+    {
+        public Guid VariantId { get; set; }
+        public decimal Quantity { get; set; }
+        public decimal Volume { get; set; }
     }
 }
 

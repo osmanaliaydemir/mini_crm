@@ -15,6 +15,7 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/common/datatable.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/customers/list.css" asp-append-version="true" />
 }
 
@@ -102,31 +103,6 @@
             else
             {
                 <li class="empty">@Localizer["Customers_TopCustomers_NoData"]</li>
-            }
-        </ul>
-    </article>
-
-    <article class="card top-segments-card">
-        <header class="card-header">
-            <h2>@Localizer["Customers_TopSegments_Title"]</h2>
-        </header>
-        <ul class="top-segments-list">
-            @if (Model.CustomerSegmentStats.Any())
-            {
-                var rank = 1;
-                foreach (var segment in Model.CustomerSegmentStats.Take(5))
-                {
-                    <li>
-                        <span class="rank">@rank</span>
-                        <span class="segment">@FormatSegment(segment.Segment)</span>
-                        <span class="count">@Localizer["Customers_TopSegments_Count", segment.CustomerCount]</span>
-                    </li>
-                    rank++;
-                }
-            }
-            else
-            {
-                <li class="empty">@Localizer["Customers_TopSegments_NoData"]</li>
             }
         </ul>
     </article>

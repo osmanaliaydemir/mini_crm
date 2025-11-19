@@ -3,6 +3,7 @@ using System.Linq;
 using CRM.Application.Shipments;
 using CRM.Application.Suppliers;
 using CRM.Application.Customers;
+using CRM.Application.Products;
 using CRM.Application.Common;
 using CRM.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -18,16 +19,18 @@ public class EditModel : PageModel
     private readonly IShipmentService _shipmentService;
     private readonly ISupplierService _supplierService;
     private readonly ICustomerService _customerService;
+    private readonly IProductService _productService;
     private readonly IApplicationDbContext _context;
     private readonly ILogger<EditModel> _logger;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public EditModel(IShipmentService shipmentService, ISupplierService supplierService, ICustomerService customerService,
-        IApplicationDbContext context, ILogger<EditModel> logger, IStringLocalizer<SharedResource> localizer)
+        IProductService productService, IApplicationDbContext context, ILogger<EditModel> logger, IStringLocalizer<SharedResource> localizer)
     {
         _shipmentService = shipmentService;
         _supplierService = supplierService;
         _customerService = customerService;
+        _productService = productService;
         _context = context;
         _logger = logger;
         _localizer = localizer;
@@ -39,6 +42,7 @@ public class EditModel : PageModel
     public IList<SelectListItem> SupplierOptions { get; private set; } = new List<SelectListItem>();
     public IList<SelectListItem> CustomerOptions { get; private set; } = new List<SelectListItem>();
     public IList<SelectListItem> StatusOptions { get; private set; } = new List<SelectListItem>();
+    public IList<SelectListItem> ProductOptions { get; private set; } = new List<SelectListItem>();
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -54,6 +58,7 @@ public class EditModel : PageModel
         var shipmentWithStages = await _context.Shipments
             .AsNoTracking()
             .Include(s => s.Stages)
+            .Include(s => s.Items)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
         var latestStage = shipmentWithStages?.Stages
@@ -75,7 +80,13 @@ public class EditModel : PageModel
             StageStartedAt = latestStage is null ? DateTime.UtcNow : ToLocal(latestStage.StartedAt),
             StageCompletedAt = latestStage?.CompletedAt.HasValue == true ? ToLocal(latestStage!.CompletedAt!.Value) : null,
             StageNotes = latestStage?.Notes,
-            RowVersion = shipment.RowVersion
+            RowVersion = shipment.RowVersion,
+            Items = shipmentWithStages?.Items.Select(i => new ShipmentItemInput
+            {
+                VariantId = i.VariantId,
+                Quantity = i.Quantity,
+                Volume = i.Volume
+            }).ToList() ?? new List<ShipmentItemInput>()
         };
 
         return Page();
@@ -92,10 +103,15 @@ public class EditModel : PageModel
 
         try
         {
+            var items = Input.Items?
+                .Where(i => i.VariantId != Guid.Empty && i.Quantity > 0)
+                .Select(i => new ShipmentItemRequest(i.VariantId, i.Quantity, i.Volume))
+                .ToList();
+
             var request = new UpdateShipmentRequest(Input.Id, Input.SupplierId, Input.CustomerId, Input.ReferenceNumber,
                 Input.ShipmentDate, Input.EstimatedArrival, Input.Status, Input.LoadingPort,
                 Input.DischargePort, Input.Notes, Input.StageStartedAt,
-                Input.StageCompletedAt, Input.StageNotes, Input.RowVersion);
+                Input.StageCompletedAt, Input.StageNotes, Input.RowVersion, items);
 
             await _shipmentService.UpdateAsync(request, cancellationToken);
 
@@ -136,6 +152,13 @@ public class EditModel : PageModel
 
         var customers = await _customerService.GetAllAsync(cancellationToken: cancellationToken);
         CustomerOptions = customers.Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToList();
+
+        var products = await _productService.GetAllAsync(cancellationToken: cancellationToken);
+        ProductOptions = products.Select(p => new SelectListItem
+        {
+            Text = $"{p.Name} ({p.Species ?? "-"} / {p.Grade ?? "-"})",
+            Value = p.Id.ToString()
+        }).ToList();
 
         StatusOptions = Enum.GetValues(typeof(ShipmentStatus))
             .Cast<ShipmentStatus>()
@@ -197,6 +220,15 @@ public class EditModel : PageModel
 
         [HiddenInput]
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        public List<ShipmentItemInput> Items { get; set; } = new();
+    }
+
+    public sealed class ShipmentItemInput
+    {
+        public Guid VariantId { get; set; }
+        public decimal Quantity { get; set; }
+        public decimal Volume { get; set; }
     }
 }
 

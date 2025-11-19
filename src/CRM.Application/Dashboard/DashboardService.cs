@@ -41,44 +41,68 @@ public class DashboardService : IDashboardService
         var monthBuckets = BuildMonthSeries(now, 6);
         var sixMonthsStart = monthBuckets.First();
         var thirtyDaysAgo = now.AddDays(-30);
+        var activityThreshold = now.AddDays(-90);
+        var todayStart = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc);
+        var todayEnd = todayStart.AddDays(1);
 
-        // Optimize: Only include necessary navigation properties (avoid loading all columns)
-        var shipments = await _context.Shipments
+        // Execute queries sequentially to avoid DbContext concurrency issues
+        // EF Core DbContext is not thread-safe and cannot handle concurrent operations
+        // However, queries are still optimized with projections and AsNoTracking()
+        var shipments = await GetShipmentsForDashboardAsync(sixMonthsStart, activityThreshold, cancellationToken);
+        
+        var supplierCountries = await _context.Suppliers
             .AsNoTracking()
-            .Include(s => s.Stages)
-            .Include(s => s.Customer)
+            .Select(s => s.Country)
             .ToListAsync(cancellationToken);
-
-        var suppliers = await _context.Suppliers
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
-
+        
         var totalCustomers = await _context.Customers
             .AsNoTracking()
             .CountAsync(cancellationToken);
-
+        
         var totalWarehouses = await _context.Warehouses
             .AsNoTracking()
             .CountAsync(cancellationToken);
-
+        
         var warehouseUnloadings = await _context.WarehouseUnloadings
             .AsNoTracking()
             .Where(w => w.UnloadedAt >= sixMonthsStart)
+            .Select(w => new WarehouseUnloadingProjection(w.UnloadedAt, w.UnloadedVolume))
             .ToListAsync(cancellationToken);
-
+        
         var interactions = await _context.CustomerInteractions
             .AsNoTracking()
             .Where(i => i.InteractionDate >= sixMonthsStart)
+            .Select(i => i.InteractionDate)
             .ToListAsync(cancellationToken);
-
+        
         var cashTransactions = await _context.CashTransactions
             .AsNoTracking()
             .Where(t => t.TransactionDate >= sixMonthsStart)
+            .Select(t => new CashTransactionProjection(t.TransactionDate, t.TransactionType, t.Amount))
             .ToListAsync(cancellationToken);
-
-        var totalShipments = shipments.Count;
-        var activeShipments = shipments.Count(s => s.Status != ShipmentStatus.DeliveredToDealer && s.Status != ShipmentStatus.Cancelled);
-        var shipmentsInCustoms = shipments.Count(s => s.Status == ShipmentStatus.InCustoms);
+        
+        var todayTasksList = await _context.Tasks
+            .AsNoTracking()
+            .Where(t => t.Status != Domain.Tasks.TaskStatus.Completed &&
+                        t.Status != Domain.Tasks.TaskStatus.Cancelled &&
+                        t.DueDate.HasValue &&
+                        t.DueDate.Value <= todayEnd)
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate)
+            .Take(10)
+            .ToListAsync(cancellationToken);
+        
+        var totalShipments = await _context.Shipments
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+        
+        var activeShipments = await _context.Shipments
+            .AsNoTracking()
+            .CountAsync(s => s.Status != ShipmentStatus.DeliveredToDealer && s.Status != ShipmentStatus.Cancelled, cancellationToken);
+        
+        var shipmentsInCustoms = await _context.Shipments
+            .AsNoTracking()
+            .CountAsync(s => s.Status == ShipmentStatus.InCustoms, cancellationToken);
 
         var deliveredLast30 = shipments.Count(s =>
             s.Status == ShipmentStatus.DeliveredToDealer &&
@@ -101,8 +125,8 @@ public class DashboardService : IDashboardService
             .Select(month => new TimeSeriesPoint(month, monthDict.TryGetValue(month, out var value) ? value : 0))
             .ToList();
 
-        var supplierCountryBreakdown = suppliers
-            .GroupBy(s => NormalizeSupplierCountry(s.Country), StringComparer.OrdinalIgnoreCase)
+        var supplierCountryBreakdown = supplierCountries
+            .GroupBy(NormalizeSupplierCountry, StringComparer.OrdinalIgnoreCase)
             .Select(group => new CategoryPoint(group.Key, group.Count()))
             .OrderByDescending(point => point.Value)
             .ThenBy(point => point.Label)
@@ -136,7 +160,7 @@ public class DashboardService : IDashboardService
             .ToList();
 
         var interactionDict = interactions
-            .GroupBy(i => new DateTime(i.InteractionDate.Year, i.InteractionDate.Month, 1, 0, 0, 0, DateTimeKind.Utc))
+            .GroupBy(i => new DateTime(i.Year, i.Month, 1, 0, 0, 0, DateTimeKind.Utc))
             .ToDictionary(g => g.Key, g => g.Count());
 
         var customerInteractionTrend = monthBuckets
@@ -147,14 +171,14 @@ public class DashboardService : IDashboardService
         var cashNetLast30 = cashTransactions
             .Where(t => t.TransactionDate >= thirtyDaysAgo)
             .Sum(t => t.TransactionType == CashTransactionType.Income ? t.Amount : -t.Amount);
-        var interactionsLast30 = interactions.Count(i => i.InteractionDate >= thirtyDaysAgo);
+        var interactionsLast30 = interactions.Count(i => i >= thirtyDaysAgo);
 
         var summary = new DashboardSummary(
             TotalShipments: totalShipments,
             ActiveShipments: activeShipments,
             ShipmentsInCustoms: shipmentsInCustoms,
             DeliveredLast30Days: deliveredLast30,
-            TotalSuppliers: suppliers.Count,
+            TotalSuppliers: supplierCountries.Count,
             TotalCustomers: totalCustomers,
             TotalWarehouses: totalWarehouses,
             WarehouseUnloadingsLast30: warehouseUnloadingsLast30,
@@ -169,22 +193,8 @@ public class DashboardService : IDashboardService
             ["90d"] = BuildActivityEvents(shipments, nowUtc, 90)
         };
 
-        // Get today's tasks (due today or overdue, not completed)
-        var todayStart = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
-        var todayEnd = todayStart.AddDays(1);
-        var todayTasks = await _context.Tasks
-            .AsNoTracking()
-            .Where(t => t.Status != Domain.Tasks.TaskStatus.Completed && 
-                       t.Status != Domain.Tasks.TaskStatus.Cancelled &&
-                       t.DueDate.HasValue &&
-                       t.DueDate.Value <= todayEnd)
-            .OrderBy(t => t.Priority)
-            .ThenBy(t => t.DueDate)
-            .Take(10)
-            .ToListAsync(cancellationToken);
-
         // User names will be loaded in the view layer using UserManager
-        var taskSummaries = todayTasks.Select(t => new TaskSummary(
+        var taskSummaries = todayTasksList.Select(t => new TaskSummary(
             t.Id,
             t.Title,
             t.Status,
@@ -224,7 +234,7 @@ public class DashboardService : IDashboardService
     private static string NormalizeSupplierCountry(string? country) =>
         string.IsNullOrWhiteSpace(country) ? UnspecifiedLabel : country.Trim();
 
-    private static IReadOnlyList<ActivityEvent> BuildActivityEvents(IEnumerable<Domain.Shipments.Shipment> shipments, DateTime referenceUtc, int dayWindow)
+    private static IReadOnlyList<ActivityEvent> BuildActivityEvents(IEnumerable<ShipmentDashboardProjection> shipments, DateTime referenceUtc, int dayWindow)
     {
         var threshold = referenceUtc.AddDays(-dayWindow);
 
@@ -240,8 +250,8 @@ public class DashboardService : IDashboardService
                                   ?? stageMoment
                                   ?? shipment.CreatedAt;
 
-                var customerDisplay = shipment.Customer != null
-                    ? shipment.Customer.Name
+                var customerDisplay = !string.IsNullOrWhiteSpace(shipment.CustomerName)
+                    ? shipment.CustomerName
                     : shipment.CustomerId.HasValue
                         ? shipment.CustomerId.Value.ToString("N")
                         : null;
@@ -257,5 +267,55 @@ public class DashboardService : IDashboardService
             .Take(6)
             .ToList();
     }
+
+    private Task<List<ShipmentDashboardProjection>> GetShipmentsForDashboardAsync(
+        DateTime sixMonthsStart,
+        DateTime activityThreshold,
+        CancellationToken cancellationToken)
+    {
+        return _context.Shipments
+            .AsNoTracking()
+            .Where(s =>
+                s.ShipmentDate >= sixMonthsStart ||
+                (s.LastModifiedAt ?? s.CreatedAt) >= activityThreshold ||
+                s.Stages.Any(stage => (stage.CompletedAt ?? stage.StartedAt) >= activityThreshold))
+            .Select(s => new ShipmentDashboardProjection(
+                s.Id,
+                s.ReferenceNumber,
+                s.Status,
+                s.ShipmentDate,
+                s.CreatedAt,
+                s.LastModifiedAt,
+                s.CustomerId,
+                s.Customer != null ? s.Customer.Name : null,
+                s.Stages.Select(stage => new ShipmentStageProjection(
+                    stage.Status,
+                    stage.StartedAt,
+                    stage.CompletedAt)).ToList()))
+            .ToListAsync(cancellationToken);
+    }
+
+    private sealed record ShipmentDashboardProjection(
+        Guid Id,
+        string ReferenceNumber,
+        ShipmentStatus Status,
+        DateTime ShipmentDate,
+        DateTime CreatedAt,
+        DateTime? LastModifiedAt,
+        Guid? CustomerId,
+        string? CustomerName,
+        IReadOnlyList<ShipmentStageProjection> Stages);
+
+    private sealed record ShipmentStageProjection(
+        ShipmentStatus Status,
+        DateTime StartedAt,
+        DateTime? CompletedAt);
+
+    private sealed record WarehouseUnloadingProjection(DateTime UnloadedAt, decimal UnloadedVolume);
+
+    private sealed record CashTransactionProjection(
+        DateTime TransactionDate,
+        CashTransactionType TransactionType,
+        decimal Amount);
 }
 

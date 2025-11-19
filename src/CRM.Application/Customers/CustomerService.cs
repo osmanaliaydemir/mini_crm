@@ -96,71 +96,144 @@ public class CustomerService : ICustomerService
 
     public async Task<Guid> CreateAsync(CreateCustomerRequest request, CancellationToken cancellationToken = default)
     {
-        var customer = new Customer(Guid.NewGuid(), request.Name, request.LegalName,
-            request.TaxNumber, request.Email, request.Phone, request.Address, request.Segment, request.Notes);
-
-        if (!string.IsNullOrWhiteSpace(request.PrimaryContactName))
+        try
         {
-            customer.AddContact(request.PrimaryContactName, request.PrimaryContactEmail,
-                request.PrimaryContactPhone, request.PrimaryContactPosition);
+            _logger.LogInformation("Creating customer: {CustomerName}, Email: {Email}, Segment: {Segment}", 
+                request.Name, request.Email, request.Segment);
+
+            var customer = new Customer(Guid.NewGuid(), request.Name, request.LegalName,
+                request.TaxNumber, request.Email, request.Phone, request.Address, request.Segment, request.Notes);
+
+            if (!string.IsNullOrWhiteSpace(request.PrimaryContactName))
+            {
+                customer.AddContact(request.PrimaryContactName, request.PrimaryContactEmail,
+                    request.PrimaryContactPhone, request.PrimaryContactPosition);
+            }
+
+            await _repository.AddAsync(customer, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Customer created successfully: {CustomerId}, Name: {CustomerName}", 
+                customer.Id, customer.Name);
+
+            // Cache invalidation - Customer dashboard cache'lerini temizle
+            // Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for customer creation");
+            }
+
+            // Email gönderimi başarısız olsa bile devam et
+            try
+            {
+                await SendCustomerCreatedNotificationAsync(customer, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send customer created notification for customer {CustomerId}", customer.Id);
+            }
+
+            return customer.Id;
         }
-
-        await _repository.AddAsync(customer, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation - Customer dashboard cache'lerini temizle
-        await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
-
-        await SendCustomerCreatedNotificationAsync(customer, cancellationToken);
-
-        return customer.Id;
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error creating customer: {CustomerName}", request.Name);
+            throw;
+        }
     }
 
     public async Task UpdateAsync(UpdateCustomerRequest request, CancellationToken cancellationToken = default)
     {
-        var customer = await _context.Customers.Include(c => c.Contacts).FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
-
-        if (customer == null)
+        try
         {
-            throw new NotFoundException(nameof(Customer), request.Id);
+            _logger.LogInformation("Updating customer: {CustomerId}, Name: {CustomerName}", 
+                request.Id, request.Name);
+
+            var customer = await _context.Customers.Include(c => c.Contacts).FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+
+            if (customer == null)
+            {
+                throw new NotFoundException(nameof(Customer), request.Id);
+            }
+
+            // Set RowVersion for optimistic concurrency control
+            customer.RowVersion = request.RowVersion;
+
+            customer.Update(request.Name, request.LegalName, request.TaxNumber, request.Email,
+                request.Phone, request.Address, request.Segment, request.Notes);
+
+            customer.ClearContacts();
+            if (!string.IsNullOrWhiteSpace(request.PrimaryContactName))
+            {
+                customer.AddContact(request.PrimaryContactName, request.PrimaryContactEmail,
+                    request.PrimaryContactPhone, request.PrimaryContactPosition);
+            }
+
+            await _repository.UpdateAsync(customer, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Customer updated successfully: {CustomerId}, Name: {CustomerName}", 
+                customer.Id, customer.Name);
+
+            // Cache invalidation - Customer dashboard cache'lerini temizle
+            // Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for customer update");
+            }
         }
-
-        // Set RowVersion for optimistic concurrency control
-        customer.RowVersion = request.RowVersion;
-
-        customer.Update(request.Name, request.LegalName, request.TaxNumber, request.Email,
-            request.Phone, request.Address, request.Segment, request.Notes);
-
-        customer.ClearContacts();
-        if (!string.IsNullOrWhiteSpace(request.PrimaryContactName))
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
         {
-            customer.AddContact(request.PrimaryContactName, request.PrimaryContactEmail,
-                request.PrimaryContactPhone, request.PrimaryContactPosition);
+            _logger.LogError(ex, "Error updating customer: {CustomerId}", request.Id);
+            throw;
         }
-
-        await _repository.UpdateAsync(customer, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation - Customer dashboard cache'lerini temizle
-        await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var customer = await _repository.GetByIdAsync(id, cancellationToken);
-        if (customer == null)
+        try
         {
-            throw new NotFoundException(nameof(Customer), id);
+            _logger.LogInformation("Deleting customer: {CustomerId}", id);
+
+            var customer = await _repository.GetByIdAsync(id, cancellationToken);
+            if (customer == null)
+            {
+                throw new NotFoundException(nameof(Customer), id);
+            }
+
+            await _repository.DeleteAsync(customer, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Customer deleted successfully: {CustomerId}, Name: {CustomerName}", 
+                id, customer.Name);
+
+            // Cache invalidation - Customer dashboard cache'lerini temizle
+            // Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for customer deletion");
+            }
         }
-
-        await _repository.DeleteAsync(customer, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation - Customer dashboard cache'lerini temizle
-        await _cacheService.RemoveByPrefixAsync(CacheKeys.CustomerDashboardPrefix, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error deleting customer: {CustomerId}", id);
+            throw;
+        }
     }
 
     public async Task<CustomerDetailsDto?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)

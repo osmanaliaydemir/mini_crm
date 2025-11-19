@@ -212,10 +212,23 @@ else
                             <tr>
                                 <td>
                                     <strong>@item.VariantName</strong>
-                                    <span class="muted">@item.VariantId</span>
+                                    @if (!string.IsNullOrEmpty(item.VariantSpecies) || !string.IsNullOrEmpty(item.VariantGrade))
+                                    {
+                                        <div class="muted">
+                                            @if (!string.IsNullOrEmpty(item.VariantSpecies))
+                                            {
+                                                <span>Tür: @item.VariantSpecies</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(item.VariantGrade))
+                                            {
+                                                <span>Kalite: @item.VariantGrade</span>
+                                            }
+                                        </div>
+                                    }
+                                    <div class="muted">Birim: @item.UnitOfMeasure</div>
                                 </td>
-                                <td>@item.Quantity</td>
-                                <td>@item.Volume</td>
+                                <td>@item.Quantity @item.UnitOfMeasure</td>
+                                <td>@item.Volume m³</td>
                             </tr>
                         }
                     </tbody>

@@ -1,0 +1,42 @@
+@page
+@model CRM.Web.Pages.Products.DeleteModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Ürün Sil";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/products/delete.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/products/form.css" asp-append-version="true" />
+}
+
+<section class="page-header form-header">
+    <div>
+        <h1>Ürün Sil</h1>
+        <p class="subtitle">Bu ürünü silmek istediğinizden emin misiniz?</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">Geri</a>
+    </div>
+</section>
+
+<section class="content-section">
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+
+    <div class="form-card">
+        <p><strong>Ürün Adı:</strong> @Model.ProductName</p>
+        <p class="text-warning">Bu işlem geri alınamaz. Ürün sevkiyatlarda kullanılıyorsa silinemez.</p>
+    </div>
+
+    <div class="delete-actions">
+        <form method="post" style="display: inline;">
+            <input type="hidden" asp-for="ProductId" />
+            <button type="submit" class="btn btn-danger">Sil</button>
+            <a asp-page="Index" class="btn btn-ghost">İptal</a>
+        </form>
+    </div>
+</section>
+

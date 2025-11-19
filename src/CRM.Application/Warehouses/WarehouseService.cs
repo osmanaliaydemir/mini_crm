@@ -69,54 +69,124 @@ public class WarehouseService : IWarehouseService
 
     public async Task<Guid> CreateAsync(CreateWarehouseRequest request, CancellationToken cancellationToken = default)
     {
-        var warehouse = new Warehouse(Guid.NewGuid(), request.Name, request.Location, request.ContactPerson, request.ContactPhone);
-        warehouse.Update(request.Name, request.Location, request.ContactPerson, request.ContactPhone, request.Notes);
-        await _repository.AddAsync(warehouse, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            _logger.LogInformation("Creating warehouse: {WarehouseName}, Location: {Location}", 
+                request.Name, request.Location);
 
-        // Cache invalidation
-        await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            var warehouse = new Warehouse(Guid.NewGuid(), request.Name, request.Location, request.ContactPerson, request.ContactPhone);
+            warehouse.Update(request.Name, request.Location, request.ContactPerson, request.ContactPhone, request.Notes);
+            await _repository.AddAsync(warehouse, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await SendWarehouseCreatedNotificationAsync(warehouse, cancellationToken);
+            _logger.LogInformation("Warehouse created successfully: {WarehouseId}, Name: {WarehouseName}", 
+                warehouse.Id, warehouse.Name);
 
-        return warehouse.Id;
+            // Cache invalidation - Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for warehouse creation");
+            }
+
+            // Email gönderimi başarısız olsa bile devam et
+            try
+            {
+                await SendWarehouseCreatedNotificationAsync(warehouse, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send warehouse created notification for warehouse {WarehouseId}", warehouse.Id);
+            }
+
+            return warehouse.Id;
+        }
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error creating warehouse: {WarehouseName}", request.Name);
+            throw;
+        }
     }
 
     public async Task UpdateAsync(UpdateWarehouseRequest request, CancellationToken cancellationToken = default)
     {
-        var warehouse = await _repository.GetByIdAsync(request.Id, cancellationToken);
-        if (warehouse == null)
+        try
         {
-            throw new NotFoundException(nameof(Warehouse), request.Id);
+            _logger.LogInformation("Updating warehouse: {WarehouseId}, Name: {WarehouseName}", 
+                request.Id, request.Name);
+
+            var warehouse = await _repository.GetByIdAsync(request.Id, cancellationToken);
+            if (warehouse == null)
+            {
+                throw new NotFoundException(nameof(Warehouse), request.Id);
+            }
+
+            // Set RowVersion for optimistic concurrency control
+            warehouse.RowVersion = request.RowVersion;
+
+            warehouse.Update(request.Name, request.Location, request.ContactPerson, request.ContactPhone, request.Notes);
+            await _repository.UpdateAsync(warehouse, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Warehouse updated successfully: {WarehouseId}, Name: {WarehouseName}", 
+                warehouse.Id, warehouse.Name);
+
+            // Cache invalidation - Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for warehouse update");
+            }
         }
-
-        // Set RowVersion for optimistic concurrency control
-        warehouse.RowVersion = request.RowVersion;
-
-        warehouse.Update(request.Name, request.Location, request.ContactPerson, request.ContactPhone, request.Notes);
-        await _repository.UpdateAsync(warehouse, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation
-        await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error updating warehouse: {WarehouseId}", request.Id);
+            throw;
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var warehouse = await _repository.GetByIdAsync(id, cancellationToken);
-        if (warehouse == null)
+        try
         {
-            throw new NotFoundException(nameof(Warehouse), id);
+            _logger.LogInformation("Deleting warehouse: {WarehouseId}", id);
+
+            var warehouse = await _repository.GetByIdAsync(id, cancellationToken);
+            if (warehouse == null)
+            {
+                throw new NotFoundException(nameof(Warehouse), id);
+            }
+
+            await _repository.DeleteAsync(warehouse, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Warehouse deleted successfully: {WarehouseId}, Name: {WarehouseName}", 
+                id, warehouse.Name);
+
+            // Cache invalidation - Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for warehouse deletion");
+            }
         }
-
-        await _repository.DeleteAsync(warehouse, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation
-        await _cacheService.RemoveAsync(CacheKeys.WarehouseDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error deleting warehouse: {WarehouseId}", id);
+            throw;
+        }
     }
 
     public async Task<WarehouseDashboardData> GetDashboardDataAsync(CancellationToken cancellationToken = default)
@@ -245,21 +315,29 @@ public class WarehouseService : IWarehouseService
 
     public async Task<Guid> AddUnloadingAsync(AddUnloadingRequest request, CancellationToken cancellationToken = default)
     {
-        var warehouse = await _repository.GetByIdAsync(request.WarehouseId, cancellationToken);
-        if (warehouse == null)
+        try
         {
-            throw new NotFoundException(nameof(Warehouse), request.WarehouseId);
+            var warehouse = await _repository.GetByIdAsync(request.WarehouseId, cancellationToken);
+            if (warehouse == null)
+            {
+                throw new NotFoundException(nameof(Warehouse), request.WarehouseId);
+            }
+
+            var unloading = new WarehouseUnloading(request.WarehouseId, request.ShipmentId,
+                request.TruckPlate, request.UnloadedAt, request.UnloadedVolume);
+
+            unloading.Update(request.UnloadedAt, request.UnloadedVolume, request.Notes);
+
+            _context.WarehouseUnloadings.Add(unloading);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return unloading.Id;
         }
-
-        var unloading = new WarehouseUnloading(request.WarehouseId, request.ShipmentId,
-            request.TruckPlate, request.UnloadedAt, request.UnloadedVolume);
-
-        unloading.Update(request.UnloadedAt, request.UnloadedVolume, request.Notes);
-
-        _context.WarehouseUnloadings.Add(unloading);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return unloading.Id;
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error adding unloading for warehouse: {WarehouseId}", request.WarehouseId);
+            throw;
+        }
     }
 
     private static string NormalizeLocation(string? location, string unspecifiedLabel) =>

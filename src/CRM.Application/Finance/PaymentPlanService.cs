@@ -1,8 +1,10 @@
 using CRM.Application.Common;
+using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Pagination;
 using CRM.Domain.Finance;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 using System.Linq;
 
@@ -13,12 +15,18 @@ public class PaymentPlanService : IPaymentPlanService
     private readonly IRepository<PaymentPlan> _repository;
     private readonly IApplicationDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<PaymentPlanService> _logger;
 
-    public PaymentPlanService(IRepository<PaymentPlan> repository, IApplicationDbContext context, IUnitOfWork unitOfWork)
+    public PaymentPlanService(
+        IRepository<PaymentPlan> repository, 
+        IApplicationDbContext context, 
+        IUnitOfWork unitOfWork,
+        ILogger<PaymentPlanService> logger)
     {
         _repository = repository;
         _context = context;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<PaymentPlanDetailsDto?> GetDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -364,23 +372,38 @@ public class PaymentPlanService : IPaymentPlanService
 
     public async Task<Guid> CreateAsync(CreatePaymentPlanRequest request, CancellationToken cancellationToken = default)
     {
-        var plan = new PaymentPlan(Guid.NewGuid(), request.CustomerId, request.ShipmentId, request.PlanType,
-            request.TotalAmount, request.Currency ?? "TRY", request.StartDate, request.PeriodicityWeeks);
-
-        plan.Update(request.PlanType, request.TotalAmount, request.Currency ?? "TRY", request.StartDate, request.PeriodicityWeeks, request.Notes);
-
-        if (request.Installments?.Any() == true)
+        try
         {
-            var installments = request.Installments.Select(inst =>
-                new PaymentInstallment(plan.Id, inst.InstallmentNumber, inst.DueDate, inst.Amount, request.Currency ?? "TRY"));
+            _logger.LogInformation("Creating payment plan: CustomerId: {CustomerId}, ShipmentId: {ShipmentId}, PlanType: {PlanType}, TotalAmount: {TotalAmount}", 
+                request.CustomerId, request.ShipmentId, request.PlanType, request.TotalAmount);
 
-            plan.SetInstallments(installments);
+            var plan = new PaymentPlan(Guid.NewGuid(), request.CustomerId, request.ShipmentId, request.PlanType,
+                request.TotalAmount, request.Currency ?? "TRY", request.StartDate, request.PeriodicityWeeks);
+
+            plan.Update(request.PlanType, request.TotalAmount, request.Currency ?? "TRY", request.StartDate, request.PeriodicityWeeks, request.Notes);
+
+            if (request.Installments?.Any() == true)
+            {
+                var installments = request.Installments.Select(inst =>
+                    new PaymentInstallment(plan.Id, inst.InstallmentNumber, inst.DueDate, inst.Amount, request.Currency ?? "TRY"));
+
+                plan.SetInstallments(installments);
+                _logger.LogDebug("Payment plan created with {InstallmentCount} installments", installments.Count());
+            }
+
+            await _repository.AddAsync(plan, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Payment plan created successfully: {PlanId}, CustomerId: {CustomerId}, TotalAmount: {TotalAmount}", 
+                plan.Id, plan.CustomerId, plan.TotalAmount);
+
+            return plan.Id;
         }
-
-        await _repository.AddAsync(plan, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return plan.Id;
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error creating payment plan for customer: {CustomerId}, shipment: {ShipmentId}", request.CustomerId, request.ShipmentId);
+            throw;
+        }
     }
 }
 

@@ -101,6 +101,7 @@ builder.Services.AddRazorPages(options =>
         options.Conventions.AllowAnonymousToPage("/Error/403");
         options.Conventions.AllowAnonymousToPage("/Error/500");
         options.Conventions.AuthorizeFolder("/");
+        options.Conventions.AuthorizeFolder("/Products", "OperationsAccess");
         options.Conventions.AuthorizeFolder("/Suppliers", "OperationsAccess");
         options.Conventions.AuthorizeFolder("/Warehouses", "OperationsAccess");
         options.Conventions.AuthorizeFolder("/Customers", "OperationsAccess");

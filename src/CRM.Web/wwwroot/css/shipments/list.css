@@ -374,72 +374,7 @@
     color: rgba(30, 41, 59, 0.95);
 }
 
-.shipments-table-section #shipmentsTable_wrapper .dt-layout-row:not(.dt-layout-table) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-top: 16px;
-}
-
-.shipments-table-section #shipmentsTable_wrapper .dt-info {
-    text-align: left;
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-}
-
-.shipments-table-section #shipmentsTable_wrapper .dt-paging {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.shipments-table-section #shipmentsTable_wrapper .dt-paging-button {
-    border-radius: 12px;
-    padding: 6px 12px;
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    background: rgba(16, 24, 40, 0.65);
-    color: var(--text-secondary) !important;
-    cursor: pointer;
-    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-}
-
-.shipments-table-section #shipmentsTable_wrapper .dt-paging-button.current,
-.shipments-table-section #shipmentsTable_wrapper .dt-paging-button:hover {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(14, 165, 233, 0.18));
-    border-color: rgba(99, 102, 241, 0.45);
-    color: var(--text-primary) !important;
-}
-
-.shipments-table-section #shipmentsTable_wrapper .dt-paging-button.disabled,
-.shipments-table-section #shipmentsTable_wrapper .dt-paging-button.disabled:hover {
-    opacity: 0.45;
-    cursor: not-allowed;
-    background: rgba(16, 24, 40, 0.4);
-    border-color: rgba(148, 163, 184, 0.2);
-    color: rgba(148, 163, 184, 0.5) !important;
-}
-
-:root[data-theme='light'] .shipments-table-section #shipmentsTable_wrapper .dt-paging-button {
-    background: rgba(255, 255, 255, 0.92);
-    border-color: rgba(203, 213, 225, 0.65);
-    color: rgba(71, 85, 105, 0.8) !important;
-}
-
-:root[data-theme='light'] .shipments-table-section #shipmentsTable_wrapper .dt-paging-button.current,
-:root[data-theme='light'] .shipments-table-section #shipmentsTable_wrapper .dt-paging-button:hover {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(14, 165, 233, 0.12));
-    border-color: rgba(99, 102, 241, 0.45);
-    color: rgba(30, 41, 59, 0.95) !important;
-}
-
-:root[data-theme='light'] .shipments-table-section #shipmentsTable_wrapper .dt-paging-button.disabled,
-:root[data-theme='light'] .shipments-table-section #shipmentsTable_wrapper .dt-paging-button.disabled:hover {
-    background: rgba(248, 250, 252, 0.85);
-    border-color: rgba(203, 213, 225, 0.5);
-    color: rgba(148, 163, 184, 0.6) !important;
-}
+/* DataTable stilleri artık ~/css/common/datatable.css dosyasında */
 
 @media (max-width: 992px) {
     .filter-search {

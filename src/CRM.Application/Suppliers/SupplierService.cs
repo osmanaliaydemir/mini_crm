@@ -61,58 +61,120 @@ public class SupplierService : ISupplierService
 
     public async Task<Guid> CreateAsync(CreateSupplierRequest request, CancellationToken cancellationToken = default)
     {
-        var supplier = new Supplier(Guid.NewGuid(), request.Name, request.Country,
-            request.TaxNumber, request.ContactEmail, request.ContactPhone, request.AddressLine);
+        try
+        {
+            _logger.LogInformation("Creating supplier: {SupplierName}, Country: {Country}", 
+                request.Name, request.Country);
 
-        supplier.Update(request.Name, request.Country, request.TaxNumber,
-            request.ContactEmail, request.ContactPhone, request.AddressLine, request.Notes);
+            var supplier = new Supplier(Guid.NewGuid(), request.Name, request.Country,
+                request.TaxNumber, request.ContactEmail, request.ContactPhone, request.AddressLine);
 
-        await _repository.AddAsync(supplier, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            supplier.Update(request.Name, request.Country, request.TaxNumber,
+                request.ContactEmail, request.ContactPhone, request.AddressLine, request.Notes);
 
-        // Cache invalidation
-        await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            await _repository.AddAsync(supplier, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return supplier.Id;
+            _logger.LogInformation("Supplier created successfully: {SupplierId}, Name: {SupplierName}", 
+                supplier.Id, supplier.Name);
+
+            // Cache invalidation - Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for supplier creation");
+            }
+
+            return supplier.Id;
+        }
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error creating supplier: {SupplierName}", request.Name);
+            throw;
+        }
     }
 
     public async Task UpdateAsync(UpdateSupplierRequest request, CancellationToken cancellationToken = default)
     {
-        var supplier = await _repository.GetByIdAsync(request.Id, cancellationToken);
-        if (supplier == null)
+        try
         {
-            throw new NotFoundException(nameof(Supplier), request.Id);
+            _logger.LogInformation("Updating supplier: {SupplierId}, Name: {SupplierName}", 
+                request.Id, request.Name);
+
+            var supplier = await _repository.GetByIdAsync(request.Id, cancellationToken);
+            if (supplier == null)
+            {
+                throw new NotFoundException(nameof(Supplier), request.Id);
+            }
+
+            // Set RowVersion for optimistic concurrency control
+            supplier.RowVersion = request.RowVersion;
+
+            supplier.Update(request.Name, request.Country, request.TaxNumber,
+                request.ContactEmail, request.ContactPhone, request.AddressLine, request.Notes);
+
+            await _repository.UpdateAsync(supplier, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Supplier updated successfully: {SupplierId}, Name: {SupplierName}", 
+                supplier.Id, supplier.Name);
+
+            // Cache invalidation - Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for supplier update");
+            }
         }
-
-        // Set RowVersion for optimistic concurrency control
-        supplier.RowVersion = request.RowVersion;
-
-        supplier.Update(request.Name, request.Country, request.TaxNumber,
-            request.ContactEmail, request.ContactPhone, request.AddressLine, request.Notes);
-
-        await _repository.UpdateAsync(supplier, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation
-        await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error updating supplier: {SupplierId}", request.Id);
+            throw;
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var supplier = await _repository.GetByIdAsync(id, cancellationToken);
-        if (supplier == null)
+        try
         {
-            throw new NotFoundException(nameof(Supplier), id);
+            _logger.LogInformation("Deleting supplier: {SupplierId}", id);
+
+            var supplier = await _repository.GetByIdAsync(id, cancellationToken);
+            if (supplier == null)
+            {
+                throw new NotFoundException(nameof(Supplier), id);
+            }
+
+            await _repository.DeleteAsync(supplier, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Supplier deleted successfully: {SupplierId}, Name: {SupplierName}", 
+                id, supplier.Name);
+
+            // Cache invalidation - Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for supplier deletion");
+            }
         }
-
-        await _repository.DeleteAsync(supplier, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation
-        await _cacheService.RemoveAsync(CacheKeys.SupplierDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error deleting supplier: {SupplierId}", id);
+            throw;
+        }
     }
 
     public async Task<SupplierDashboardData> GetDashboardDataAsync(CancellationToken cancellationToken = default)

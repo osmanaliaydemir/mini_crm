@@ -1,0 +1,137 @@
+.products-header {
+    margin-bottom: 24px;
+}
+
+.products-filter-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.products-filter-form__control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 180px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.products-filter-form__control span {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.products-filter-form__control select,
+.products-filter-form__control input {
+    padding: 10px 12px;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.products-filter-form__control select:focus,
+.products-filter-form__control input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+    outline: none;
+}
+
+.products-table-section {
+    margin-top: 24px;
+}
+
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: var(--bg-secondary);
+}
+
+.data-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--separator);
+}
+
+.data-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--separator);
+    color: var(--text-primary);
+}
+
+.data-table tbody tr:hover {
+    background: var(--bg-tertiary);
+}
+
+.cell-strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cell-strong a {
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+
+.cell-strong a:hover {
+    text-decoration: underline;
+}
+
+.cell-subtext {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.text-end {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.table-empty-message {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* DataTable stilleri artık ~/css/common/datatable.css dosyasında */
+
+@media (max-width: 640px) {
+    .products-filter-form {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .products-filter-form__control {
+        width: 100%;
+    }
+
+    .products-filter-form .btn {
+        width: 100%;
+    }
+}
+

@@ -7,6 +7,7 @@ using CRM.Application.ExportImport;
 using CRM.Application.Finance;
 using CRM.Application.Notifications;
 using CRM.Application.Notifications.Automation;
+using CRM.Application.Products;
 using CRM.Application.Settings;
 using CRM.Application.Shipments;
 using CRM.Application.Suppliers;
@@ -51,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IExportService, ExportService>();
         services.AddScoped<ISystemSettingsService, SystemSettingsService>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<IProductService, ProductService>();
 
         return services;
     }

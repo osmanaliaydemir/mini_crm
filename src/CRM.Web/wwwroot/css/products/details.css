@@ -1,0 +1,119 @@
+.details-header {
+    margin-bottom: 24px;
+}
+
+.details-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 320px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.details-card {
+    position: relative;
+    border-radius: 20px;
+    padding: 24px 26px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow: hidden;
+}
+
+.details-card::after {
+    display: none;
+}
+
+.details-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.details-card header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.details-card header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.details-card header p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.detail-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.detail-list dt {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.detail-list dd {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.detail-list dd:empty::before {
+    content: "-";
+    color: var(--text-tertiary);
+}
+
+:root[data-theme='light'] .details-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(203, 213, 225, 0.6);
+    box-shadow: 0 20px 32px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .details-card header p {
+    color: rgba(100, 116, 139, 0.7);
+}
+
+:root[data-theme='light'] .detail-list dt {
+    color: rgba(71, 85, 105, 0.78);
+}
+
+:root[data-theme='light'] .detail-list dd {
+    color: rgba(30, 41, 59, 0.92);
+}
+
+@media (max-width: 768px) {
+    .details-card {
+        padding: 20px 18px;
+        border-radius: 16px;
+    }
+
+    .detail-list {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .detail-list dt {
+        margin-bottom: 4px;
+    }
+}
+

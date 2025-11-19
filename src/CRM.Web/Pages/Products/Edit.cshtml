@@ -1,0 +1,111 @@
+@page
+@model CRM.Web.Pages.Products.EditModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Ürün Düzenle";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/products/form.css" asp-append-version="true" />
+}
+
+<section class="page-header form-header">
+    <div>
+        <h1>Ürün Düzenle</h1>
+        <p class="subtitle">Ürün bilgilerini güncelleyin</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="Index">Geri</a>
+    </div>
+</section>
+
+<form method="post" class="form-shell" novalidate>
+    <div asp-validation-summary="ModelOnly" class="form-validation-summary"></div>
+    <input type="hidden" asp-for="Product.Id" />
+    <input type="hidden" asp-for="Product.RowVersion" />
+
+    <div class="form-sections">
+        <section class="form-card">
+            <header>
+                <h2>Ürün Bilgileri</h2>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Product.Name">Ad *</label>
+                    <input asp-for="Product.Name" class="input-control" />
+                    <span asp-validation-for="Product.Name" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Product.Species">Tür</label>
+                    <input asp-for="Product.Species" class="input-control" placeholder="Örn: Çam, Meşe, Kayın" />
+                    <span asp-validation-for="Product.Species" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Product.Grade">Kalite</label>
+                    <input asp-for="Product.Grade" class="input-control" placeholder="Örn: A, B, C" />
+                    <span asp-validation-for="Product.Grade" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Product.UnitOfMeasure">Birim *</label>
+                    <select asp-for="Product.UnitOfMeasure" class="input-control">
+                        <option value="m3">m³</option>
+                        <option value="adet">Adet</option>
+                        <option value="ton">Ton</option>
+                        <option value="kg">kg</option>
+                    </select>
+                    <span asp-validation-for="Product.UnitOfMeasure" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>Standart Hacim (Opsiyonel)</h2>
+                <p>Ürünün standart ölçülerini girebilirsiniz</p>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Product.StandardVolumeLength">Uzunluk (m)</label>
+                    <input asp-for="Product.StandardVolumeLength" type="number" step="0.01" class="input-control" />
+                    <span asp-validation-for="Product.StandardVolumeLength" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Product.StandardVolumeWidth">Genişlik (m)</label>
+                    <input asp-for="Product.StandardVolumeWidth" type="number" step="0.01" class="input-control" />
+                    <span asp-validation-for="Product.StandardVolumeWidth" class="input-error"></span>
+                </div>
+                <div class="input-field">
+                    <label asp-for="Product.StandardVolumeHeight">Yükseklik (m)</label>
+                    <input asp-for="Product.StandardVolumeHeight" type="number" step="0.01" class="input-control" />
+                    <span asp-validation-for="Product.StandardVolumeHeight" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card">
+            <header>
+                <h2>Notlar</h2>
+            </header>
+            <div class="form-grid">
+                <div class="input-field">
+                    <label asp-for="Product.Notes">Notlar</label>
+                    <textarea asp-for="Product.Notes" class="input-control" rows="4"></textarea>
+                    <span asp-validation-for="Product.Notes" class="input-error"></span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-page="Index" class="btn btn-ghost">İptal</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

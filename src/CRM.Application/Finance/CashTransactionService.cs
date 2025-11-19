@@ -1,5 +1,6 @@
 using CRM.Application.Common;
 using CRM.Application.Common.Caching;
+using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Pagination;
 using CRM.Domain.Customers;
 using CRM.Domain.Finance;
@@ -33,18 +34,40 @@ public class CashTransactionService : ICashTransactionService
 
     public async Task<Guid> CreateAsync(CreateCashTransactionRequest request, CancellationToken cancellationToken = default)
     {
-        var transaction = new CashTransaction(Guid.NewGuid(), request.TransactionDate, request.TransactionType, request.Amount,
-            request.Currency, request.Description, request.Category, request.RelatedCustomerId, request.RelatedShipmentId);
+        try
+        {
+            _logger.LogInformation("Creating cash transaction: Type: {TransactionType}, Amount: {Amount}, Currency: {Currency}, Date: {TransactionDate}", 
+                request.TransactionType, request.Amount, request.Currency, request.TransactionDate);
 
-        await _repository.AddAsync(transaction, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            var transaction = new CashTransaction(Guid.NewGuid(), request.TransactionDate, request.TransactionType, request.Amount,
+                request.Currency, request.Description, request.Category, request.RelatedCustomerId, request.RelatedShipmentId);
 
-        // Cache invalidation - Cash transaction ve ana dashboard cache'lerini temizle
-        await _cacheService.RemoveByPrefixAsync(CacheKeys.CashTransactionDashboardPrefix, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.CashboxQuickSummary, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            await _repository.AddAsync(transaction, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return transaction.Id;
+            _logger.LogInformation("Cash transaction created successfully: {TransactionId}, Type: {TransactionType}, Amount: {Amount}", 
+                transaction.Id, transaction.TransactionType, transaction.Amount);
+
+            // Cache invalidation - Cash transaction ve ana dashboard cache'lerini temizle
+            // Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveByPrefixAsync(CacheKeys.CashTransactionDashboardPrefix, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.CashboxQuickSummary, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for cash transaction creation");
+            }
+
+            return transaction.Id;
+        }
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error creating cash transaction: {TransactionType}, Amount: {Amount}", request.TransactionType, request.Amount);
+            throw;
+        }
     }
 
     public async Task<IReadOnlyList<CashTransactionDto>> GetAllAsync(DateTime? from = null, DateTime? to = null, CashTransactionType? type = null, CancellationToken cancellationToken = default)

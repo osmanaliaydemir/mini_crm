@@ -91,6 +91,74 @@ public class GlobalExceptionHandlerMiddleware
                 _logger.LogWarning(exception, "Unauthorized access attempt");
                 break;
 
+            case ForbiddenException forbiddenException:
+                errorResponse.Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3";
+                errorResponse.Title = "Forbidden";
+                errorResponse.Status = (int)HttpStatusCode.Forbidden;
+                errorResponse.Detail = forbiddenException.Message;
+                response.StatusCode = (int)HttpStatusCode.Forbidden;
+                _logger.LogWarning(exception, "Forbidden access: {Message}", forbiddenException.Message);
+                break;
+
+            case ConflictException conflictException:
+                errorResponse.Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8";
+                errorResponse.Title = "Conflict";
+                errorResponse.Status = (int)HttpStatusCode.Conflict;
+                errorResponse.Detail = conflictException.Message;
+                response.StatusCode = (int)HttpStatusCode.Conflict;
+                _logger.LogWarning(exception, "Conflict occurred: {Message}", conflictException.Message);
+                break;
+
+            case UnprocessableEntityException unprocessableException:
+                errorResponse.Type = "https://tools.ietf.org/html/rfc4918#section-11.2";
+                errorResponse.Title = "Unprocessable Entity";
+                errorResponse.Status = 422; // Unprocessable Entity
+                errorResponse.Detail = unprocessableException.Message;
+                errorResponse.Errors = unprocessableException.Errors;
+                response.StatusCode = 422;
+                _logger.LogWarning(exception, "Unprocessable entity: {Message}", unprocessableException.Message);
+                break;
+
+            case DbUpdateException dbUpdateException:
+                // Handle database update exceptions (foreign key, unique constraint, etc.)
+                var dbErrorDetail = ExtractDatabaseError(dbUpdateException);
+                errorResponse.Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1";
+                errorResponse.Title = "Database Error";
+                errorResponse.Status = (int)HttpStatusCode.BadRequest;
+                errorResponse.Detail = dbErrorDetail;
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                _logger.LogWarning(exception, "Database update error: {Message}", dbUpdateException.Message);
+                break;
+
+            case InvalidOperationException invalidOperationException:
+                // Handle invalid operation exceptions (business logic errors)
+                errorResponse.Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1";
+                errorResponse.Title = "Invalid Operation";
+                errorResponse.Status = (int)HttpStatusCode.BadRequest;
+                errorResponse.Detail = invalidOperationException.Message;
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                _logger.LogWarning(exception, "Invalid operation: {Message}", invalidOperationException.Message);
+                break;
+
+            case TimeoutException timeoutException:
+                errorResponse.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.5";
+                errorResponse.Title = "Request Timeout";
+                errorResponse.Status = (int)HttpStatusCode.RequestTimeout;
+                errorResponse.Detail = "The request took too long to process. Please try again.";
+                response.StatusCode = (int)HttpStatusCode.RequestTimeout;
+                _logger.LogWarning(exception, "Request timeout occurred");
+                break;
+
+            case TaskCanceledException taskCanceledException:
+                // Handle cancellation token exceptions
+                errorResponse.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.5";
+                errorResponse.Title = "Request Cancelled";
+                errorResponse.Status = 499; // Client Closed Request
+                errorResponse.Detail = "The request was cancelled.";
+                response.StatusCode = 499;
+                _logger.LogInformation("Request was cancelled");
+                break;
+
             default:
                 errorResponse.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1";
                 errorResponse.Title = "An error occurred while processing your request";
@@ -111,6 +179,43 @@ public class GlobalExceptionHandlerMiddleware
 
         var json = JsonSerializer.Serialize(errorResponse, options);
         await response.WriteAsync(json);
+    }
+
+    /// <summary>
+    /// Extracts user-friendly error messages from database exceptions.
+    /// </summary>
+    private static string ExtractDatabaseError(DbUpdateException exception)
+    {
+        // Check for foreign key constraint violations
+        if (exception.InnerException?.Message.Contains("FOREIGN KEY") == true ||
+            exception.InnerException?.Message.Contains("REFERENCE constraint") == true)
+        {
+            return "Bu kayıt başka kayıtlarla ilişkili olduğu için silinemez veya güncellenemez.";
+        }
+
+        // Check for unique constraint violations
+        if (exception.InnerException?.Message.Contains("UNIQUE KEY") == true ||
+            exception.InnerException?.Message.Contains("UNIQUE constraint") == true ||
+            exception.InnerException?.Message.Contains("Cannot insert duplicate key") == true)
+        {
+            return "Bu değer zaten kullanılıyor. Lütfen farklı bir değer giriniz.";
+        }
+
+        // Check for NOT NULL constraint violations
+        if (exception.InnerException?.Message.Contains("NOT NULL") == true ||
+            exception.InnerException?.Message.Contains("cannot be null") == true)
+        {
+            return "Zorunlu alanlar eksik. Lütfen tüm zorunlu alanları doldurunuz.";
+        }
+
+        // Check for check constraint violations
+        if (exception.InnerException?.Message.Contains("CHECK constraint") == true)
+        {
+            return "Girilen değer geçersiz. Lütfen geçerli bir değer giriniz.";
+        }
+
+        // Generic database error
+        return "Veritabanı işlemi sırasında bir hata oluştu. Lütfen tekrar deneyiniz.";
     }
 }
 

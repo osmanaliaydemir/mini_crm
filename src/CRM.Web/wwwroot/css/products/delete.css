@@ -1,0 +1,70 @@
+.delete-header {
+    margin-bottom: 24px;
+}
+
+.delete-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.delete-card p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--text-primary);
+}
+
+.delete-card p strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.delete-card .text-warning {
+    color: var(--accent-orange);
+    font-weight: 500;
+}
+
+.delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 8px;
+}
+
+:root[data-theme='light'] .delete-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(203, 213, 225, 0.6);
+    box-shadow: 0 20px 32px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .delete-card p {
+    color: rgba(30, 41, 59, 0.92);
+}
+
+:root[data-theme='light'] .delete-card .text-warning {
+    color: rgba(180, 83, 9, 0.9);
+}
+
+@media (max-width: 768px) {
+    .delete-card {
+        padding: 20px 18px;
+        border-radius: 16px;
+    }
+
+    .delete-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .delete-actions .btn {
+        width: 100%;
+    }
+}
+

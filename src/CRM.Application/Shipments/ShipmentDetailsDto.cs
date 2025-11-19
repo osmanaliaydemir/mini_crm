@@ -8,7 +8,14 @@ public record ShipmentDetailsDto(Guid Id, string ReferenceNumber, string Supplie
 
 public record ShipmentStageDto(ShipmentStatus Status, DateTime StartedAt, DateTime? CompletedAt, string? Notes);
 
-public record ShipmentItemDto(Guid VariantId, string VariantName, decimal Quantity, decimal Volume);
+public record ShipmentItemDto(
+    Guid VariantId,
+    string VariantName,
+    string? VariantSpecies,
+    string? VariantGrade,
+    string UnitOfMeasure,
+    decimal Quantity,
+    decimal Volume);
 
 public record ShipmentTransportUnitDto(TransportMode Mode, string Identifier, int Count);
 

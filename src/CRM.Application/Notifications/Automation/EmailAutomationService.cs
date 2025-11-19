@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using CRM.Application.Common;
+using CRM.Application.Common.Exceptions;
 using CRM.Domain.Finance;
 using CRM.Domain.Notifications;
 using Microsoft.EntityFrameworkCore;
@@ -80,7 +81,7 @@ public class EmailAutomationService : IEmailAutomationService
 
         if (rule == null)
         {
-            throw new InvalidOperationException($"Email automation rule {request.Id} not found.");
+            throw new NotFoundException(nameof(EmailAutomationRule), request.Id);
         }
 
         rule.RowVersion = request.RowVersion ?? Array.Empty<byte>();
@@ -252,12 +253,12 @@ public class EmailAutomationService : IEmailAutomationService
 
         if (string.IsNullOrWhiteSpace(cronExpression))
         {
-            throw new InvalidOperationException("Zamanlanmış kurallar için cron ifadesi gereklidir.");
+            throw new BadRequestException("Zamanlanmış kurallar için cron ifadesi gereklidir.");
         }
 
         if (string.IsNullOrWhiteSpace(timeZoneId))
         {
-            throw new InvalidOperationException("Zamanlanmış kurallar için saat dilimi gereklidir.");
+            throw new BadRequestException("Zamanlanmış kurallar için saat dilimi gereklidir.");
         }
     }
 

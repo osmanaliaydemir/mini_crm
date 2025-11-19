@@ -2,6 +2,7 @@ using CRM.Domain.Audit;
 using CRM.Domain.Customers;
 using CRM.Domain.Finance;
 using CRM.Domain.Notifications;
+using CRM.Domain.Products;
 using CRM.Domain.Settings;
 using CRM.Domain.Shipments;
 using CRM.Domain.Suppliers;
@@ -17,6 +18,7 @@ public interface IApplicationDbContext
     DbSet<CustomerContact> CustomerContacts { get; }
     DbSet<CustomerInteraction> CustomerInteractions { get; }
     DbSet<Shipment> Shipments { get; }
+    DbSet<ShipmentItem> ShipmentItems { get; }
     DbSet<CashTransaction> CashTransactions { get; }
     DbSet<Warehouse> Warehouses { get; }
     DbSet<WarehouseUnloading> WarehouseUnloadings { get; }
@@ -29,6 +31,7 @@ public interface IApplicationDbContext
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<SystemSettings> SystemSettings { get; }
     DbSet<TaskDb> Tasks { get; }
+    DbSet<LumberVariant> LumberVariants { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 

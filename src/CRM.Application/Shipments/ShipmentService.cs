@@ -93,86 +93,166 @@ public class ShipmentService : IShipmentService
 
     public async Task<Guid> CreateAsync(CreateShipmentRequest request, CancellationToken cancellationToken = default)
     {
-        var shipmentDate = DateTime.SpecifyKind(request.ShipmentDate, DateTimeKind.Utc);
-        DateTime? estimatedArrival = request.EstimatedArrival.HasValue
-            ? DateTime.SpecifyKind(request.EstimatedArrival.Value, DateTimeKind.Utc)
-            : null;
-        var stageStartedAt = DateTime.SpecifyKind(request.StageStartedAt, DateTimeKind.Utc);
-        DateTime? stageCompletedAt = request.StageCompletedAt.HasValue
-            ? DateTime.SpecifyKind(request.StageCompletedAt.Value, DateTimeKind.Utc)
-            : null;
+        try
+        {
+            _logger.LogInformation("Creating shipment: {ReferenceNumber}, SupplierId: {SupplierId}, Status: {Status}", 
+                request.ReferenceNumber, request.SupplierId, request.Status);
 
-        var shipment = new Shipment(Guid.NewGuid(), request.SupplierId,
-            request.ReferenceNumber.Trim(), shipmentDate, request.Status, request.CustomerId);
+            var shipmentDate = DateTime.SpecifyKind(request.ShipmentDate, DateTimeKind.Utc);
+            DateTime? estimatedArrival = request.EstimatedArrival.HasValue
+                ? DateTime.SpecifyKind(request.EstimatedArrival.Value, DateTimeKind.Utc)
+                : null;
+            var stageStartedAt = DateTime.SpecifyKind(request.StageStartedAt, DateTimeKind.Utc);
+            DateTime? stageCompletedAt = request.StageCompletedAt.HasValue
+                ? DateTime.SpecifyKind(request.StageCompletedAt.Value, DateTimeKind.Utc)
+                : null;
 
-        shipment.Update(shipmentDate, estimatedArrival,
-            request.Status, request.LoadingPort, request.DischargePort, request.Notes, request.CustomerId);
+            var shipment = new Shipment(Guid.NewGuid(), request.SupplierId,
+                request.ReferenceNumber.Trim(), shipmentDate, request.Status, request.CustomerId);
 
-        shipment.SetOrUpdateStage(request.Status, stageStartedAt, stageCompletedAt, request.StageNotes);
+            shipment.Update(shipmentDate, estimatedArrival,
+                request.Status, request.LoadingPort, request.DischargePort, request.Notes, request.CustomerId);
 
-        await _repository.AddAsync(shipment, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            shipment.SetOrUpdateStage(request.Status, stageStartedAt, stageCompletedAt, request.StageNotes);
 
-        // Cache invalidation - Shipment ve ana dashboard cache'lerini temizle
-        await _cacheService.RemoveAsync(CacheKeys.ShipmentDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.AnalyticsOperations, cancellationToken);
+            // Add items if provided
+            if (request.Items != null && request.Items.Any())
+            {
+                shipment.ClearItems();
+                foreach (var item in request.Items)
+                {
+                    shipment.AddItem(item.VariantId, item.Quantity, item.Volume);
+                }
+            }
 
-        return shipment.Id;
+            await _repository.AddAsync(shipment, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Shipment created successfully: {ShipmentId}, ReferenceNumber: {ReferenceNumber}", 
+                shipment.Id, shipment.ReferenceNumber);
+
+            // Cache invalidation - Shipment ve ana dashboard cache'lerini temizle
+            // Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.ShipmentDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.AnalyticsOperations, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for shipment creation");
+            }
+
+            return shipment.Id;
+        }
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error creating shipment: {ReferenceNumber}", request.ReferenceNumber);
+            throw;
+        }
     }
 
     public async Task UpdateAsync(UpdateShipmentRequest request, CancellationToken cancellationToken = default)
     {
-        var shipment = await _context.Shipments
-            .Include(s => s.Stages)
-            .Include(s => s.Supplier)
-            .Include(s => s.Customer)
-            .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
-
-        if (shipment == null)
+        try
         {
-            throw new NotFoundException(nameof(Shipment), request.Id);
+            _logger.LogInformation("Updating shipment: {ShipmentId}, ReferenceNumber: {ReferenceNumber}", 
+                request.Id, request.ReferenceNumber);
+
+            var shipment = await _context.Shipments
+                .Include(s => s.Stages)
+                .Include(s => s.Supplier)
+                .Include(s => s.Customer)
+                .Include(s => s.Items)
+                .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
+
+            if (shipment == null)
+            {
+                throw new NotFoundException(nameof(Shipment), request.Id);
+            }
+
+            // Set RowVersion for optimistic concurrency control
+            shipment.RowVersion = request.RowVersion;
+
+            var previousStatus = shipment.Status;
+
+            shipment.ReassignSupplier(request.SupplierId);
+            shipment.ReassignCustomer(request.CustomerId);
+
+            var shipmentDate = DateTime.SpecifyKind(request.ShipmentDate, DateTimeKind.Utc);
+            DateTime? estimatedArrival = request.EstimatedArrival.HasValue
+                ? DateTime.SpecifyKind(request.EstimatedArrival.Value, DateTimeKind.Utc)
+                : null;
+
+            shipment.Update(shipmentDate, estimatedArrival, request.Status, request.LoadingPort,
+                request.DischargePort, request.Notes, request.CustomerId);
+
+            var stageStartedAt = DateTime.SpecifyKind(request.StageStartedAt, DateTimeKind.Utc);
+            DateTime? stageCompletedAt = request.StageCompletedAt.HasValue
+                ? DateTime.SpecifyKind(request.StageCompletedAt.Value, DateTimeKind.Utc)
+                : null;
+
+            shipment.SetOrUpdateStage(request.Status, stageStartedAt, stageCompletedAt, request.StageNotes);
+
+            // Update items if provided
+            if (request.Items != null)
+            {
+                shipment.ClearItems();
+                foreach (var item in request.Items)
+                {
+                    shipment.AddItem(item.VariantId, item.Quantity, item.Volume);
+                }
+            }
+
+            await _repository.UpdateAsync(shipment, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Shipment updated successfully: {ShipmentId}, ReferenceNumber: {ReferenceNumber}, Status: {Status}", 
+                shipment.Id, shipment.ReferenceNumber, shipment.Status);
+
+            // Cache invalidation - Shipment ve ana dashboard cache'lerini temizle
+            // Cache işlemleri başarısız olsa bile devam et
+            try
+            {
+                await _cacheService.RemoveAsync(CacheKeys.ShipmentDashboard, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
+                await _cacheService.RemoveAsync(CacheKeys.AnalyticsOperations, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cache invalidation failed for shipment update");
+            }
+
+            // Email gönderimi başarısız olsa bile devam et
+            if (previousStatus != shipment.Status)
+            {
+                try
+                {
+                    await SendShipmentStatusChangedNotificationAsync(shipment, previousStatus, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send shipment status changed notification for shipment {ShipmentId}", shipment.Id);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.StageNotes))
+            {
+                try
+                {
+                    await SendShipmentNoteNotificationAsync(shipment, request.StageNotes!, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send shipment note notification for shipment {ShipmentId}", shipment.Id);
+                }
+            }
         }
-
-        // Set RowVersion for optimistic concurrency control
-        shipment.RowVersion = request.RowVersion;
-
-        var previousStatus = shipment.Status;
-
-        shipment.ReassignSupplier(request.SupplierId);
-        shipment.ReassignCustomer(request.CustomerId);
-
-        var shipmentDate = DateTime.SpecifyKind(request.ShipmentDate, DateTimeKind.Utc);
-        DateTime? estimatedArrival = request.EstimatedArrival.HasValue
-            ? DateTime.SpecifyKind(request.EstimatedArrival.Value, DateTimeKind.Utc)
-            : null;
-
-        shipment.Update(shipmentDate, estimatedArrival, request.Status, request.LoadingPort,
-            request.DischargePort, request.Notes, request.CustomerId);
-
-        var stageStartedAt = DateTime.SpecifyKind(request.StageStartedAt, DateTimeKind.Utc);
-        DateTime? stageCompletedAt = request.StageCompletedAt.HasValue
-            ? DateTime.SpecifyKind(request.StageCompletedAt.Value, DateTimeKind.Utc)
-            : null;
-
-        shipment.SetOrUpdateStage(request.Status, stageStartedAt, stageCompletedAt, request.StageNotes);
-
-        await _repository.UpdateAsync(shipment, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Cache invalidation - Shipment ve ana dashboard cache'lerini temizle
-        await _cacheService.RemoveAsync(CacheKeys.ShipmentDashboard, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.DashboardData, cancellationToken);
-        await _cacheService.RemoveAsync(CacheKeys.AnalyticsOperations, cancellationToken);
-
-        if (previousStatus != shipment.Status)
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
         {
-            await SendShipmentStatusChangedNotificationAsync(shipment, previousStatus, cancellationToken);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.StageNotes))
-        {
-            await SendShipmentNoteNotificationAsync(shipment, request.StageNotes!, cancellationToken);
+            _logger.LogError(ex, "Error updating shipment: {ShipmentId}", request.Id);
+            throw;
         }
     }
 
@@ -191,7 +271,13 @@ public class ShipmentService : IShipmentService
                 stage.Status, stage.StartedAt, stage.CompletedAt, stage.Notes)).ToList();
 
         var items = shipment.Items.Select(item => new ShipmentItemDto(
-                item.VariantId, item.Variant?.Name ?? "-", item.Quantity, item.Volume)).ToList();
+                item.VariantId,
+                item.Variant?.Name ?? "-",
+                item.Variant?.Species,
+                item.Variant?.Grade,
+                item.Variant?.UnitOfMeasure ?? "m3",
+                item.Quantity,
+                item.Volume)).ToList();
 
         var transportUnits = shipment.TransportUnits
             .Select(unit => new ShipmentTransportUnitDto(

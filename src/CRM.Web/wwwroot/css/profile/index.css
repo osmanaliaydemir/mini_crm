@@ -15,10 +15,10 @@
 }
 
 .profile-form .form-card {
-    background: rgba(15, 23, 42, 0.82);
-    border: 1px solid rgba(71, 85, 105, 0.28);
+    background: rgba(10, 10, 10, 0.9);
+    border: 1px solid rgba(40, 40, 40, 0.4);
     border-radius: 24px;
-    box-shadow: 0 24px 38px rgba(7, 16, 32, 0.28);
+    box-shadow: 0 24px 38px rgba(0, 0, 0, 0.6);
     padding: 26px 28px;
     display: flex;
     flex-direction: column;
@@ -34,7 +34,7 @@
     width: 200px;
     height: 200px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(37, 99, 235, 0.2), transparent 70%);
+    background: radial-gradient(circle, rgba(50, 50, 50, 0.15), transparent 70%);
 }
 
 .profile-form .form-card header {
@@ -79,7 +79,7 @@
 
 .profile-form .input-control {
     border: 1px solid rgba(100, 116, 139, 0.45);
-    background: rgba(15, 23, 42, 0.65);
+    background: rgba(15, 15, 15, 0.8);
     border-radius: 14px;
     padding: 12px 14px;
     color: rgba(226, 232, 240, 0.95);
@@ -88,8 +88,8 @@
 }
 
 .profile-form .input-control:focus {
-    border-color: rgba(59, 130, 246, 0.7);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    border-color: rgba(100, 116, 139, 0.6);
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.15);
     outline: none;
 }
 

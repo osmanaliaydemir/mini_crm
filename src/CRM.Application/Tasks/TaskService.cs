@@ -139,114 +139,205 @@ public class TaskService : ITaskService
 
     public async Task<Guid> CreateAsync(CreateTaskRequest request, CancellationToken cancellationToken = default)
     {
-        var task = new TaskDb(
-            Guid.NewGuid(),
-            request.Title,
-            request.Description,
-            request.Status,
-            request.Priority,
-            request.DueDate,
-            request.AssignedToUserId,
-            request.RelatedEntityType,
-            request.RelatedEntityId);
-
-        await _repository.AddAsync(task, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        if (task.AssignedToUserId.HasValue)
+        try
         {
-            await SendTaskAssignedNotificationAsync(task, task.AssignedToUserId.Value, cancellationToken);
-        }
+            _logger.LogInformation("Creating task: {TaskTitle}, Status: {Status}, Priority: {Priority}, AssignedTo: {AssignedToUserId}", 
+                request.Title, request.Status, request.Priority, request.AssignedToUserId);
 
-        return task.Id;
+            var task = new TaskDb(
+                Guid.NewGuid(),
+                request.Title,
+                request.Description,
+                request.Status,
+                request.Priority,
+                request.DueDate,
+                request.AssignedToUserId,
+                request.RelatedEntityType,
+                request.RelatedEntityId);
+
+            await _repository.AddAsync(task, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Task created successfully: {TaskId}, Title: {TaskTitle}", 
+                task.Id, task.Title);
+
+            // Email gönderimi başarısız olsa bile devam et
+            if (task.AssignedToUserId.HasValue)
+            {
+                try
+                {
+                    await SendTaskAssignedNotificationAsync(task, task.AssignedToUserId.Value, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send task assigned notification for task {TaskId}", task.Id);
+                }
+            }
+
+            return task.Id;
+        }
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error creating task: {TaskTitle}", request.Title);
+            throw;
+        }
     }
 
     public async Task UpdateAsync(UpdateTaskRequest request, CancellationToken cancellationToken = default)
     {
-        var task = await _repository.GetByIdAsync(request.Id, cancellationToken);
-        if (task == null)
+        try
         {
-            throw new NotFoundException(nameof(TaskDb), request.Id);
+            var task = await _repository.GetByIdAsync(request.Id, cancellationToken);
+            if (task == null)
+            {
+                throw new NotFoundException(nameof(TaskDb), request.Id);
+            }
+
+            var previousAssignedUserId = task.AssignedToUserId;
+            var previousStatus = task.Status;
+
+            task.RowVersion = request.RowVersion;
+
+            task.Update(
+                request.Title,
+                request.Description,
+                request.Status,
+                request.Priority,
+                request.DueDate,
+                request.AssignedToUserId,
+                request.RelatedEntityType,
+                request.RelatedEntityId);
+
+            await _repository.UpdateAsync(task, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Task updated successfully: {TaskId}, Title: {TaskTitle}, Status: {Status}", 
+                task.Id, task.Title, task.Status);
+
+            // Email gönderimleri başarısız olsa bile devam et
+            if (task.AssignedToUserId.HasValue &&
+                task.AssignedToUserId != previousAssignedUserId)
+            {
+                try
+                {
+                    await SendTaskAssignedNotificationAsync(task, task.AssignedToUserId.Value, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send task assigned notification for task {TaskId}", task.Id);
+                }
+            }
+
+            if (task.Status == TaskStatus.Completed &&
+                previousStatus != TaskStatus.Completed)
+            {
+                try
+                {
+                    await SendTaskCompletedNotificationAsync(task, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send task completed notification for task {TaskId}", task.Id);
+                }
+            }
         }
-
-        var previousAssignedUserId = task.AssignedToUserId;
-        var previousStatus = task.Status;
-
-        task.RowVersion = request.RowVersion;
-
-        task.Update(
-            request.Title,
-            request.Description,
-            request.Status,
-            request.Priority,
-            request.DueDate,
-            request.AssignedToUserId,
-            request.RelatedEntityType,
-            request.RelatedEntityId);
-
-        await _repository.UpdateAsync(task, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        if (task.AssignedToUserId.HasValue &&
-            task.AssignedToUserId != previousAssignedUserId)
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
         {
-            await SendTaskAssignedNotificationAsync(task, task.AssignedToUserId.Value, cancellationToken);
-        }
-
-        if (task.Status == TaskStatus.Completed &&
-            previousStatus != TaskStatus.Completed)
-        {
-            await SendTaskCompletedNotificationAsync(task, cancellationToken);
+            _logger.LogError(ex, "Error updating task: {TaskId}", request.Id);
+            throw;
         }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var task = await _repository.GetByIdAsync(id, cancellationToken);
-        if (task == null)
+        try
         {
-            throw new NotFoundException(nameof(TaskDb), id);
-        }
+            var task = await _repository.GetByIdAsync(id, cancellationToken);
+            if (task == null)
+            {
+                throw new NotFoundException(nameof(TaskDb), id);
+            }
 
-        await _repository.DeleteAsync(task, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _repository.DeleteAsync(task, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Task deleted successfully: {TaskId}, Title: {TaskTitle}", 
+                id, task.Title);
+        }
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
+        {
+            _logger.LogError(ex, "Error deleting task: {TaskId}", id);
+            throw;
+        }
     }
 
     public async Task UpdateStatusAsync(Guid id, Domain.Tasks.TaskStatus status, CancellationToken cancellationToken = default)
     {
-        var task = await _repository.GetByIdAsync(id, cancellationToken);
-        if (task == null)
+        try
         {
-            throw new NotFoundException(nameof(TaskDb), id);
+            var task = await _repository.GetByIdAsync(id, cancellationToken);
+            if (task == null)
+            {
+                throw new NotFoundException(nameof(TaskDb), id);
+            }
+
+            var previousStatus = task.Status;
+
+            task.UpdateStatus(status);
+            await _repository.UpdateAsync(task, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Email gönderimi başarısız olsa bile devam et
+            if (status == TaskStatus.Completed && previousStatus != TaskStatus.Completed)
+            {
+                try
+                {
+                    await SendTaskCompletedNotificationAsync(task, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send task completed notification for task {TaskId}", task.Id);
+                }
+            }
         }
-
-        var previousStatus = task.Status;
-
-        task.UpdateStatus(status);
-        await _repository.UpdateAsync(task, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        if (status == TaskStatus.Completed && previousStatus != TaskStatus.Completed)
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
         {
-            await SendTaskCompletedNotificationAsync(task, cancellationToken);
+            _logger.LogError(ex, "Error updating task status: {TaskId}, Status: {Status}", id, status);
+            throw;
         }
     }
 
     public async Task AssignToAsync(Guid id, Guid? userId, CancellationToken cancellationToken = default)
     {
-        var task = await _repository.GetByIdAsync(id, cancellationToken);
-        if (task == null)
+        try
         {
-            throw new NotFoundException(nameof(TaskDb), id);
+            var task = await _repository.GetByIdAsync(id, cancellationToken);
+            if (task == null)
+            {
+                throw new NotFoundException(nameof(TaskDb), id);
+            }
+
+            task.AssignTo(userId);
+            await _repository.UpdateAsync(task, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Email gönderimi başarısız olsa bile devam et
+            if (userId.HasValue)
+            {
+                try
+                {
+                    await SendTaskAssignedNotificationAsync(task, userId.Value, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send task assigned notification for task {TaskId}", task.Id);
+                }
+            }
         }
-
-        task.AssignTo(userId);
-        await _repository.UpdateAsync(task, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        if (userId.HasValue)
+        catch (Exception ex) when (ex is not NotFoundException && ex is not BadRequestException && ex is not ValidationException)
         {
-            await SendTaskAssignedNotificationAsync(task, userId.Value, cancellationToken);
+            _logger.LogError(ex, "Error assigning task: {TaskId} to user: {UserId}", id, userId);
+            throw;
         }
     }
 

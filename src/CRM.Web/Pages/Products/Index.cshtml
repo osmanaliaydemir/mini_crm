@@ -1,0 +1,68 @@
+@page
+@model CRM.Web.Pages.Products.IndexModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Ürünler";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/datatable.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/products/list.css" asp-append-version="true" />
+}
+
+<section class="page-header products-header">
+    <div>
+        <h1>Ürünler</h1>
+        <p class="subtitle">Kereste varyantlarını yönetin</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary" asp-page="Create">
+            Yeni Ürün Ekle
+        </a>
+    </div>
+</section>
+
+<div class="products-table-section">
+    <article class="card table-card wide">
+        <header class="card-header">
+            <div>
+                <h2>Ürün Listesi</h2>
+                <p>Ürünlerin tür, kalite ve birim bilgilerini görün</p>
+            </div>
+            <form method="get" class="table-actions products-filter-form">
+                <label class="products-filter-form__control">
+                    <span>Ara</span>
+                    <input type="text" name="search" value="@Model.Search" placeholder="Ürün ara..." />
+                </label>
+                <button type="submit" class="btn btn-primary">Filtrele</button>
+                @if (!string.IsNullOrEmpty(Model.Search))
+                {
+                    <a asp-page="Index" class="btn btn-ghost">Temizle</a>
+                }
+            </form>
+        </header>
+        <div class="table-wrapper">
+            <table id="productsTable" class="data-table" data-order-column="0" data-order-direction="asc">
+                <thead>
+                    <tr>
+                        <th>Ad</th>
+                        <th>Tür</th>
+                        <th>Kalite</th>
+                        <th>Birim</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @* DataTables server-side processing kullanıldığı için tbody boş bırakılıyor *@
+                </tbody>
+            </table>
+        </div>
+    </article>
+</div>
+
+@section Scripts {
+    <script src="~/js/products/list.js" asp-append-version="true"></script>
+}

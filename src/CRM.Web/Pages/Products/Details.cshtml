@@ -1,0 +1,64 @@
+@page
+@model CRM.Web.Pages.Products.DetailsModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Ürün Detayları";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/products/details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/products/form.css" asp-append-version="true" />
+}
+
+@if (Model.Product != null)
+{
+    <section class="page-header">
+        <div>
+            <h1>@Model.Product.Name</h1>
+            <p class="subtitle">Ürün detayları</p>
+        </div>
+        <div class="header-actions">
+            <a asp-page="Edit" asp-route-id="@Model.Product.Id" class="btn btn-primary">Düzenle</a>
+            <a asp-page="Index" class="btn btn-ghost">Geri</a>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="form-card">
+            <header>
+                <h2>Ürün Bilgileri</h2>
+            </header>
+            <dl class="detail-list">
+                <dt>Ad</dt>
+                <dd>@Model.Product.Name</dd>
+
+                <dt>Tür</dt>
+                <dd>@(Model.Product.Species ?? "-")</dd>
+
+                <dt>Kalite</dt>
+                <dd>@(Model.Product.Grade ?? "-")</dd>
+
+                <dt>Birim</dt>
+                <dd>@Model.Product.UnitOfMeasure</dd>
+
+                @if (Model.Product.StandardVolume != null)
+                {
+                    <dt>Standart Hacim</dt>
+                    <dd>
+                        @Model.Product.StandardVolume.Amount @Model.Product.StandardVolume.Unit
+                    </dd>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Product.Notes))
+                {
+                    <dt>Notlar</dt>
+                    <dd>@Model.Product.Notes</dd>
+                }
+            </dl>
+        </div>
+    </section>
+}
+
