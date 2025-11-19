@@ -96,6 +96,7 @@ builder.Services.AddRazorPages(options =>
     {
         options.Conventions.AllowAnonymousToPage("/Auth/Login");
         options.Conventions.AllowAnonymousToPage("/Auth/ForgotPassword");
+        options.Conventions.AllowAnonymousToPage("/Index");
         // Error pages should be accessible to everyone
         options.Conventions.AllowAnonymousToPage("/Error/404");
         options.Conventions.AllowAnonymousToPage("/Error/403");
@@ -109,7 +110,7 @@ builder.Services.AddRazorPages(options =>
         options.Conventions.AuthorizeFolder("/Users", "AdminOnly");
         options.Conventions.AuthorizeFolder("/Settings", "AdminOnly");
         options.Conventions.AuthorizeFolder("/Tasks", "OperationsAccess");
-        options.Conventions.AuthorizePage("/Index", "OperationsAccess");
+        options.Conventions.AuthorizePage("/Dashboard/Index", "OperationsAccess");
     })
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
     .AddDataAnnotationsLocalization(options =>

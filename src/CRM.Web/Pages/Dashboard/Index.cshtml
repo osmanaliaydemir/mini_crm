@@ -1,0 +1,377 @@
+﻿@page "/dashboard"
+@model CRM.Web.Pages.Dashboard.IndexModel
+@using System.Collections.Generic
+@using System.Globalization
+@using System.Text.Json
+@using CRM.Web
+@using CRM.Domain.Tasks
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Localizer["Dashboard_Title"];
+    var currencyCulture = CultureInfo.CurrentCulture;
+    var numberCulture = CultureInfo.CurrentCulture;
+
+    string FormatCurrency(decimal value) => value.ToString("C0", currencyCulture);
+    string FormatNumber(int value) => value.ToString("N0", numberCulture);
+    string FormatPercent(double value) => value.ToString("P0", numberCulture);
+
+    var totalShipments = Model.Summary.TotalShipments;
+    var activeRatio = totalShipments > 0 ? (double)Model.Summary.ActiveShipments / totalShipments : 0d;
+    var customsRatio = totalShipments > 0 ? (double)Model.Summary.ShipmentsInCustoms / totalShipments : 0d;
+    var deliveredRatio = totalShipments > 0 ? (double)Model.Summary.DeliveredLast30Days / Math.Max(1, totalShipments) : 0d;
+
+    var supplierLabels = Model.SupplierCountryBreakdown
+        .Select(p => p.Label.Equals(CRM.Web.Pages.Dashboard.IndexModel.SupplierUnspecifiedToken, StringComparison.OrdinalIgnoreCase)
+            ? Localizer["Dashboard_Unspecified"].Value
+            : p.Label)
+        .ToArray();
+    var supplierValues = Model.SupplierCountryBreakdown.Select(p => p.Value).ToArray();
+
+    var shipmentStatusLabels = Model.ShipmentStatusSummaries
+        .Select(s => Localizer[$"Shipments_Status_{s.Status}"].Value)
+        .ToArray();
+    var shipmentStatusData = Model.ShipmentStatusSummaries.Select(s => s.Count).ToArray();
+    var shipmentStatusNarration = string.Join(", ",
+        Model.ShipmentStatusSummaries.Select(s => string.Concat(Localizer[$"Shipments_Status_{s.Status}"], ": ", s.Count)));
+
+    var supplierNarration = string.Join(", ",
+        Model.SupplierCountryBreakdown.Select(p =>
+            string.Concat(
+                p.Label.Equals(CRM.Web.Pages.Dashboard.IndexModel.SupplierUnspecifiedToken, StringComparison.OrdinalIgnoreCase)
+                    ? Localizer["Dashboard_Unspecified"].Value
+                    : p.Label,
+                ": ",
+                p.Value)));
+
+    var cashFlowPoints = Model.CashFlowTrend
+        .Select(p => new
+        {
+            Label = p.PeriodStart.ToString("MMM yyyy", CultureInfo.CurrentCulture),
+            Income = Math.Round((double)p.Income, 2),
+            Expense = Math.Round((double)p.Expense, 2)
+        })
+        .ToArray();
+
+    var cashFlowLabels = cashFlowPoints.Select(p => p.Label).ToArray();
+    var cashFlowIncome = cashFlowPoints.Select(p => p.Income).ToArray();
+    var cashFlowExpense = cashFlowPoints.Select(p => p.Expense).ToArray();
+
+    var shipmentTrendLabels = Model.ShipmentMonthlyTrend
+        .Select(p => p.PeriodStart.ToString("MMM yyyy", CultureInfo.CurrentCulture))
+        .ToArray();
+    var shipmentTrendValues = Model.ShipmentMonthlyTrend
+        .Select(p => Math.Round((double)p.Value, 2))
+        .ToArray();
+
+    var statusItems = new[]
+    {
+        new { label = Localizer["Dashboard_Summary_ActiveShipments"].Value, value = FormatNumber(Model.Summary.ActiveShipments), state = "good" },
+        new { label = Localizer["Dashboard_Summary_CustomsShipments"].Value, value = FormatNumber(Model.Summary.ShipmentsInCustoms), state = customsRatio > 0.12 ? "warn" : "good" },
+        new { label = Localizer["Dashboard_Summary_Delivered30"].Value, value = FormatNumber(Model.Summary.DeliveredLast30Days), state = "good" }
+    };
+
+    var baseKpis = new
+    {
+        kpis = new
+        {
+            activeShipments = new { value = FormatNumber(Model.Summary.ActiveShipments), trendLabel = FormatPercent(activeRatio), tone = activeRatio >= 0.6 ? "positive" : "neutral", meta = "Son 30 gün" },
+            customsShipments = new { value = FormatNumber(Model.Summary.ShipmentsInCustoms), trendLabel = FormatPercent(customsRatio), tone = customsRatio > 0.15 ? "warning" : "neutral", meta = "Takip edilen dosya" },
+            cashNet = new { value = FormatCurrency(Model.Summary.CashNetLast30), trendLabel = "+0%", tone = "neutral", meta = "Net nakit" },
+            satisfaction = new { value = $"{FormatNumber(Model.Summary.CustomerInteractionsLast30)} temas", trendLabel = FormatPercent(deliveredRatio), tone = "neutral", meta = "Müşteri Etkileşimi" }
+        }
+    };
+
+    List<object> BuildActivities(string rangeKey)
+    {
+        if (!Model.ActivityFeed.TryGetValue(rangeKey, out var events) || events.Count == 0)
+        {
+            return new List<object>();
+        }
+
+        return events.Select(ev => new
+        {
+            time = ev.OccurredAt.ToLocalTime().ToString("HH:mm"),
+            title = string.Format(Localizer["Dashboard_Activity_ShipmentTitle"].Value, ev.ReferenceNumber),
+            detail = $"{Localizer[$"Shipments_Status_{ev.Status}"]} · {(string.IsNullOrWhiteSpace(ev.CustomerDisplay) ? Localizer["Dashboard_Unspecified"].Value : ev.CustomerDisplay)}",
+            type = "shipment",
+            typeLabel = Localizer["Dashboard_ActivityType_Shipment"].Value
+        }).Cast<object>().ToList();
+    }
+
+    object BuildRangePayload(string rangeKey) => new
+    {
+        baseKpis.kpis,
+        shipmentStatus = new { labels = shipmentStatusLabels, values = shipmentStatusData },
+        cashFlow = new { labels = cashFlowLabels, income = cashFlowIncome, expense = cashFlowExpense },
+        riskShipments = Array.Empty<object>(),
+        activities = BuildActivities(rangeKey)
+    };
+
+    var serializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+    var todayTaskCards = Model.DashboardData.TodayTasks.Select(t =>
+    {
+        var hasDueDate = t.DueDate.HasValue;
+        var dueLocal = hasDueDate ? DateTime.SpecifyKind(t.DueDate!.Value, DateTimeKind.Utc).ToLocalTime() : (DateTime?)null;
+        var dueText = dueLocal?.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture) ?? Localizer["Dashboard_Tasks_NoDueDate"].Value;
+        var assignedLabel = t.AssignedToUserId.HasValue && Model.UserNames.TryGetValue(t.AssignedToUserId.Value, out var assignedUserName)
+            ? assignedUserName
+            : Localizer["Tasks_Field_Unassigned"].Value;
+        var isOverdue = dueLocal.HasValue && dueLocal < DateTime.Now && t.Status != CRM.Domain.Tasks.TaskStatus.Completed;
+        var statusClass = t.Status == CRM.Domain.Tasks.TaskStatus.Completed ? "success"
+            : t.Status == CRM.Domain.Tasks.TaskStatus.Cancelled ? "danger"
+            : t.Status == CRM.Domain.Tasks.TaskStatus.InProgress ? "warning"
+            : "info";
+        var priorityClass = t.Priority == TaskPriority.Urgent ? "danger"
+            : t.Priority == TaskPriority.High ? "warning"
+            : "info";
+        var statusLabel = Localizer[$"Tasks_Status_{t.Status}"].Value;
+        var priorityLabel = Localizer[$"Tasks_Priority_{t.Priority}"].Value;
+        var priorityWeight = t.Priority switch
+        {
+            TaskPriority.Urgent => 1.0,
+            TaskPriority.High => 0.75,
+            TaskPriority.Medium => 0.5,
+            _ => 0.25
+        };
+        var completion = t.Status == CRM.Domain.Tasks.TaskStatus.Completed
+            ? 1.0
+            : t.Status == CRM.Domain.Tasks.TaskStatus.InProgress
+                ? 0.6
+                : t.Status == CRM.Domain.Tasks.TaskStatus.Pending
+                    ? 0.3
+                    : 0.1;
+        var progressPercent = Math.Clamp((priorityWeight * 0.4 + completion * 0.6) * 100, 5, 100);
+
+        return new
+        {
+            t.Id,
+            t.Title,
+            Status = t.Status,
+            StatusClass = statusClass,
+            StatusLabel = statusLabel,
+            PriorityClass = priorityClass,
+            PriorityLabel = priorityLabel,
+            DueText = dueText,
+            DueIso = t.DueDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            OwnerLabel = assignedLabel,
+            IsOverdue = isOverdue,
+            Progress = (int)Math.Round(progressPercent, 0, MidpointRounding.AwayFromZero),
+            DetailsUrl = Url.Page("/Tasks/Details", new { id = t.Id })
+        };
+    }).ToList();
+
+    var taskItems = todayTaskCards.Select(t => new
+    {
+        id = t.Id,
+        title = t.Title,
+        status = t.Status.ToString(),
+        statusClass = t.StatusClass,
+        statusLabel = t.StatusLabel,
+        priority = t.PriorityLabel,
+        priorityClass = t.PriorityClass,
+        priorityLabel = t.PriorityLabel,
+        due = t.DueText,
+        dueLabel = t.DueText,
+        owner = t.OwnerLabel,
+        ownerLabel = t.OwnerLabel,
+        isOverdue = t.IsOverdue,
+        progress = t.Progress,
+        detailsUrl = t.DetailsUrl
+    }).ToArray();
+
+    var dashboardPayload = new
+    {
+        status = statusItems,
+        tasks = taskItems,
+        suppliers = new { labels = supplierLabels, values = supplierValues },
+        ranges = new Dictionary<string, object>
+        {
+            ["7d"] = BuildRangePayload("7d"),
+            ["30d"] = BuildRangePayload("30d"),
+            ["90d"] = BuildRangePayload("90d")
+        },
+        shipmentTrend = new { labels = shipmentTrendLabels, values = shipmentTrendValues }
+    };
+}
+
+<section class="page-header">
+    <div>
+        <h1>@Localizer["Dashboard_Title"]</h1>
+        <p class="subtitle">@Localizer["Dashboard_Intro"]</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-ghost" asp-page="/Shipments/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
+        <a class="btn btn-primary" asp-page="/Shipments/Create">Yeni Sevkiyat</a>
+    </div>
+</section>
+<section class="kpi-grid">
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Summary_ActiveShipments"].Value, 
+        value = FormatNumber(Model.Summary.ActiveShipments), 
+        meta = "Son 30 gün",
+        trend = FormatPercent(activeRatio),
+        trendType = "positive",
+        dataKpi = "activeShipments"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Summary_CustomsShipments"].Value, 
+        value = FormatNumber(Model.Summary.ShipmentsInCustoms), 
+        meta = "Takip edilen dosya",
+        trend = FormatPercent(customsRatio),
+        trendType = "warning",
+        dataKpi = "customsShipments"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Summary_CashNet30"].Value, 
+        value = FormatCurrency(Model.Summary.CashNetLast30), 
+        meta = "Net nakit",
+        trend = "+0%",
+        trendType = "neutral",
+        dataKpi = "cashNet"
+    })
+    @await Component.InvokeAsync("KpiCard", new { 
+        label = Localizer["Dashboard_Section_CRM"].Value, 
+        value = FormatNumber(Model.Summary.CustomerInteractionsLast30), 
+        meta = "Müşteri Etkileşimi",
+        trend = FormatPercent(deliveredRatio),
+        trendType = "neutral",
+        dataKpi = "satisfaction"
+    })
+</section>
+
+<section class="insight-grid">
+    <article class="card chart-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Dashboard_Section_Shipments"]</h2>
+                <p>@Localizer["Dashboard_Chart_ShipmentStatus"]</p>
+            </div>
+            <select id="shipmentStatusRange" aria-label="Sevkiyat aralığı">
+                <option value="7d">Son 7 gün</option>
+                <option value="30d" selected>Son 30 gün</option>
+                <option value="90d">Son 90 gün</option>
+            </select>
+        </header>
+        <canvas id="shipmentStatusChart" role="img" aria-describedby="shipmentStatusDesc"></canvas>
+        <p id="shipmentStatusDesc" class="sr-only">@shipmentStatusNarration</p>
+    </article>
+
+    <article class="card chart-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Dashboard_Chart_SupplierCountries"]</h2>
+                <p>Aktif sipariş verilen ülkeler</p>
+            </div>
+        </header>
+        <canvas id="supplierCountryChart" role="img" aria-describedby="supplierCountryDesc"></canvas>
+        <p id="supplierCountryDesc" class="sr-only">@supplierNarration</p>
+    </article>
+
+    <article class="card chart-card wide">
+        <header class="card-header">
+            <div>
+                <h2>Gelir / Gider Trendi</h2>
+                <p>Finansal akış (₺)</p>
+            </div>
+            <div class="legend">
+                <span class="legend-pill income">Gelir</span>
+                <span class="legend-pill expense">Gider</span>
+            </div>
+        </header>
+        <canvas id="cashFlowChart" role="img" aria-describedby="cashFlowDesc"></canvas>
+        <p id="cashFlowDesc" class="sr-only">Gelir ve gider trendi</p>
+    </article>
+
+    <article class="card table-card">
+        <header class="card-header">
+            <div>
+                <h2>Riskli Sevkiyatlar</h2>
+                <p>Gecikme veya kritik durumdaki operasyonlar</p>
+            </div>
+            <a class="btn btn-ghost" asp-page="/Shipments/Index">@Localizer["Dashboard_Link_ViewShipments"]</a>
+        </header>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sevkiyat</th>
+                        <th>Müşteri</th>
+                        <th>Durum</th>
+                        <th>Tahmini Varış</th>
+                    </tr>
+                </thead>
+                <tbody id="riskShipmentTable">
+                    <tr>
+                        <td colspan="4" class="empty-state">Riskli sevkiyat verisi bulunamadı.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="card todo-card">
+        <header class="card-header">
+            <div>
+                <h2>@Localizer["Navigation_Tasks"]</h2>
+                <p>@Localizer["Dashboard_Tasks_Subtitle"]</p>
+            </div>
+            <a class="btn btn-ghost" asp-page="/Tasks/Index">@Localizer["Tasks_Action_Create"]</a>
+        </header>
+        <ul id="taskList" class="task-list">
+            @if (todayTaskCards.Any())
+            {
+                @foreach (var task in todayTaskCards)
+                {
+                    <li class="task-card @(task.IsOverdue ? "overdue" : "")">
+                        <a href="@task.DetailsUrl" class="task-link">
+                            <div class="task-header">
+                                <span class="task-title">@task.Title</span>
+                                <span class="badge badge-@task.StatusClass">@task.StatusLabel</span>
+                            </div>
+                            <div class="task-meta">
+                                <span class="task-due @(task.IsOverdue ? "text-danger" : "")">
+                                    @Localizer["Tasks_Field_DueDate"]: @task.DueText
+                                </span>
+                                <span class="task-assigned">
+                                    @Localizer["Tasks_Field_AssignedTo"]: @task.OwnerLabel
+                                </span>
+                                <span class="badge badge-@task.PriorityClass">@task.PriorityLabel</span>
+                            </div>
+                            <div class="progress-bar">
+                                <span style="width:@task.Progress%"></span>
+                            </div>
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="task-card empty-state">@Localizer["Dashboard_Tasks_Empty"]</li>
+            }
+        </ul>
+    </article>
+
+    <article class="card feed-card">
+        <header class="card-header">
+            <div>
+                <h2>Operasyon Akışı</h2>
+                <p>Son aksiyon ve kayıtlar</p>
+            </div>
+            <a class="btn btn-ghost" asp-page="/Analytics/Operations">Tümünü Gör</a>
+        </header>
+        <ul id="activityFeed" class="activity-feed">
+            <li class="activity-item empty"><span>Henüz aktivite kaydı yok.</span></li>
+        </ul>
+    </article>
+</section>
+
+@section Scripts {
+    <script>
+        window.dashboardData = @Html.Raw(JsonSerializer.Serialize(dashboardPayload, serializerOptions));
+        window.dashboardDefaultRange = '30d';
+    </script>
+}

@@ -15,6 +15,15 @@ public interface IAuditLogService
         DateTime? toDate = null,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<AuditLogDto>> GetAllAsync(
+        string? entityType = null,
+        Guid? entityId = null,
+        string? action = null,
+        string? userId = null,
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        CancellationToken cancellationToken = default);
+
     Task<AuditLogDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<string>> GetEntityTypesAsync(CancellationToken cancellationToken = default);
     

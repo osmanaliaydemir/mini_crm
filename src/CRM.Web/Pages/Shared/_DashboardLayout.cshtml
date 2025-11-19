@@ -38,7 +38,7 @@
     var layoutLang = CultureShortName(currentCulture.Name);
     var layoutDir = currentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
-    var hideStatusBar = string.Equals(currentPage, "/Index", StringComparison.OrdinalIgnoreCase);
+    var hideStatusBar = string.Equals(currentPage, "/Dashboard/Index", StringComparison.OrdinalIgnoreCase);
 
     bool IsActive(string page) =>
         string.Equals(currentPage, page, StringComparison.OrdinalIgnoreCase);
@@ -164,7 +164,7 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <span class="nav-section-title">@Localizer["Dashboard_Title"]</span>
-                    <a class="nav-item @(IsActive("/Index") ? "active" : null)" asp-page="/Index">
+                    <a class="nav-item @(IsActive("/Dashboard/Index") ? "active" : null)" asp-page="/Dashboard/Index">
                         @* <span class="nav-active-indicator"></span> *@
                         <span class="nav-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" /></svg>

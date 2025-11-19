@@ -30,37 +30,7 @@ public class AuditLogService : IAuditLogService
         DateTime? toDate = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.AuditLogs.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(entityType))
-        {
-            query = query.Where(a => a.EntityType == entityType);
-        }
-
-        if (entityId.HasValue)
-        {
-            query = query.Where(a => a.EntityId == entityId.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(action))
-        {
-            query = query.Where(a => a.Action == action);
-        }
-
-        if (!string.IsNullOrWhiteSpace(userId))
-        {
-            query = query.Where(a => a.UserId == userId);
-        }
-
-        if (fromDate.HasValue)
-        {
-            query = query.Where(a => a.Timestamp >= fromDate.Value);
-        }
-
-        if (toDate.HasValue)
-        {
-            query = query.Where(a => a.Timestamp <= toDate.Value);
-        }
+        var query = BuildFilteredQuery(entityType, entityId, action, userId, fromDate, toDate);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -74,9 +44,27 @@ public class AuditLogService : IAuditLogService
 
         return new PagedResult<AuditLogDto>(
             auditLogDtos,
+            totalCount,
             pagination.PageNumber,
-            pagination.PageSize,
-            totalCount);
+            pagination.PageSize);
+    }
+
+    public async Task<IReadOnlyList<AuditLogDto>> GetAllAsync(
+        string? entityType = null,
+        Guid? entityId = null,
+        string? action = null,
+        string? userId = null,
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = BuildFilteredQuery(entityType, entityId, action, userId, fromDate, toDate);
+
+        var auditLogs = await query
+            .OrderByDescending(a => a.Timestamp)
+            .ToListAsync(cancellationToken);
+
+        return auditLogs.Adapt<List<AuditLogDto>>();
     }
 
     public async Task<AuditLogDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -119,6 +107,48 @@ public class AuditLogService : IAuditLogService
             // Audit log oluşturma hatası uygulama akışını bozmamalı
             // Bu yüzden exception'ı fırlatmıyoruz, sadece logluyoruz
         }
+    }
+    private IQueryable<AuditLog> BuildFilteredQuery(
+        string? entityType,
+        Guid? entityId,
+        string? action,
+        string? userId,
+        DateTime? fromDate,
+        DateTime? toDate)
+    {
+        var query = _context.AuditLogs.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(entityType))
+        {
+            query = query.Where(a => a.EntityType == entityType);
+        }
+
+        if (entityId.HasValue)
+        {
+            query = query.Where(a => a.EntityId == entityId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(action))
+        {
+            query = query.Where(a => a.Action == action);
+        }
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            query = query.Where(a => a.UserId == userId);
+        }
+
+        if (fromDate.HasValue)
+        {
+            query = query.Where(a => a.Timestamp >= fromDate.Value);
+        }
+
+        if (toDate.HasValue)
+        {
+            query = query.Where(a => a.Timestamp <= toDate.Value);
+        }
+
+        return query;
     }
 }
 

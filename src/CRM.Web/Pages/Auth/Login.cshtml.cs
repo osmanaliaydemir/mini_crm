@@ -34,7 +34,7 @@ public class LoginModel : PageModel
     {
         if (_signInManager.IsSignedIn(User))
         {
-            return LocalRedirect(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl!);
+            return LocalRedirect(string.IsNullOrWhiteSpace(ReturnUrl) ? "/dashboard" : ReturnUrl!);
         }
 
         return Page();
@@ -162,7 +162,7 @@ public class LoginModel : PageModel
             }
         });
 
-        return LocalRedirect(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl!);
+        return LocalRedirect(string.IsNullOrWhiteSpace(ReturnUrl) ? "/dashboard" : ReturnUrl!);
     }
 
     public sealed class LoginInput

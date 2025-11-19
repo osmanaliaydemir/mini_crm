@@ -160,7 +160,6 @@ textarea.form-control {
 }
 
 .data-table thead {
-    background: rgba(15, 23, 42, 0.6);
     border-bottom: 2px solid var(--border-card);
 }
 
@@ -170,7 +169,6 @@ textarea.form-control {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-secondary);
-    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 

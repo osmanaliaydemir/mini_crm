@@ -1,8 +1,10 @@
 body.login-minimal {
     min-height: 100vh;
-    background: radial-gradient(circle at 18% 15%, rgba(37, 62, 90, 0.55), transparent 52%),
-                radial-gradient(circle at 82% 12%, rgba(111, 127, 155, 0.45), transparent 60%),
-                #0b1220;
+    background:
+        radial-gradient(circle at 20% 25%, rgba(55, 55, 57, 0.42), transparent 55%),
+        radial-gradient(circle at 78% 28%, rgba(38, 38, 40, 0.35), transparent 60%),
+        linear-gradient(130deg, #0f0f11 0%, #18181a 45%, #0b0b0d 100%);
+    background-color: #121214;
     color: #fff;
     display: flex;
     align-items: center;
@@ -24,6 +26,60 @@ body.login-minimal::after {
     position: fixed;
     inset: 0;
     pointer-events: none;
+}
+
+.login-ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.ambient-glow {
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    left: max(4vw, -40px);
+    top: 10vh;
+    background: radial-gradient(circle at 40% 40%, rgba(72, 118, 208, 0.75), rgba(5, 10, 20, 0));
+    filter: blur(90px);
+    opacity: 0.55;
+    animation: pulseGlow 16s ease-in-out infinite;
+}
+
+.ambient-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(6px);
+    opacity: 0.55;
+    background: radial-gradient(circle, rgba(94, 234, 212, 0.65), rgba(94, 234, 212, 0));
+    animation: floatOrbs 18s ease-in-out infinite;
+}
+
+.ambient-orb--one {
+    width: 180px;
+    height: 180px;
+    left: 12vw;
+    top: 28vh;
+}
+
+.ambient-orb--two {
+    width: 130px;
+    height: 130px;
+    left: 6vw;
+    top: 52vh;
+    animation-delay: -4s;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.6), rgba(59, 130, 246, 0));
+}
+
+.ambient-orb--three {
+    width: 220px;
+    height: 220px;
+    left: 24vw;
+    top: 8vh;
+    animation-delay: -7s;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.42), rgba(14, 165, 233, 0));
 }
 
 .brand-ribbon,
@@ -164,6 +220,7 @@ body.login-minimal::after {
 .minimal-shell {
     position: relative;
     width: min(420px, 100%);
+    z-index: 1;
 }
 
 .forgot-password .minimal-card {
@@ -200,9 +257,9 @@ body.login-minimal::after {
     position: relative;
     padding: 48px 40px;
     border-radius: 28px;
-    background: rgba(12, 18, 32, 0.88);
+    background: #2C2C2E;
     border: 1px solid rgba(111, 127, 155, 0.35);
-    box-shadow: 0 22px 45px rgba(10, 14, 26, 0.45);
+    box-shadow: 0 22px 45px rgb(255 255 255 / 45%);
     backdrop-filter: blur(18px);
 }
 
@@ -380,7 +437,7 @@ body.login-minimal::after {
     padding: 12px 16px;
     padding-right: 46px;
     border-radius: 18px;
-    background: rgba(14, 21, 36, 0.92);
+    background: rgba(0, 0, 0, 0.92);
     border: 1px solid rgba(111, 127, 155, 0.35);
     transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
@@ -501,7 +558,7 @@ body.login-minimal::after {
     padding: 13px;
     border: 0;
     border-radius: 18px;
-    background: linear-gradient(135deg, #1c3b58, #152842);
+    background: linear-gradient(135deg, #111212, #3a6e74);
     color: #ffffff;
     font-weight: 600;
     font-size: 0.95rem;
@@ -584,6 +641,15 @@ body.login-minimal::after {
     }
 }
 
+@keyframes floatOrbs {
+    0%, 100% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+        transform: translate3d(30px, -35px, 0) scale(1.08);
+    }
+}
+
 @keyframes drift {
     from {
         transform: translate3d(0, 0, 0);
@@ -642,7 +708,7 @@ body.login-minimal::after {
 .form-input:-webkit-autofill:hover,
 .form-input:-webkit-autofill:focus,
 .form-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px rgba(14, 21, 36, 0.92) inset;
+    -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.92) inset;
     -webkit-text-fill-color: rgba(224, 231, 245, 0.95);
     caret-color: rgba(224, 231, 245, 0.95);
     transition: background-color 9999s ease-out 0s, color 9999s ease-out 0s;
