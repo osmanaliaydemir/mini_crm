@@ -19,19 +19,14 @@ public class GlobalSearchService : IGlobalSearchService
     private readonly CRMDbContext _dbContext;
     private readonly ILogger<GlobalSearchService> _logger;
 
-    public GlobalSearchService(
-        IApplicationDbContext context,
-        CRMDbContext dbContext,
-        ILogger<GlobalSearchService> logger)
+    public GlobalSearchService(IApplicationDbContext context, CRMDbContext dbContext, ILogger<GlobalSearchService> logger)
     {
         _context = context;
         _dbContext = dbContext;
         _logger = logger;
     }
 
-    public async Task<GlobalSearchResponse> SearchAsync(
-        GlobalSearchRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<GlobalSearchResponse> SearchAsync(GlobalSearchRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Query) || request.Query.Length < 2)
         {
@@ -111,16 +106,11 @@ public class GlobalSearchService : IGlobalSearchService
             }
 
             // Sort by relevance score and take max results
-            var sortedResults = results
-                .OrderByDescending(r => r.RelevanceScore)
-                .ThenByDescending(r => r.CreatedAt)
-                .Take(request.MaxResults)
-                .ToList();
+            var sortedResults = results.OrderByDescending(r => r.RelevanceScore)
+                .ThenByDescending(r => r.CreatedAt).Take(request.MaxResults).ToList();
 
             // Count by type
-            var countByType = results
-                .GroupBy(r => r.Type)
-                .ToDictionary(g => g.Key, g => g.Count());
+            var countByType = results.GroupBy(r => r.Type).ToDictionary(g => g.Key, g => g.Count());
 
             return new GlobalSearchResponse(
                 sortedResults,
@@ -130,61 +120,37 @@ public class GlobalSearchService : IGlobalSearchService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error performing global search for query: {Query}", query);
-            return new GlobalSearchResponse(
-                Array.Empty<GlobalSearchResult>(),
-                0,
-                new Dictionary<SearchEntityType, int>());
+            return new GlobalSearchResponse(Array.Empty<GlobalSearchResult>(), 0, new Dictionary<SearchEntityType, int>());
         }
     }
 
     private async Task<List<GlobalSearchResult>> SearchCustomersAsync(string query, CancellationToken cancellationToken)
     {
-        var customers = await _context.Customers
-            .AsNoTracking()
+        var customers = await _context.Customers.AsNoTracking()
             .Where(c => c.Name.Contains(query) ||
                        (c.LegalName != null && c.LegalName.Contains(query)) ||
                        (c.TaxNumber != null && c.TaxNumber.Contains(query)) ||
                        (c.Email != null && c.Email.Contains(query)) ||
                        (c.Phone != null && c.Phone.Contains(query)))
-            .OrderBy(c => c.Name)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+            .OrderBy(c => c.Name).Take(10).ToListAsync(cancellationToken);
 
-        return customers.Select(c => new GlobalSearchResult(
-            SearchEntityType.Customer,
-            c.Id,
-            c.Name,
-            c.LegalName ?? c.Email,
-            c.Segment,
-            "customer",
-            $"/Customers/Details/{c.Id}",
-            c.CreatedAt,
-            c.CreatedBy,
+        return customers.Select(c => new GlobalSearchResult(SearchEntityType.Customer,
+            c.Id, c.Name, c.LegalName ?? c.Email, c.Segment,
+            "customer", $"/Customers/Details/{c.Id}", c.CreatedAt, c.CreatedBy,
             CalculateRelevanceScore(c.Name, query, c.LegalName, c.TaxNumber, c.Email))).ToList();
     }
 
     private async Task<List<GlobalSearchResult>> SearchShipmentsAsync(string query, CancellationToken cancellationToken)
     {
-        var shipments = await _context.Shipments
-            .AsNoTracking()
-            .Include(s => s.Customer)
+        var shipments = await _context.Shipments.AsNoTracking().Include(s => s.Customer)
             .Where(s => s.ReferenceNumber.Contains(query) ||
                        (s.Notes != null && s.Notes.Contains(query)) ||
                        (s.Customer != null && s.Customer.Name.Contains(query)))
-            .OrderByDescending(s => s.CreatedAt)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+            .OrderByDescending(s => s.CreatedAt).Take(10).ToListAsync(cancellationToken);
 
-        return shipments.Select(s => new GlobalSearchResult(
-            SearchEntityType.Shipment,
-            s.Id,
-            s.ReferenceNumber,
-            s.Customer != null ? s.Customer.Name : null,
-            s.Status.ToString(),
-            "shipment",
-            $"/Shipments/Details/{s.Id}",
-            s.CreatedAt,
-            s.CreatedBy,
+        return shipments.Select(s => new GlobalSearchResult(SearchEntityType.Shipment, s.Id, s.ReferenceNumber,
+            s.Customer != null ? s.Customer.Name : null, s.Status.ToString(),
+            "shipment", $"/Shipments/Details/{s.Id}", s.CreatedAt, s.CreatedBy,
             CalculateRelevanceScore(s.ReferenceNumber, query, s.Customer?.Name, s.Notes))).ToList();
     }
 
@@ -200,151 +166,94 @@ public class GlobalSearchService : IGlobalSearchService
             .Take(10)
             .ToListAsync(cancellationToken);
 
-        return suppliers.Select(s => new GlobalSearchResult(
-            SearchEntityType.Supplier,
-            s.Id,
-            s.Name,
-            s.Country,
-            s.ContactEmail,
-            "supplier",
-            $"/Suppliers/Details/{s.Id}",
-            s.CreatedAt,
-            s.CreatedBy,
+        return suppliers.Select(s => new GlobalSearchResult(SearchEntityType.Supplier, s.Id, s.Name,
+            s.Country, s.ContactEmail, "supplier", $"/Suppliers/Details/{s.Id}", s.CreatedAt, s.CreatedBy,
             CalculateRelevanceScore(s.Name, query, s.Country, s.TaxNumber, s.ContactEmail))).ToList();
     }
 
     private async Task<List<GlobalSearchResult>> SearchWarehousesAsync(string query, CancellationToken cancellationToken)
     {
-        var warehouses = await _context.Warehouses
-            .AsNoTracking()
-            .Where(w => w.Name.Contains(query) ||
-                       (w.Location != null && w.Location.Contains(query)))
-            .OrderBy(w => w.Name)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+        var warehouses = await _context.Warehouses.AsNoTracking()
+            .Where(w => w.Name.Contains(query) || (w.Location != null && w.Location.Contains(query)))
+            .OrderBy(w => w.Name).Take(10).ToListAsync(cancellationToken);
 
-        return warehouses.Select(w => new GlobalSearchResult(
-            SearchEntityType.Warehouse,
-            w.Id,
-            w.Name,
-            w.Location,
-            w.ContactPerson,
-            "warehouse",
-            $"/Warehouses/Details/{w.Id}",
-            w.CreatedAt,
-            w.CreatedBy,
+        return warehouses.Select(w => new GlobalSearchResult(SearchEntityType.Warehouse,
+            w.Id, w.Name, w.Location, w.ContactPerson,
+            "warehouse", $"/Warehouses/Details/{w.Id}", w.CreatedAt, w.CreatedBy,
             CalculateRelevanceScore(w.Name, query, w.Location))).ToList();
     }
 
     private async Task<List<GlobalSearchResult>> SearchTasksAsync(string query, CancellationToken cancellationToken)
     {
-        var tasks = await _context.Tasks
-            .AsNoTracking()
-            .Where(t => t.Title.Contains(query) ||
-                       (t.Description != null && t.Description.Contains(query)))
-            .OrderByDescending(t => t.CreatedAt)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+        var tasks = await _context.Tasks.AsNoTracking()
+            .Where(t => t.Title.Contains(query) || (t.Description != null && t.Description.Contains(query)))
+            .OrderByDescending(t => t.CreatedAt).Take(10).ToListAsync(cancellationToken);
 
-        return tasks.Select(t => new GlobalSearchResult(
-            SearchEntityType.Task,
-            t.Id,
-            t.Title,
-            t.Status.ToString(),
-            t.Description,
-            "task",
-            $"/Tasks/Details/{t.Id}",
-            t.CreatedAt,
-            t.CreatedBy,
-            CalculateRelevanceScore(t.Title, query, t.Description))).ToList();
+        return tasks.Select(t => new GlobalSearchResult(SearchEntityType.Task, t.Id, t.Title,
+            t.Status.ToString(), t.Description, "task", $"/Tasks/Details/{t.Id}",
+            t.CreatedAt, t.CreatedBy, CalculateRelevanceScore(t.Title, query, t.Description))).ToList();
     }
 
     private async Task<List<GlobalSearchResult>> SearchPaymentPlansAsync(string query, CancellationToken cancellationToken)
     {
         // Get matching customer IDs
-        var matchingCustomerIds = await _context.Customers
-            .AsNoTracking()
-            .Where(c => c.Name.Contains(query))
-            .Select(c => c.Id)
-            .ToListAsync(cancellationToken);
+        var matchingCustomerIds = await _context.Customers.AsNoTracking().Where(c => c.Name.Contains(query))
+            .Select(c => c.Id).ToListAsync(cancellationToken);
 
         // Get matching shipment IDs
-        var matchingShipmentIds = await _context.Shipments
-            .AsNoTracking()
-            .Where(s => s.ReferenceNumber.Contains(query))
-            .Select(s => s.Id)
-            .ToListAsync(cancellationToken);
+        var matchingShipmentIds = await _context.Shipments.AsNoTracking().Where(s => s.ReferenceNumber.Contains(query))
+            .Select(s => s.Id).ToListAsync(cancellationToken);
 
-        var plans = await _context.PaymentPlans
-            .AsNoTracking()
+        var plans = await _context.PaymentPlans.AsNoTracking()
             .Where(p => matchingCustomerIds.Contains(p.CustomerId) ||
                        matchingShipmentIds.Contains(p.ShipmentId) ||
                        p.PlanType.ToString().Contains(query))
-            .OrderByDescending(p => p.CreatedAt)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+            .OrderByDescending(p => p.CreatedAt).Take(10).ToListAsync(cancellationToken);
 
         // Get customer and shipment names for display
         var customerIds = plans.Select(p => p.CustomerId).Distinct().ToList();
         var shipmentIds = plans.Select(p => p.ShipmentId).Distinct().ToList();
 
-        var customers = await _context.Customers
-            .AsNoTracking()
-            .Where(c => customerIds.Contains(c.Id))
+        var customers = await _context.Customers.AsNoTracking().Where(c => customerIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
 
-        var shipments = await _context.Shipments
-            .AsNoTracking()
-            .Where(s => shipmentIds.Contains(s.Id))
+        var shipments = await _context.Shipments.AsNoTracking().Where(s => shipmentIds.Contains(s.Id))
             .ToDictionaryAsync(s => s.Id, s => s.ReferenceNumber, cancellationToken);
 
-        return plans.Select(p => new GlobalSearchResult(
-            SearchEntityType.PaymentPlan,
-            p.Id,
-            $"Payment Plan - {p.PlanType}",
-            customers.TryGetValue(p.CustomerId, out var customerName) ? customerName : 
+        return plans.Select(p => new GlobalSearchResult(SearchEntityType.PaymentPlan,
+            p.Id, $"Payment Plan - {p.PlanType}",
+            customers.TryGetValue(p.CustomerId, out var customerName) ? customerName :
                 (shipments.TryGetValue(p.ShipmentId, out var shipmentRef) ? shipmentRef : null),
             $"Amount: {p.TotalAmount:C}",
             "payment-plan",
             $"/Finance/PaymentPlans/Details/{p.Id}",
             p.CreatedAt,
             p.CreatedBy,
-            CalculateRelevanceScore(p.PlanType.ToString(), query, 
+            CalculateRelevanceScore(p.PlanType.ToString(), query,
                 customers.TryGetValue(p.CustomerId, out var cName) ? cName : null,
                 shipments.TryGetValue(p.ShipmentId, out var sRef) ? sRef : null))).ToList();
     }
 
     private async Task<List<GlobalSearchResult>> SearchCashTransactionsAsync(string query, CancellationToken cancellationToken)
     {
-        var transactions = await _context.CashTransactions
-            .AsNoTracking()
+        var transactions = await _context.CashTransactions.AsNoTracking()
             .Where(t => (t.Description != null && t.Description.Contains(query)) ||
                        t.TransactionType.ToString().Contains(query))
-            .OrderByDescending(t => t.TransactionDate)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+            .OrderByDescending(t => t.TransactionDate).Take(10).ToListAsync(cancellationToken);
 
-        return transactions.Select(t => new GlobalSearchResult(
-            SearchEntityType.CashTransaction,
-            t.Id,
-            t.Description ?? "Cash Transaction",
-            t.TransactionType.ToString(),
-            $"Amount: {t.Amount:C}",
-            "cash-transaction",
-            $"/Finance/Cashbox",
-            t.TransactionDate,
-            null,
+        return transactions.Select(t => new GlobalSearchResult(SearchEntityType.CashTransaction,
+            t.Id, t.Description ?? "Cash Transaction",
+            t.TransactionType.ToString(), $"Amount: {t.Amount:C}",
+            "cash-transaction", $"/Finance/Cashbox", t.TransactionDate, null,
             CalculateRelevanceScore(t.Description ?? "", query, t.TransactionType.ToString()))).ToList();
     }
 
     private async Task<List<GlobalSearchResult>> SearchUsersAsync(string query, CancellationToken cancellationToken)
     {
-        var users = await _dbContext.Users
-            .AsNoTracking()
+        var users = await _dbContext.Users.AsNoTracking()
             .Where(u => (u.UserName != null && u.UserName.Contains(query)) ||
                        (u.Email != null && u.Email.Contains(query)))
-            .OrderBy(u => u.UserName ?? u.Email ?? "")
-            .Take(10)
+            .OrderBy(u => u.UserName ?? u.Email ?? "").Take(10)
             .ToListAsync(cancellationToken);
 
         return users.Select(u => new GlobalSearchResult(

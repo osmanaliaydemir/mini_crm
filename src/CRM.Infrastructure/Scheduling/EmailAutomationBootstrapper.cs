@@ -13,9 +13,7 @@ public class EmailAutomationBootstrapper : IHostedService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EmailAutomationBootstrapper> _logger;
 
-    public EmailAutomationBootstrapper(
-        IServiceProvider serviceProvider,
-        ILogger<EmailAutomationBootstrapper> logger)
+    public EmailAutomationBootstrapper(IServiceProvider serviceProvider, ILogger<EmailAutomationBootstrapper> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;

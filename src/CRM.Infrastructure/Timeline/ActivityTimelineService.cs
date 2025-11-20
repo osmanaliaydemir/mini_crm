@@ -19,17 +19,13 @@ public class ActivityTimelineService : IActivityTimelineService
     private readonly IApplicationDbContext _context;
     private readonly ILogger<ActivityTimelineService> _logger;
 
-    public ActivityTimelineService(
-        IApplicationDbContext context,
-        ILogger<ActivityTimelineService> logger)
+    public ActivityTimelineService(IApplicationDbContext context, ILogger<ActivityTimelineService> logger)
     {
         _context = context;
         _logger = logger;
     }
 
-    public async Task<ActivityTimelineResult> GetTimelineAsync(
-        ActivityTimelineFilter filter,
-        CancellationToken cancellationToken = default)
+    public async Task<ActivityTimelineResult> GetTimelineAsync(ActivityTimelineFilter filter, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -82,11 +78,8 @@ public class ActivityTimelineService : IActivityTimelineService
             var totalCount = await query.CountAsync(cancellationToken);
             var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
 
-            var auditLogs = await query
-                .OrderByDescending(a => a.Timestamp)
-                .Skip((filter.PageNumber - 1) * filter.PageSize)
-                .Take(filter.PageSize)
-                .ToListAsync(cancellationToken);
+            var auditLogs = await query.OrderByDescending(a => a.Timestamp).Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize).ToListAsync(cancellationToken);
 
             var items = new List<ActivityTimelineItem>();
 
@@ -113,20 +106,10 @@ public class ActivityTimelineService : IActivityTimelineService
                     }
                 }
 
-                items.Add(new ActivityTimelineItem(
-                    auditLog.Id,
-                    activityType,
-                    activityAction,
-                    auditLog.Timestamp,
-                    auditLog.EntityId.ToString(),
-                    entityInfo.Name,
-                    entityInfo.Reference,
-                    BuildDescription(auditLog, entityInfo),
-                    auditLog.UserId,
-                    auditLog.UserName,
-                    null,
-                    null,
-                    metadata.Count > 0 ? metadata : null));
+                items.Add(new ActivityTimelineItem(auditLog.Id, activityType, activityAction,
+                    auditLog.Timestamp, auditLog.EntityId.ToString(), entityInfo.Name,
+                    entityInfo.Reference, BuildDescription(auditLog, entityInfo), auditLog.UserId,
+                    auditLog.UserName, null, null, metadata.Count > 0 ? metadata : null));
             }
 
             return new ActivityTimelineResult(
@@ -139,20 +122,13 @@ public class ActivityTimelineService : IActivityTimelineService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading activity timeline");
-            return new ActivityTimelineResult(
-                Array.Empty<ActivityTimelineItem>(),
-                0,
-                filter.PageNumber,
-                filter.PageSize,
-                0);
+            return new ActivityTimelineResult(Array.Empty<ActivityTimelineItem>(), 0,
+                filter.PageNumber, filter.PageSize, 0);
         }
     }
 
-    public async Task<ActivityTimelineResult> GetEntityTimelineAsync(
-        string entityType,
-        Guid entityId,
-        ActivityTimelineFilter? additionalFilter = null,
-        CancellationToken cancellationToken = default)
+    public async Task<ActivityTimelineResult> GetEntityTimelineAsync(string entityType, Guid entityId,
+        ActivityTimelineFilter? additionalFilter = null, CancellationToken cancellationToken = default)
     {
         var filter = additionalFilter ?? new ActivityTimelineFilter();
         filter = filter with { EntityType = entityType, EntityId = entityId.ToString() };
@@ -206,10 +182,7 @@ public class ActivityTimelineService : IActivityTimelineService
             _ => ActivityAction.Updated
         };
 
-    private async Task<(string? Name, string? Reference)> GetEntityInfoAsync(
-        string entityType,
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetEntityInfoAsync(string entityType, Guid entityId, CancellationToken cancellationToken)
     {
         try
         {
@@ -233,9 +206,7 @@ public class ActivityTimelineService : IActivityTimelineService
         }
     }
 
-    private async Task<(string? Name, string? Reference)> GetShipmentInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetShipmentInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
         var shipment = await _context.Shipments
             .AsNoTracking()
@@ -252,9 +223,7 @@ public class ActivityTimelineService : IActivityTimelineService
         return ($"{shipment.ReferenceNumber}{customerInfo} ({shipment.Status})", shipment.ReferenceNumber);
     }
 
-    private async Task<(string? Name, string? Reference)> GetCustomerInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetCustomerInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
         var customer = await _context.Customers
             .AsNoTracking()
@@ -270,9 +239,7 @@ public class ActivityTimelineService : IActivityTimelineService
         return (customer.Name, customer.TaxNumber);
     }
 
-    private async Task<(string? Name, string? Reference)> GetTaskInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetTaskInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
         var task = await _context.Tasks
             .AsNoTracking()
@@ -288,15 +255,10 @@ public class ActivityTimelineService : IActivityTimelineService
         return (task.Title, task.Status.ToString());
     }
 
-    private async Task<(string? Name, string? Reference)> GetCashTransactionInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetCashTransactionInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
-        var transaction = await _context.CashTransactions
-            .AsNoTracking()
-            .Where(t => t.Id == entityId)
-            .Select(t => new { t.Description, t.Amount, t.TransactionType })
-            .FirstOrDefaultAsync(cancellationToken);
+        var transaction = await _context.CashTransactions.AsNoTracking().Where(t => t.Id == entityId)
+            .Select(t => new { t.Description, t.Amount, t.TransactionType }).FirstOrDefaultAsync(cancellationToken);
 
         if (transaction == null)
         {
@@ -306,15 +268,10 @@ public class ActivityTimelineService : IActivityTimelineService
         return ($"{transaction.Description} - {transaction.Amount:C}", transaction.TransactionType.ToString());
     }
 
-    private async Task<(string? Name, string? Reference)> GetWarehouseInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetWarehouseInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
-        var warehouse = await _context.Warehouses
-            .AsNoTracking()
-            .Where(w => w.Id == entityId)
-            .Select(w => new { w.Name, w.Location })
-            .FirstOrDefaultAsync(cancellationToken);
+        var warehouse = await _context.Warehouses.AsNoTracking().Where(w => w.Id == entityId)
+            .Select(w => new { w.Name, w.Location }).FirstOrDefaultAsync(cancellationToken);
 
         if (warehouse == null)
         {
@@ -324,15 +281,10 @@ public class ActivityTimelineService : IActivityTimelineService
         return (warehouse.Name, warehouse.Location);
     }
 
-    private async Task<(string? Name, string? Reference)> GetSupplierInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetSupplierInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
-        var supplier = await _context.Suppliers
-            .AsNoTracking()
-            .Where(s => s.Id == entityId)
-            .Select(s => new { s.Name, s.Country })
-            .FirstOrDefaultAsync(cancellationToken);
+        var supplier = await _context.Suppliers.AsNoTracking().Where(s => s.Id == entityId)
+            .Select(s => new { s.Name, s.Country }).FirstOrDefaultAsync(cancellationToken);
 
         if (supplier == null)
         {
@@ -342,13 +294,9 @@ public class ActivityTimelineService : IActivityTimelineService
         return (supplier.Name, supplier.Country);
     }
 
-    private async Task<(string? Name, string? Reference)> GetCustomerInteractionInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetCustomerInteractionInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
-        var interaction = await _context.CustomerInteractions
-            .AsNoTracking()
-            .Where(i => i.Id == entityId)
+        var interaction = await _context.CustomerInteractions.AsNoTracking().Where(i => i.Id == entityId)
             .Select(i => new { i.Subject, i.InteractionType, CustomerName = i.Customer != null ? i.Customer.Name : null })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -360,15 +308,10 @@ public class ActivityTimelineService : IActivityTimelineService
         return ($"{interaction.InteractionType} - {interaction.Subject ?? "N/A"}", interaction.CustomerName);
     }
 
-    private async Task<(string? Name, string? Reference)> GetEmailAutomationRuleInfoAsync(
-        Guid entityId,
-        CancellationToken cancellationToken)
+    private async Task<(string? Name, string? Reference)> GetEmailAutomationRuleInfoAsync(Guid entityId, CancellationToken cancellationToken)
     {
-        var rule = await _context.EmailAutomationRules
-            .AsNoTracking()
-            .Where(r => r.Id == entityId)
-            .Select(r => new { r.Name, r.ResourceType })
-            .FirstOrDefaultAsync(cancellationToken);
+        var rule = await _context.EmailAutomationRules.AsNoTracking().Where(r => r.Id == entityId)
+            .Select(r => new { r.Name, r.ResourceType }).FirstOrDefaultAsync(cancellationToken);
 
         if (rule == null)
         {

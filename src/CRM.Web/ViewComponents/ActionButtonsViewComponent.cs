@@ -4,16 +4,9 @@ namespace CRM.Web.ViewComponents;
 
 public class ActionButtonsViewComponent : ViewComponent
 {
-    public IViewComponentResult Invoke(
-        string? detailsPage = null,
-        string? editPage = null,
-        string? deletePage = null,
-        Guid? detailsId = null,
-        Guid? editId = null,
-        Guid? deleteId = null,
-        string? detailsTitle = null,
-        string? editTitle = null,
-        string? deleteTitle = null)
+    public IViewComponentResult Invoke(string? detailsPage = null, string? editPage = null, string? deletePage = null,
+        Guid? detailsId = null, Guid? editId = null, Guid? deleteId = null, string? detailsTitle = null,
+        string? editTitle = null, string? deleteTitle = null)
     {
         var model = new ActionButtonsViewModel
         {

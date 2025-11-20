@@ -47,12 +47,12 @@ public static class DependencyInjection
 
         var identityBuilder = services.AddIdentityCore<ApplicationUser>(options =>
         {
-            // OWASP Password Policy Guidelines
-            options.Password.RequiredLength = 12; // Minimum 12 karakter
+            // Password Policy
+            options.Password.RequiredLength = 6; // Minimum 6 karakter
             options.Password.RequireDigit = true; // En az 1 rakam
             options.Password.RequireLowercase = true; // En az 1 küçük harf
             options.Password.RequireUppercase = true; // En az 1 büyük harf
-            options.Password.RequireNonAlphanumeric = true; // En az 1 özel karakter
+            options.Password.RequireNonAlphanumeric = false; // Özel karakter zorunlu değil
             options.Password.RequiredUniqueChars = 4; // En az 4 farklı karakter
 
             // Account Lockout - Brute force koruması

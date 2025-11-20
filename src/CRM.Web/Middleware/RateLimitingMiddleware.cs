@@ -12,10 +12,7 @@ public class RateLimitingMiddleware
     // IP bazlı rate limiting için in-memory cache
     private readonly ConcurrentDictionary<string, RateLimitInfo> _rateLimitCache = new();
 
-    public RateLimitingMiddleware(
-        RequestDelegate next,
-        ILogger<RateLimitingMiddleware> logger,
-        RateLimitingOptions options)
+    public RateLimitingMiddleware(RequestDelegate next, ILogger<RateLimitingMiddleware> logger, RateLimitingOptions options)
     {
         _next = next;
         _logger = logger;
@@ -76,7 +73,7 @@ public class RateLimitingMiddleware
                 clientIp, endpoint, currentCount, _options.MaxRequests);
 
             context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
-            context.Response.Headers.Append("Retry-After", 
+            context.Response.Headers.Append("Retry-After",
                 ((int)_options.Window.TotalSeconds).ToString());
             context.Response.ContentType = "application/json";
 

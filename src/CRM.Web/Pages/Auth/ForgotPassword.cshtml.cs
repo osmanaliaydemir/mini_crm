@@ -19,12 +19,8 @@ public class ForgotPasswordModel : PageModel
     private readonly ILogger<ForgotPasswordModel> _logger;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public ForgotPasswordModel(
-        UserManager<ApplicationUser> userManager,
-        IEmailSender emailSender,
-        IEmailTemplateService emailTemplateService,
-        IStringLocalizer<SharedResource> localizer,
-        ILogger<ForgotPasswordModel> logger)
+    public ForgotPasswordModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender,
+        IEmailTemplateService emailTemplateService, IStringLocalizer<SharedResource> localizer, ILogger<ForgotPasswordModel> logger)
     {
         _userManager = userManager;
         _emailSender = emailSender;

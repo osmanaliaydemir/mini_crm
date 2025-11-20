@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using CRM.Application;
 using CRM.Infrastructure;
 using CRM.Infrastructure.Persistence;
@@ -18,6 +19,21 @@ using Serilog;
 using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Log klasörünü oluştur (yoksa)
+var logsPath = Path.Combine(builder.Environment.ContentRootPath, "logs");
+if (!Directory.Exists(logsPath))
+{
+    try
+    {
+        Directory.CreateDirectory(logsPath);
+    }
+    catch (Exception ex)
+    {
+        // Log klasörü oluşturulamazsa devam et, sadece console'a yaz
+        Console.WriteLine($"Warning: Could not create logs directory: {ex.Message}");
+    }
+}
 
 // Serilog yapılandırması - appsettings.json'dan oku
 Log.Logger = new LoggerConfiguration()
@@ -42,7 +58,19 @@ builder.Services.AddResponseCaching(options =>
 });
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+try
+{
+    builder.Services.AddInfrastructure(builder.Configuration);
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "Infrastructure services could not be fully configured. Some features may not work.");
+    // Production'da devam et, development'ta fırlat
+    if (builder.Environment.IsDevelopment())
+    {
+        throw;
+    }
+}
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<SignInManager<ApplicationUser>>();
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, UserClaimsPrincipalFactory<ApplicationUser, ApplicationRole>>();
@@ -172,10 +200,25 @@ IResult HandleCultureChange(HttpContext context, string? culture, string? return
     return Results.Redirect(redirectUrl);
 }
 
+// Veritabanı başlatma - hata durumunda uygulama çalışmaya devam eder
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-    await initializer.InitializeAsync();
+    try
+    {
+        var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+        await initializer.InitializeAsync();
+        Log.Information("Database initialized successfully");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Database initialization failed. Application will continue but some features may not work.");
+        // Production'da uygulama çalışmaya devam eder, sadece log yazar
+        // Development'ta exception fırlatılabilir
+        if (app.Environment.IsDevelopment())
+        {
+            throw;
+        }
+    }
 }
 
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;

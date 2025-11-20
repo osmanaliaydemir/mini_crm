@@ -11,9 +11,7 @@ public class EmailAutomationQuartzJob : IJob
     private readonly IEmailAutomationService _emailAutomationService;
     private readonly ILogger<EmailAutomationQuartzJob> _logger;
 
-    public EmailAutomationQuartzJob(
-        IEmailAutomationService emailAutomationService,
-        ILogger<EmailAutomationQuartzJob> logger)
+    public EmailAutomationQuartzJob(IEmailAutomationService emailAutomationService, ILogger<EmailAutomationQuartzJob> logger)
     {
         _emailAutomationService = emailAutomationService;
         _logger = logger;
@@ -21,8 +19,7 @@ public class EmailAutomationQuartzJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        if (!context.MergedJobDataMap.TryGetValue(RuleIdKey, out var value) ||
-            value is not string ruleIdString ||
+        if (!context.MergedJobDataMap.TryGetValue(RuleIdKey, out var value) || value is not string ruleIdString ||
             !Guid.TryParse(ruleIdString, out var ruleId))
         {
             _logger.LogWarning("Email automation job triggered without valid rule id.");

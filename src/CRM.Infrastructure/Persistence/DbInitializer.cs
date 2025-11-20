@@ -38,8 +38,9 @@ public class DbInitializer : IDbInitializer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Veritabanı başlangıç işlemi başarısız oldu.");
-            throw;
+            _logger.LogError(ex, "Veritabanı başlangıç işlemi başarısız oldu. Uygulama çalışmaya devam edecek ancak veritabanı özellikleri kullanılamayabilir.");
+            // Exception'ı fırlatmıyoruz - uygulama çalışmaya devam etmeli
+            // Program.cs'deki try-catch bloğu bu hatayı zaten yakalayacak ve production'da devam edecek
         }
     }
 

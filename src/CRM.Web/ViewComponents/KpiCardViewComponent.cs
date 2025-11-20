@@ -4,13 +4,8 @@ namespace CRM.Web.ViewComponents;
 
 public class KpiCardViewComponent : ViewComponent
 {
-    public IViewComponentResult Invoke(
-        string label,
-        object value,
-        string? meta = null,
-        string? trend = null,
-        string? trendType = null,
-        string? dataKpi = null)
+    public IViewComponentResult Invoke(string label, object value, string? meta = null,
+        string? trend = null, string? trendType = null, string? dataKpi = null)
     {
         var model = new KpiCardViewModel
         {

@@ -94,14 +94,7 @@ public class IndexModel : PageModel
         }
     }
 
-    private sealed record AuditLogTableRow(
-        string Timestamp,
-        string EntityType,
-        string EntityIdShort,
-        string ActionDisplay,
-        string ActionCssClass,
-        string UserLabel,
-        string IpAddress,
-        string DetailsUrl);
+    private sealed record AuditLogTableRow(string Timestamp, string EntityType, string EntityIdShort, string ActionDisplay,
+        string ActionCssClass, string UserLabel, string IpAddress, string DetailsUrl);
 }
 

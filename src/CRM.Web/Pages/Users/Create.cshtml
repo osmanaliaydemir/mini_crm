@@ -44,8 +44,12 @@
                 </div>
                 <div class="input-field">
                     <label asp-for="User.Password">@Localizer["Users_Field_Password"]</label>
-                    <input asp-for="User.Password" type="password" class="input-control" />
+                    <input asp-for="User.Password" type="password" class="input-control" 
+                           minlength="6" 
+                           required
+                           title="Parola en az 6 karakter olmalıdır." />
                     <span asp-validation-for="User.Password" class="input-error"></span>
+                    <small class="input-hint">Parola en az 6 karakter olmalıdır.</small>
                 </div>
             </div>
         </section>
@@ -104,3 +108,38 @@
     </div>
 </form>
 
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.querySelector('input[type="password"][asp-for="User.Password"]');
+            if (passwordInput) {
+                // Real-time validation feedback
+                passwordInput.addEventListener('input', function() {
+                    const value = this.value;
+                    const minLength = 6;
+                    const isValid = value.length >= minLength;
+                    
+                    // Update input class for visual feedback
+                    if (value.length > 0) {
+                        if (isValid) {
+                            this.classList.remove('input-invalid');
+                            this.classList.add('input-valid');
+                        } else {
+                            this.classList.remove('input-valid');
+                            this.classList.add('input-invalid');
+                        }
+                    } else {
+                        this.classList.remove('input-valid', 'input-invalid');
+                    }
+                });
+                
+                // Clear validation classes on blur if empty
+                passwordInput.addEventListener('blur', function() {
+                    if (this.value.length === 0) {
+                        this.classList.remove('input-valid', 'input-invalid');
+                    }
+                });
+            }
+        });
+    </script>
+}

@@ -4,10 +4,7 @@ namespace CRM.Web.ViewComponents;
 
 public class StatusBadgeViewComponent : ViewComponent
 {
-    public IViewComponentResult Invoke(
-        string label,
-        string statusType,
-        string? cssClass = null)
+    public IViewComponentResult Invoke(string label, string statusType, string? cssClass = null)
     {
         var model = new StatusBadgeViewModel
         {

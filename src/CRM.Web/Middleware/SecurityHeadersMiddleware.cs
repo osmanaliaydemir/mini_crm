@@ -5,9 +5,7 @@ public class SecurityHeadersMiddleware
     private readonly RequestDelegate _next;
     private readonly IWebHostEnvironment _environment;
 
-    public SecurityHeadersMiddleware(
-        RequestDelegate next,
-        IWebHostEnvironment environment)
+    public SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment environment)
     {
         _next = next;
         _environment = environment;
@@ -27,7 +25,7 @@ public class SecurityHeadersMiddleware
         response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
 
         // Permissions-Policy: Özellik izinleri
-        response.Headers.Append("Permissions-Policy", 
+        response.Headers.Append("Permissions-Policy",
             "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()");
 
         // Content-Security-Policy: XSS ve injection koruması

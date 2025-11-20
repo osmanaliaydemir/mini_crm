@@ -10,9 +10,7 @@ public class CashboxQuickSummaryViewComponent : ViewComponent
     private readonly ICacheService _cacheService;
     private readonly ILogger<CashboxQuickSummaryViewComponent> _logger;
 
-    public CashboxQuickSummaryViewComponent(
-        ICashTransactionService cashTransactionService,
-        ICacheService cacheService,
+    public CashboxQuickSummaryViewComponent(ICashTransactionService cashTransactionService, ICacheService cacheService,
         ILogger<CashboxQuickSummaryViewComponent> logger)
     {
         _cashTransactionService = cashTransactionService;
